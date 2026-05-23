@@ -7,42 +7,36 @@ namespace Caritas.Models.Entities;
 public class Usuario
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public string? Nome { get; set; }
-
     public string? Sobrenome { get; set; }
-
-    [Required]
-    public string Senha { get; set; } = string.Empty;
 
     [Required]
     public string Email { get; set; } = string.Empty;
 
+    public string? Cpf { get; set; }
     public string? Telefone { get; set; }
+    public DateTime? DataNasc { get; set; }
 
-    public string? DataNascimento { get; set; }
+    [Required]
+    public string Senha { get; set; } = string.Empty; // armazenar hash
 
+    public long? PerfilId { get; set; }
     public bool Ativo { get; set; } = true;
-
-    public DateTime? DataCriacao { get; set; }
-
+    public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
+    public long? UsuarioCriadorId { get; set; }
     public DateTime? DataInativacao { get; set; }
 
-    public int? IdCriador { get; set; }
-
-    public int? IdParoquia { get; set; }
-
-    public int? IdPerfil { get; set; }
-
-    [ForeignKey(nameof(IdCriador))]
-    public Usuario? Criador { get; set; }
+    // Auto-referência: usuário que criou este usuário
+    [ForeignKey(nameof(UsuarioCriadorId))]
+    public Usuario? UsuarioCriador { get; set; }
 
     public ICollection<Usuario> UsuariosCriados { get; set; } = new List<Usuario>();
 
-    [ForeignKey(nameof(IdParoquia))]
-    public Paroquia? Paroquia { get; set; }
-
-    [ForeignKey(nameof(IdPerfil))]
+    [ForeignKey(nameof(PerfilId))]
     public Perfil? Perfil { get; set; }
+
+    // Navegação many-to-many
+    public ICollection<UsuarioParoquia> UsuarioParoquias { get; set; } = new List<UsuarioParoquia>();
 }

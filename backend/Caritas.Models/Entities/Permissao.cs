@@ -7,7 +7,7 @@ namespace Caritas.Models.Entities;
 public class Permissao
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public string? Codigo { get; set; }
 

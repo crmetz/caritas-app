@@ -7,18 +7,15 @@ namespace Caritas.Models.Entities;
 public class PerfilPermissao
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
-    public int? IdPerfil { get; set; }
+    public long PerfilId { get; set; }
+    public long PermissaoId { get; set; }
+    public bool Ativa { get; set; } = true;
 
-    public int? IdPermissao { get; set; }
-
-    public bool Ativo { get; set; } = true;
-
-    // Navegações
-    [ForeignKey(nameof(IdPerfil))]
+    [ForeignKey(nameof(PerfilId))]
     public Perfil? Perfil { get; set; }
 
-    [ForeignKey(nameof(IdPermissao))]
+    [ForeignKey(nameof(PermissaoId))]
     public Permissao? Permissao { get; set; }
 }

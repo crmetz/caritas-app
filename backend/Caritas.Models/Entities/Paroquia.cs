@@ -7,17 +7,16 @@ namespace Caritas.Models.Entities;
 public class Paroquia
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [Required]
     public string Nome { get; set; } = string.Empty;
 
-    public int? IdEndereco { get; set; }
+    public long? EnderecoId { get; set; }
 
-    [ForeignKey(nameof(IdEndereco))]
+    [ForeignKey(nameof(EnderecoId))]
     public Endereco? Endereco { get; set; }
 
-    public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
-
-    public ICollection<Notificacao> Notificacoes { get; set; } = new List<Notificacao>();
+    // Navegação many-to-many
+    public ICollection<UsuarioParoquia> UsuarioParoquias { get; set; } = new List<UsuarioParoquia>();
 }

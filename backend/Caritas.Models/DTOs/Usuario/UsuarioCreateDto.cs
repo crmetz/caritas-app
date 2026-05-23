@@ -5,8 +5,8 @@ public record UsuarioCreateDto(
     string Sobrenome,
     string Email,
     string Senha,
+    string? Cpf,
     string? Telefone,
-    string? DataNascimento,
-    int? IdParoquia,
-    int? IdPerfil
+    DateTime? DataNasc,
+    long? PerfilId
 );

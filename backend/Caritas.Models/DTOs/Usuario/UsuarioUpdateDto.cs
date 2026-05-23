@@ -1,10 +1,9 @@
 namespace Caritas.Models.DTOs.Usuario;
 
-public record UpdateUsuarioDto(
+public record UsuarioUpdateDto(
     string? Nome,
     string? Sobrenome,
     string? Telefone,
-    string? DataNascimento,
-    int? IdParoquia,
-    int? IdPerfil
+    DateTime? DataNasc,
+    long? PerfilId
 );

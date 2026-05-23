@@ -28,9 +28,8 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
                 usuario.Sobrenome,
                 usuario.Email,
                 usuario.Telefone,
-                usuario.DataNascimento,
-                usuario.IdParoquia,
-                usuario.IdPerfil,
+                usuario.DataNasc,
+                usuario.PerfilId,
                 usuario.DataCriacao
             });
         }
@@ -55,15 +54,14 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
             usuario.Sobrenome,
             usuario.Email,
             usuario.Telefone,
-            usuario.DataNascimento,
-            usuario.IdParoquia,
-            usuario.IdPerfil,
+            usuario.DataNasc,
+            usuario.PerfilId,
             usuario.DataCriacao
         });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UsuarioUpdateDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -78,9 +76,8 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
                 usuario.Sobrenome,
                 usuario.Email,
                 usuario.Telefone,
-                usuario.DataNascimento,
-                usuario.IdParoquia,
-                usuario.IdPerfil,
+                usuario.DataNasc,
+                usuario.PerfilId,
                 usuario.DataCriacao
             });
         }

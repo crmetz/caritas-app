@@ -19,16 +19,15 @@ public class UsuarioService(UsuarioRepository repository)
             Email          = dto.Email,
             Senha          = dto.Senha, // TODO: adicionar hash antes de produção
             Telefone       = dto.Telefone,
-            DataNascimento = dto.DataNascimento,
-            IdParoquia     = dto.IdParoquia,
-            IdPerfil       = dto.IdPerfil,
+            DataNasc = dto.DataNasc,
+            PerfilId       = dto.PerfilId,
             Ativo          = true,
             DataCriacao    = DateTime.UtcNow
         };
 
         return await repository.AddAsync(usuario);
     }
-    public async Task<Usuario> UpdateAsync(int id, UpdateUsuarioDto dto)
+    public async Task<Usuario> UpdateAsync(int id, UsuarioUpdateDto dto)
     {
         var usuario = await repository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
@@ -36,9 +35,8 @@ public class UsuarioService(UsuarioRepository repository)
         usuario.Nome           = dto.Nome ?? usuario.Nome;
         usuario.Sobrenome      = dto.Sobrenome ?? usuario.Sobrenome;
         usuario.Telefone       = dto.Telefone ?? usuario.Telefone;
-        usuario.DataNascimento = dto.DataNascimento ?? usuario.DataNascimento;
-        usuario.IdParoquia     = dto.IdParoquia ?? usuario.IdParoquia;
-        usuario.IdPerfil       = dto.IdPerfil ?? usuario.IdPerfil;
+        usuario.DataNasc       = dto.DataNasc ?? usuario.DataNasc;
+        usuario.PerfilId       = dto.PerfilId ?? usuario.PerfilId;
 
         return await repository.UpdateAsync(usuario);
     }

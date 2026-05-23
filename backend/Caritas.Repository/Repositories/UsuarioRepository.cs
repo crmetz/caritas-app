@@ -21,7 +21,6 @@ public class UsuarioRepository(CaritasDbContext context)
 
     public async Task<Usuario?> GetByIdAsync(int id)
         => await _context.Usuarios
-            .Include(u => u.Paroquia)
             .Include(u => u.Perfil)
             .FirstOrDefaultAsync(u => u.Id == id && u.Ativo);
 
