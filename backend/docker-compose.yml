@@ -1,0 +1,26 @@
+services:
+  carweb:
+    image: ${DOCKER_REGISTRY-}carweb
+    build:
+      context: .
+      dockerfile: Caritas.WebApi/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: caritas
+      POSTGRES_USER: caritas
+      POSTGRES_PASSWORD: caritas_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U caritas -d caritas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,15 @@
+services:
+  carweb:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=caritas;Username=caritas;Password=caritas_dev;Include Error Detail=true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+
+  postgres:
+    ports:
+      - "5432:5432"

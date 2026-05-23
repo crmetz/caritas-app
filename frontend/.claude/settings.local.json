@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item \"C:\\\\Code\\\\caritas\\\\backend\\\\CAR.Models\\\\Class1.cs\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item \"C:\\\\Code\\\\caritas\\\\backend\\\\CAR.Business\\\\Class1.cs\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item \"C:\\\\Code\\\\caritas\\\\backend\\\\CAR.Repository\\\\Class1.cs\" -ErrorAction SilentlyContinue)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(npm uninstall *)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(./node_modules/.bin/tailwindcss init *)"
+    ]
+  }
+}

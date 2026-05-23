@@ -1,0 +1,48 @@
+# .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.swp
+appsettings.*.local.json
+*.pfx
+*.snk
+project.lock.json
+.dotnet/
+TestResults/
+publish/
+artifacts/
+
+# Node / Vite / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+*.iml
+.vscode/settings.json
+
+.claude/settings.local.json
