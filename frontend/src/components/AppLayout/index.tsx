@@ -21,6 +21,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						<NavLink to="/paroquias" className={linkClassName}>
 							Paróquias
 						</NavLink>
+						<NavLink to="/usuarios" className={linkClassName}>
+							Usuários
+						</NavLink>
 					</nav>
 				</div>
 			</header>

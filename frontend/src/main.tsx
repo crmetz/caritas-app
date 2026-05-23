@@ -7,6 +7,7 @@ import "./style.css";
 import { AppLayout } from "./components/AppLayout";
 import FamiliaPage from "./pages/Familia";
 import ParoquiaPage from "./pages/Paroquia";
+import UsuarioPage from "./pages/Usuario";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
@@ -18,6 +19,7 @@ createRoot(rootElement).render(
 				<Routes>
 					<Route path="/" element={<FamiliaPage />} />
 					<Route path="/paroquias" element={<ParoquiaPage />} />
+					<Route path="/usuarios" element={<UsuarioPage />} />
 				</Routes>
 			</AppLayout>
 		</BrowserRouter>
