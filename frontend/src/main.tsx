@@ -6,19 +6,21 @@ import "react-toastify/dist/ReactToastify.css";
 import "./style.css";
 import { AppLayout } from "./components/AppLayout";
 import FamiliaPage from "./pages/Familia";
+import ParoquiaPage from "./pages/Paroquia";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
 createRoot(rootElement).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<FamiliaPage />} />
-        </Routes>
-      </AppLayout>
-    </BrowserRouter>
-    <ToastContainer position="top-right" />
-  </StrictMode>,
+	<StrictMode>
+		<BrowserRouter>
+			<AppLayout>
+				<Routes>
+					<Route path="/" element={<FamiliaPage />} />
+					<Route path="/paroquias" element={<ParoquiaPage />} />
+				</Routes>
+			</AppLayout>
+		</BrowserRouter>
+		<ToastContainer position="top-right" />
+	</StrictMode>,
 );
