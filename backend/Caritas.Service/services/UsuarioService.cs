@@ -22,7 +22,6 @@ public class UsuarioService(UsuarioRepository repository)
             DataNasc = dto.DataNasc,
             PerfilId       = dto.PerfilId,
             Ativo          = true,
-            DataCriacao    = DateTime.UtcNow
         };
 
         return await repository.AddAsync(usuario);

@@ -1,18 +1,16 @@
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("Paroquia")]
-public class Paroquia
+public class Paroquia : AuditableEntity
 {
-    [Key]
-    public long Id { get; set; }
-
     [Required]
     public string Nome { get; set; } = string.Empty;
 
-    public long? EnderecoId { get; set; }
+    public int? EnderecoId { get; set; }
 
     [ForeignKey(nameof(EnderecoId))]
     public Endereco? Endereco { get; set; }

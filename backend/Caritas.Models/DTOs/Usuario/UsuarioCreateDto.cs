@@ -8,5 +8,5 @@ public record UsuarioCreateDto(
     string? Cpf,
     string? Telefone,
     DateTime? DataNasc,
-    long? PerfilId
+    int? PerfilId
 );

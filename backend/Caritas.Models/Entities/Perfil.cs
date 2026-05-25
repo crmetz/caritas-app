@@ -1,20 +1,18 @@
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("Perfil")]
-public class Perfil
+public class Perfil : AuditableEntity
 {
-    [Key]
-    public long Id { get; set; }
-
     [Required]
     public string Nome { get; set; } = string.Empty;
 
     public string? Descricao { get; set; }
 
-    public long? PerfilPaiId { get; set; }
+    public int? PerfilPaiId { get; set; }
 
     [ForeignKey(nameof(PerfilPaiId))]
     public Perfil? PerfilPai { get; set; }

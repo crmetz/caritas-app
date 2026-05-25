@@ -17,7 +17,7 @@ public class FamiliaService(CaritasDbContext context)
     {
         var pagedEntities = await context.Familias
             .Include(f => f.Responsavel)
-            .OrderBy(f => f.CreatedAt)
+            .OrderBy(f => f.CriadoEm)
             .ToPagedAsync(page, pageSize);
 
         return new PagedResponseDto<FamiliaResponseDto>
@@ -111,8 +111,8 @@ public class FamiliaService(CaritasDbContext context)
         Cidade = f.Cidade,
         Estado = f.Estado,
         Cep = f.Cep,
-        CreatedAt = f.CreatedAt,
-        UpdatedAt = f.UpdatedAt,
+        CriadoEm = f.CriadoEm,
+        AtualizadoEm = f.AtualizadoEm,
     };
 
     private static PessoaResponseDto MapPessoaToResponse(Pessoa p) => new()
@@ -128,8 +128,8 @@ public class FamiliaService(CaritasDbContext context)
         PossuiDeficiencia = p.PossuiDeficiencia,
         Observacoes = p.Observacoes,
         FamiliaId = p.FamiliaId,
-        CreatedAt = p.CreatedAt,
-        UpdatedAt = p.UpdatedAt,
+        CriadoEm = p.CriadoEm,
+        AtualizadoEm = p.AtualizadoEm,
     };
 
     private static Pessoa MapPessoaFromDto(PessoaCreateDto dto) => new()

@@ -1,3 +1,4 @@
+using Caritas.Models.Common;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Caritas.Repository.Repositories;
 
-public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> where T : BaseEntity
+public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> where T : AuditableEntity
 {
     protected readonly CaritasDbContext Context = context;
     protected readonly DbSet<T> DbSet = context.Set<T>();
@@ -16,7 +17,7 @@ public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> wh
         => await DbSet.FirstOrDefaultAsync(e => e.Id == id);
 
     public async Task<PagedResponseDto<T>> GetPagedAsync(int page, int pageSize)
-        => await DbSet.OrderBy(e => e.CreatedAt).ToPagedAsync(page, pageSize);
+        => await DbSet.OrderBy(e => e.CriadoEm).ToPagedAsync(page, pageSize);
 
     public async Task<T> AddAsync(T entity)
     {
