@@ -1,6 +1,8 @@
+using Caritas.Models.Common;
+
 namespace Caritas.Models.Entities;
 
-public class Pessoa : BaseEntity
+public class Pessoa : AuditableEntity
 {
     public string Nome { get; set; } = string.Empty;
     public string? Cpf { get; set; }

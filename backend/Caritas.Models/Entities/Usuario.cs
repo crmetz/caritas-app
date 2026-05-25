@@ -1,14 +1,12 @@
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("Usuario")]
-public class Usuario
+public class Usuario : AuditableEntity
 {
-    [Key]
-    public long Id { get; set; }
-
     public string? Nome { get; set; }
     public string? Sobrenome { get; set; }
 
@@ -22,10 +20,9 @@ public class Usuario
     [Required]
     public string Senha { get; set; } = string.Empty; // armazenar hash
 
-    public long? PerfilId { get; set; }
+    public int? PerfilId { get; set; }
     public bool Ativo { get; set; } = true;
-    public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
-    public long? UsuarioCriadorId { get; set; }
+    public int? UsuarioCriadorId { get; set; }
     public DateTime? DataInativacao { get; set; }
 
     // Auto-referência: usuário que criou este usuário

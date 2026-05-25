@@ -1,8 +1,9 @@
+using Caritas.Models.Common;
 using Caritas.Models.Enums;
 
 namespace Caritas.Models.Entities;
 
-public class Familia : BaseEntity
+public class Familia : AuditableEntity
 {
     public int ResponsavelId { get; set; }
     public Pessoa Responsavel { get; set; } = null!;
