@@ -23,6 +23,6 @@ public class FamiliaResponseDto
     public string Estado { get; set; } = string.Empty;
     public string Cep { get; set; } = string.Empty;
 
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CriadoEm { get; set; }
+    public DateTime AtualizadoEm { get; set; }
 }

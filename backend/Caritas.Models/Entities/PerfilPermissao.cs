@@ -1,16 +1,14 @@
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("PerfilPermissao")]
-public class PerfilPermissao
+public class PerfilPermissao : Entity
 {
-    [Key]
-    public long Id { get; set; }
-
-    public long PerfilId { get; set; }
-    public long PermissaoId { get; set; }
+    public int PerfilId { get; set; }
+    public int PermissaoId { get; set; }
     public bool Ativa { get; set; } = true;
 
     [ForeignKey(nameof(PerfilId))]

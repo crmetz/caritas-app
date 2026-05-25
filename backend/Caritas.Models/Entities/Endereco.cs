@@ -1,13 +1,12 @@
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("Endereco")]
-public class Endereco
+public class Endereco : Entity
 {
-    [Key]
-    public long Id { get; set; }
     public string? Rua { get; set; }
     public string? Numero { get; set; }
     public string? Cep { get; set; }

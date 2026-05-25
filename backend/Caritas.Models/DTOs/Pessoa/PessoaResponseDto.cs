@@ -13,6 +13,6 @@ public class PessoaResponseDto
     public bool PossuiDeficiencia { get; set; }
     public string? Observacoes { get; set; }
     public int? FamiliaId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CriadoEm { get; set; }
+    public DateTime AtualizadoEm { get; set; }
 }

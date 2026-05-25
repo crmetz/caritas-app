@@ -1,16 +1,13 @@
-using System.ComponentModel.DataAnnotations;
+using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("UsuarioParoquia")]
-public class UsuarioParoquia
+public class UsuarioParoquia : Entity
 {
-    [Key]
-    public long Id { get; set; }
-
-    public long UsuarioId { get; set; }
-    public long ParoquiaId { get; set; }
+    public int UsuarioId { get; set; }
+    public int ParoquiaId { get; set; }
 
     [ForeignKey(nameof(UsuarioId))]
     public Usuario? Usuario { get; set; }

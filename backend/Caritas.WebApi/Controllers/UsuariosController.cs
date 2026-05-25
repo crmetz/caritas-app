@@ -30,7 +30,7 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
                 usuario.Telefone,
                 usuario.DataNasc,
                 usuario.PerfilId,
-                usuario.DataCriacao
+                usuario.CriadoEm
             });
         }
         catch (InvalidOperationException ex)
@@ -56,7 +56,7 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
             usuario.Telefone,
             usuario.DataNasc,
             usuario.PerfilId,
-            usuario.DataCriacao
+            usuario.CriadoEm
         });
     }
 
@@ -78,7 +78,7 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
                 usuario.Telefone,
                 usuario.DataNasc,
                 usuario.PerfilId,
-                usuario.DataCriacao
+                usuario.AtualizadoEm
             });
         }
         catch (KeyNotFoundException ex)

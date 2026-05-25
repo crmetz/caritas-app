@@ -5,5 +5,5 @@ public record UsuarioUpdateDto(
     string? Sobrenome,
     string? Telefone,
     DateTime? DataNasc,
-    long? PerfilId
+    int? PerfilId
 );
