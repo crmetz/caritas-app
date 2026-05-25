@@ -14,42 +14,23 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(long id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var paroquia = await _paroquiaService.GetByIdAsync(id);
-
-            if (paroquia == null) 
-            {
-                return NotFound(new { mensagem = $"Paróquia com id {id} não encontrada." });
-            }
-
-            return Ok(
-                new {
-                    paroquia.Id,
-                    paroquia.Nome,
-                    paroquia.Endereco,
-                    paroquia.UsuarioParoquias
-                }
-            );
+            var result = await _paroquiaService.GetByIdAsync(id);
+            return Ok(result);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ParoquiaCreateDTO paroquiaCreateDTO)
+        public async Task<IActionResult> Create([FromBody] CreateParoquiaDTO paroquiaCreateDTO)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             try
             {
-                var paroquia = await _paroquiaService.CreateAsync(paroquiaCreateDTO);
+                var result = await _paroquiaService.CreateAsync(paroquiaCreateDTO);
 
-                return CreatedAtAction(nameof(Create), new { id = paroquia.Id }, new
-                {
-                    paroquia.Id,
-                    paroquia.Nome,
-                    paroquia.Endereco,
-                    paroquia.UsuarioParoquias
-                });
+                return CreatedAtAction(nameof(Create), new { id = result.Id }, result);
             }
             catch (Exception ex)
             {
@@ -58,39 +39,21 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(long id, [FromBody] ParoquiaUpdateDTO paroquiaUpdateDTO)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateParoquiaDto updateParoquiaDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            try
-            {
-                var paroquia = await _paroquiaService.UpdateAsync(id, paroquiaUpdateDTO);
-                return Ok(new
-                {
-                    paroquia.Id,
-                    paroquia.Nome,
-                    paroquia.Endereco,
-                    paroquia.UsuarioParoquias
-                });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { mensagem = ex.Message });
-            }
+            var result = await _paroquiaService.UpdateAsync(id, updateParoquiaDto);
+            return Ok(result);
+
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id) {
-            try
-            {
-                await _paroquiaService.DeleteAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { mensagem = ex.Message });
-            }
+
+            await _paroquiaService.DeleteAsync(id);
+            return NoContent();
         }
     }
 }

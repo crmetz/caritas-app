@@ -1,40 +1,34 @@
 ﻿using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
-using Caritas.Repository.Repositories;
+using Caritas.Models.Interfaces;
+using Caritas.Service.Mappers;
 
 namespace Caritas.Service.services
 {
     public class ParoquiaService
     {
-        private readonly ParoquiaRepository _paroquiaRepository;
-        public ParoquiaService(ParoquiaRepository paroquiaRepository)
+        private readonly IParoquiaRepository _paroquiaRepository;
+        public ParoquiaService(IParoquiaRepository paroquiaRepository)
         {
             _paroquiaRepository = paroquiaRepository;
         }
 
-        public async Task<Paroquia> GetByIdAsync(long id)
+        public async Task<ParoquiaDto> GetByIdAsync(int id)
         {
-            return await _paroquiaRepository.GetByIdAsync(id);
+            var paroquia = await _paroquiaRepository.GetByIdAsync(id);
+
+            if(paroquia == null) throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+            return paroquia.ToDto();
         }
 
-        public async Task<Paroquia> CreateAsync(ParoquiaCreateDTO dto)
+        public async Task<ParoquiaDto> CreateAsync(CreateParoquiaDTO dto)
         {
-            var paroquia = new Paroquia
-            {
-                Nome = dto.Nome,
-                Endereco = new Endereco
-                {
-                    Rua = dto.Endereco.Rua,
-                    Numero = dto.Endereco.Numero,
-                    Cep = dto.Endereco.Cep,
-                    Bairro = dto.Endereco.Bairro,
-                    Cidade = dto.Endereco.Cidade,
-                }
-            };
+            var paroquia = dto.ToEntity();
 
-            return await _paroquiaRepository.AddAsync(paroquia);
+            var createdParoquia = await _paroquiaRepository.AddAsync(paroquia);
+            return createdParoquia.ToDto();
         }
-        public async Task<Paroquia> UpdateAsync(long id, ParoquiaUpdateDTO dto)
+        public async Task<ParoquiaDto> UpdateAsync(int id, UpdateParoquiaDto dto)
         {
             var paroquia = await _paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
@@ -47,17 +41,20 @@ namespace Caritas.Service.services
             paroquia.Endereco.Bairro = dto.Endereco.Bairro;
             paroquia.Endereco.Cidade = dto.Endereco.Cidade;
 
-            paroquia.UsuarioParoquias = new List<UsuarioParoquia>(dto.UsuarioParoquias);
-
-            return await _paroquiaRepository.UpdateAsync(paroquia);
+            await _paroquiaRepository.UpdateAsync(paroquia);
+            return paroquia.ToDto();
         }
 
         public async Task DeleteAsync(long id)
         {
-            var paroquia = await _paroquiaRepository.GetByIdAsync(id)
-                ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+            throw new InvalidOperationException("Exclusão de paróquia não é permitida no momento");
+            //não podemos simplesmente excluir a paróquia devido a todos os registros que estarão vinculados a ela, além 
+            //de usuários. o certo é a gente fazer a operação de inativação, mas podemos deixar para depois
 
-            await _paroquiaRepository.DeleteAsync(paroquia);
+            //var paroquia = await _paroquiaRepository.GetByIdAsync(id)
+            //    ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            //await _paroquiaRepository.DeleteAsync(paroquia);
         }
     }
 }
