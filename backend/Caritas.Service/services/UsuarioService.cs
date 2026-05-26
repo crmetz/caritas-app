@@ -1,14 +1,32 @@
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces;
 using Caritas.Repository.Repositories;
+using Caritas.Service.Mappers;
 
 namespace Caritas.Service.Services;
 
-public class UsuarioService(UsuarioRepository repository)
+public class UsuariosService
 {
-    public async Task<Usuario> CreateAsync(UsuarioCreateDto dto)
+
+    private readonly IUsuarioRepository _usuarioRepository;
+
+    public UsuariosService(IUsuarioRepository usuarioRepository)
     {
-        var existing = await repository.GetByEmailAsync(dto.Email);
+        _usuarioRepository = usuarioRepository;
+    }
+
+    public async Task<UsuarioDto> GetByIdAsync(int id)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(id);
+
+            if(usuario == null) throw new KeyNotFoundException($"Usuario com id {id} não encontrada.");
+            return usuario.ToDto();
+        }
+
+    public async Task<Usuario> CreateAsync(CreateUsuarioDto dto)
+    {
+        var existing = await _usuarioRepository.GetByEmailAsync(dto.Email);
         if (existing is not null)
             throw new InvalidOperationException("Já existe um usuário com este e-mail.");
 
@@ -17,18 +35,18 @@ public class UsuarioService(UsuarioRepository repository)
             Nome           = dto.Nome,
             Sobrenome      = dto.Sobrenome,
             Email          = dto.Email,
-            Senha          = dto.Senha, // TODO: adicionar hash antes de produção
+            Senha          = "Teste", //colocar uma senha ou hash padrão
             Telefone       = dto.Telefone,
             DataNasc = dto.DataNasc,
             PerfilId       = dto.PerfilId,
             Ativo          = true,
         };
 
-        return await repository.AddAsync(usuario);
+        return await _usuarioRepository.AddAsync(usuario);
     }
-    public async Task<Usuario> UpdateAsync(int id, UsuarioUpdateDto dto)
+    public async Task<Usuario> UpdateAsync(int id, UpdateUsuarioDto dto)
     {
-        var usuario = await repository.GetByIdAsync(id)
+        var usuario = await _usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
         usuario.Nome           = dto.Nome ?? usuario.Nome;
@@ -37,17 +55,18 @@ public class UsuarioService(UsuarioRepository repository)
         usuario.DataNasc       = dto.DataNasc ?? usuario.DataNasc;
         usuario.PerfilId       = dto.PerfilId ?? usuario.PerfilId;
 
-        return await repository.UpdateAsync(usuario);
+        await _usuarioRepository.UpdateAsync(usuario);
+        return usuario;
     }
 
     public async Task DeactivateAsync(int id)
     {
-        var usuario = await repository.GetByIdAsync(id)
+        var usuario = await _usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
         usuario.Ativo            = false;
         usuario.DataInativacao   = DateTime.UtcNow;
 
-        await repository.UpdateAsync(usuario);
+        await _usuarioRepository.UpdateAsync(usuario);
     }
 }

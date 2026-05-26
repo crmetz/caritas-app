@@ -17,13 +17,13 @@ import { Label } from "@/components/ui/label";
 import APIService from "@/services/api";
 import type {
 	Usuario,
-	UsuarioCreateDto,
+	CreateUsuarioDto,
 	UsuarioModalProps,
 	UsuarioModalRef,
 	UsuarioUpdateDto,
 } from "./interface";
 
-const INITIAL_FORM: UsuarioCreateDto = {
+const INITIAL_FORM: CreateUsuarioDto = {
 	nome: "",
 	sobrenome: "",
 	email: "",
@@ -39,10 +39,10 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [isOpen, setIsOpen] = useState(false);
 		const [editing, setEditing] = useState<Usuario | null>(null);
 		const [loading, setLoading] = useState(false);
-		const [form, setForm] = useState<UsuarioCreateDto>(INITIAL_FORM);
+		const [form, setForm] = useState<CreateUsuarioDto>(INITIAL_FORM);
 
 		const setField = (
-			field: keyof UsuarioCreateDto,
+			field: keyof CreateUsuarioDto,
 			value: string | number | null,
 		) => setForm((prev) => ({ ...prev, [field]: value }));
 

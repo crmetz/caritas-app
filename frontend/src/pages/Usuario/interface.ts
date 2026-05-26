@@ -20,7 +20,7 @@ export interface Usuario {
 	dataInativacao: string | null;
 }
 
-export interface UsuarioCreateDto {
+export interface CreateUsuarioDto {
 	nome: string;
 	sobrenome: string;
 	email: string;

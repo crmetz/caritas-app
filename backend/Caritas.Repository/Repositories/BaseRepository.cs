@@ -32,7 +32,7 @@ public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> wh
         await Context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public virtual async Task DeleteAsync(int id)
     {
         var entity = await GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Registro com id {id} não encontrado.");
