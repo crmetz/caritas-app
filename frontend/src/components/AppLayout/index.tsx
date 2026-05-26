@@ -5,16 +5,16 @@ import { cn } from "@/lib/utils";
 export function AppLayout({ children }: { children: ReactNode }) {
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
 		cn(
-			"rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
-			isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+			"rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors hover:bg-card",
+			isActive ? "border-border bg-card text-foreground" : "border-transparent bg-transparent text-muted-foreground",
 		);
 
 	return (
 		<div className="min-h-screen bg-background">
-			<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-				<div className="flex h-14 items-center gap-6 px-6">
+			<header className="border-b bg-background/90">
+				<div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-6">
 					<span className="font-semibold text-lg">Caritas</span>
-					<nav className="flex items-center gap-1">
+					<nav className="flex items-center gap-2">
 						<NavLink to="/" className={linkClassName}>
 							Famílias
 						</NavLink>
@@ -27,7 +27,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 					</nav>
 				</div>
 			</header>
-			<main className="p-6">{children}</main>
+			<main className="mx-auto w-full max-w-7xl p-6">{children}</main>
 		</div>
 	);
 }

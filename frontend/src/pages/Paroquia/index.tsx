@@ -1,9 +1,10 @@
-import { Church, Plus } from "lucide-react";
+import { ArrowLeft, Church, Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable/interface";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import APIService, { type PagedResponse } from "@/services/api";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
@@ -104,18 +105,33 @@ export default function ParoquiaPage() {
 	};
 
 	return (
-		<div className="space-y-4">
-			<div className="flex items-center justify-between gap-4">
+		<div className="space-y-7">
+			<div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 				<div>
-					<h1 className="font-semibold text-xl">Paróquias</h1>
-					<p className="text-muted-foreground text-sm">
+					<button type="button" className="mb-4 inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+						<ArrowLeft className="h-4 w-4" />
+						Voltar
+					</button>
+					<h1 className="font-semibold text-4xl tracking-tight">Paróquias</h1>
+					<p className="mt-2 text-muted-foreground">
 						Cadastro e manutenção das paróquias atendidas
 					</p>
 				</div>
 				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-4 w-4" />
+					<Plus className="h-5 w-5" />
 					Nova Paróquia
 				</Button>
+			</div>
+
+			<div className="rounded-2xl border bg-card p-5 shadow-sm">
+				<div className="grid gap-4 md:grid-cols-[1.2fr_1fr_1fr]">
+					<div className="relative">
+						<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 text-muted-foreground" />
+						<Input className="pl-12" placeholder="Buscar paróquia..." />
+					</div>
+					<Input placeholder="Todas as cidades" readOnly />
+					<Input placeholder="Todos os bairros" readOnly />
+				</div>
 			</div>
 
 			<DataTable
