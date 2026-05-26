@@ -13,6 +13,15 @@ namespace Caritas.WebApi.Controllers
             _paroquiaService = new ParoquiaService(new ParoquiaRepository(context));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var result = await _paroquiaService.GetPagedAsync(page, pageSize);
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
