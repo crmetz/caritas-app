@@ -1,4 +1,5 @@
 using Caritas.Models.DTOs.Usuario;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
 using Caritas.Service.services;
@@ -10,9 +11,10 @@ namespace Caritas.WebApi.Controllers;
 public class UsuariosController : BaseApiController
 {
     private readonly UsuariosService _usuarioService;
-    public UsuariosController(CaritasDbContext context)
+
+    public UsuariosController(CaritasDbContext context, IEmailService emailService)
     {
-        _usuarioService = new UsuariosService(new UsuarioRepository(context));
+        _usuarioService = new UsuariosService(new UsuarioRepository(context), emailService);
     }
 
     [HttpGet]

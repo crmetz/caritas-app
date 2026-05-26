@@ -2,7 +2,7 @@ using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
-using Caritas.Repository.Repositories;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Mappers;
 using System.Security.Cryptography;
 
@@ -12,10 +12,12 @@ public class UsuariosService
 {
 
     private readonly IUsuarioRepository _usuarioRepository;
+    private readonly IEmailService _emailService;
 
-    public UsuariosService(IUsuarioRepository usuarioRepository)
+    public UsuariosService(IUsuarioRepository usuarioRepository, IEmailService emailService)
     {
         _usuarioRepository = usuarioRepository;
+        _emailService = emailService;
     }
 
     public async Task<PagedResponseDto<UsuarioDto>> GetPagedAsync(int page, int pageSize)
@@ -37,7 +39,7 @@ public class UsuariosService
             return usuario.ToDto();
     }
 
-    public async Task<Usuario> CreateAsync(CreateUsuarioDto dto)
+    public async Task<UsuarioDto> CreateAsync(CreateUsuarioDto dto)
     {
         var existing = await _usuarioRepository.GetByEmailAsync(dto.Email);
         if (existing is not null)
@@ -58,7 +60,22 @@ public class UsuariosService
             Ativo = true,
         };
 
-        return await _usuarioRepository.AddAsync(usuario);
+        var created = await _usuarioRepository.AddAsync(usuario);
+
+        //funciona, mas deixei comentado enquanto não temos login
+        //try
+        //{
+        //    await _emailService.SendAsync(
+        //        to: dto.Email,
+        //        subject: AccountCreatedEmail.Subject,
+        //        body: AccountCreatedEmail.Build(dto.Nome));
+        //}
+        //catch (Exception ex)
+        //{
+        //    throw new Exception("Usuário criado, mas falha ao enviar email de boas-vindas.", ex);
+        //}
+
+        return created.ToDto();
     }
 
     private static string GenerateTemporaryPassword(int length = 12)
@@ -73,7 +90,7 @@ public class UsuariosService
         return new string(chars);
     }
 
-    public async Task<Usuario> UpdateAsync(int id, UpdateUsuarioDto dto)
+    public async Task<UsuarioDto> UpdateAsync(int id, UpdateUsuarioDto dto)
     {
         var usuario = await _usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
@@ -85,7 +102,7 @@ public class UsuariosService
         usuario.PerfilId       = dto.PerfilId ?? usuario.PerfilId;
 
         await _usuarioRepository.UpdateAsync(usuario);
-        return usuario;
+        return usuario.ToDto();
     }
 
     public async Task DeactivateAsync(int id)
