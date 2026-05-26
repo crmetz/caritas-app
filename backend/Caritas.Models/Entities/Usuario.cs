@@ -33,7 +33,5 @@ public class Usuario : AuditableEntity
 
     [ForeignKey(nameof(PerfilId))]
     public Perfil? Perfil { get; set; }
-
-    // Navegação many-to-many
     public ICollection<UsuarioParoquia> UsuarioParoquias { get; set; } = new List<UsuarioParoquia>();
 }

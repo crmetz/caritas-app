@@ -13,7 +13,7 @@ public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> wh
     protected readonly CaritasDbContext Context = context;
     protected readonly DbSet<T> DbSet = context.Set<T>();
 
-    public async Task<T?> GetByIdAsync(int id)
+    public virtual async Task<T?> GetByIdAsync(int id)
         => await DbSet.FirstOrDefaultAsync(e => e.Id == id);
 
     public async Task<PagedResponseDto<T>> GetPagedAsync(int page, int pageSize)
@@ -32,7 +32,7 @@ public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> wh
         await Context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public virtual async Task DeleteAsync(int id)
     {
         var entity = await GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Registro com id {id} não encontrado.");

@@ -1,6 +1,7 @@
 using Caritas.Models.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Caritas.Models.Entities;
 
@@ -14,5 +15,6 @@ public class Endereco : Entity
     public string? Cidade { get; set; }
 
     // Navegação inversa
+    [JsonIgnore]
     public Paroquia? Paroquia { get; set; }
 }

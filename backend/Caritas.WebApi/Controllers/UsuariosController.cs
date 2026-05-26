@@ -1,39 +1,43 @@
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
+using Caritas.Service.services;
 using Caritas.Service.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Controllers;
 
-public class UsuariosController(CaritasDbContext context) : BaseApiController
+public class UsuariosController : BaseApiController
 {
-    private readonly CaritasDbContext _context = context;
-    private readonly UsuarioService _service = new(new UsuarioRepository(context));
+    private readonly UsuariosService _usuarioService;
+    public UsuariosController(CaritasDbContext context)
+    {
+        _usuarioService = new UsuariosService(new UsuarioRepository(context));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var result = await _usuarioService.GetPagedAsync(page, pageSize);
+        return Ok(result);
+    }
+
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] UsuarioCreateDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateUsuarioDto usuarioCreateDTO)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
-            var usuario = await _service.CreateAsync(dto);
+            var result = await _usuarioService.CreateAsync(usuarioCreateDTO);
 
-            return CreatedAtAction(nameof(Create), new { id = usuario.Id }, new
-            {
-                usuario.Id,
-                usuario.Nome,
-                usuario.Sobrenome,
-                usuario.Email,
-                usuario.Telefone,
-                usuario.DataNasc,
-                usuario.PerfilId,
-                usuario.CriadoEm
-            });
+            return CreatedAtAction(nameof(Create), new { id = result.Id }, result);
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
             return Conflict(new { mensagem = ex.Message });
         }
@@ -42,48 +46,24 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var usuario = await new UsuarioRepository(_context).GetByIdAsync(id);
-
-        if (usuario is null)
-            return NotFound(new { mensagem = $"Usuário com id {id} não encontrado." });
-
-        return Ok(new
-        {
-            usuario.Id,
-            usuario.Nome,
-            usuario.Sobrenome,
-            usuario.Email,
-            usuario.Telefone,
-            usuario.DataNasc,
-            usuario.PerfilId,
-            usuario.CriadoEm
-        });
+        var result = await _usuarioService.GetByIdAsync(id);
+        return Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UsuarioUpdateDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioDto updateUsuarioDto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
-            var usuario = await _service.UpdateAsync(id, dto);
-            return Ok(new
-            {
-                usuario.Id,
-                usuario.Nome,
-                usuario.Sobrenome,
-                usuario.Email,
-                usuario.Telefone,
-                usuario.DataNasc,
-                usuario.PerfilId,
-                usuario.AtualizadoEm
-            });
+            var result = await _usuarioService.UpdateAsync(id, updateUsuarioDto);
+            return Ok(result);
         }
-        catch (KeyNotFoundException ex)
+        catch (Exception ex)
         {
-            return NotFound(new { mensagem = ex.Message });
+            return Conflict(new { mensagem = ex.Message });
         }
     }
 
@@ -92,7 +72,7 @@ public class UsuariosController(CaritasDbContext context) : BaseApiController
     {
         try
         {
-            await _service.DeactivateAsync(id);
+            await _usuarioService.DeactivateAsync(id);
             return NoContent();
         }
         catch (KeyNotFoundException ex)
