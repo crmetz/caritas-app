@@ -1,4 +1,6 @@
-﻿using Caritas.Models.DTOs.Paroquia;
+﻿using Caritas.Models.DTOs.Endereço;
+using Caritas.Models.DTOs.Pagination;
+using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
 using Caritas.Service.Mappers;
@@ -11,6 +13,17 @@ namespace Caritas.Service.services
         public ParoquiaService(IParoquiaRepository paroquiaRepository)
         {
             _paroquiaRepository = paroquiaRepository;
+        }
+
+        public async Task<PagedResponseDto<ParoquiaDto>> GetPagedAsync(int page, int pageSize)
+        {
+            var paged = await _paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize);
+
+            return new PagedResponseDto<ParoquiaDto>
+            {
+                Items = paged.Items.Select(p => p.ToDto()),
+                TotalCount = paged.TotalCount
+            };
         }
 
         public async Task<ParoquiaDto> GetByIdAsync(int id)

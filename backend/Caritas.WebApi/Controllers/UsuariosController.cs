@@ -1,6 +1,7 @@
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
+using Caritas.Service.services;
 using Caritas.Service.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,15 @@ public class UsuariosController : BaseApiController
     public UsuariosController(CaritasDbContext context)
     {
         _usuarioService = new UsuariosService(new UsuarioRepository(context));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var result = await _usuarioService.GetPagedAsync(page, pageSize);
+        return Ok(result);
     }
 
 
