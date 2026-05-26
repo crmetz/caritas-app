@@ -1,4 +1,7 @@
+using Caritas.Models.Interfaces.Services;
+using Caritas.Models.Settings;
 using Caritas.Repository.Context;
+using Caritas.Service.Services.Email;
 using Caritas.WebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<CaritasDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings")
+);
+
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddControllers();
 
