@@ -13,8 +13,4 @@ public class Endereco : Entity
     public string? Cep { get; set; }
     public string? Bairro { get; set; }
     public string? Cidade { get; set; }
-
-    // Navegação inversa
-    [JsonIgnore]
-    public Paroquia? Paroquia { get; set; }
 }
