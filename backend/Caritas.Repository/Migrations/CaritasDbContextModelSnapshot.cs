@@ -145,8 +145,7 @@ namespace Caritas.Repository.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EnderecoId")
-                        .IsUnique();
+                    b.HasIndex("EnderecoId");
 
                     b.ToTable("Paroquia");
                 });
@@ -388,8 +387,8 @@ namespace Caritas.Repository.Migrations
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
                 {
                     b.HasOne("Caritas.Models.Entities.Endereco", "Endereco")
-                        .WithOne("Paroquia")
-                        .HasForeignKey("Caritas.Models.Entities.Paroquia", "EnderecoId");
+                        .WithMany()
+                        .HasForeignKey("EnderecoId");
 
                     b.Navigation("Endereco");
                 });
@@ -466,11 +465,6 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("Paroquia");
 
                     b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
-                {
-                    b.Navigation("Paroquia");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
