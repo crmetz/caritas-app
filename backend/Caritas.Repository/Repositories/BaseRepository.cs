@@ -19,6 +19,9 @@ public class BaseRepository<T>(CaritasDbContext context) : IBaseRepository<T> wh
     public async Task<PagedResponseDto<T>> GetPagedAsync(int page, int pageSize)
         => await DbSet.OrderBy(e => e.CriadoEm).ToPagedAsync(page, pageSize);
 
+    public async Task<List<T>> GetAllAsync()
+        => await DbSet.ToListAsync();
+
     public async Task<T> AddAsync(T entity)
     {
         await DbSet.AddAsync(entity);

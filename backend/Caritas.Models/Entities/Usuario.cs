@@ -15,7 +15,7 @@ public class Usuario : AuditableEntity
 
     public string? Cpf { get; set; }
     public string? Telefone { get; set; }
-    public DateTime? DataNasc { get; set; }
+    public DateOnly? DataNasc { get; set; }
 
     [Required]
     public string Senha { get; set; } = string.Empty; // armazenar hash

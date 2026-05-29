@@ -22,6 +22,13 @@ namespace Caritas.WebApi.Controllers
             return Ok(result);
         }
 
+        [HttpGet("select")]
+        public async Task<IActionResult> GetAllSelectObject()
+        {
+            var result = await _paroquiaService.GetAllSelectObject();
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {

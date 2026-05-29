@@ -1,4 +1,5 @@
-﻿using Caritas.Models.DTOs.Endereço;
+﻿using Caritas.Models.DTOs.Common;
+using Caritas.Models.DTOs.Endereço;
 using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
 
@@ -45,6 +46,15 @@ namespace Caritas.Service.Mappers
                         Bairro = dto.Endereco.Bairro,
                         Cidade = dto.Endereco.Cidade
                     }
+            };
+        }
+
+        public static SelectObjectDto ToSelectObjectDto(this Paroquia entity)
+        {
+            return new SelectObjectDto
+            {
+                Value = entity.Id,
+                Label = entity.Nome
             };
         }
     }

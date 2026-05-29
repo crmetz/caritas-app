@@ -22,15 +22,16 @@ import type {
 	UsuarioModalRef,
 	UsuarioUpdateDto,
 } from "./interface";
+import { MultiSelect } from "@/components/ui/MultiSelect";
 
 const INITIAL_FORM: CreateUsuarioDto = {
 	nome: "",
 	sobrenome: "",
 	email: "",
-	senha: "",
 	cpf: "",
 	telefone: "",
 	dataNasc: "",
+	paroquiasPermitidas: [],
 	perfilId: null,
 };
 
@@ -43,7 +44,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 		const setField = (
 			field: keyof CreateUsuarioDto,
-			value: string | number | null,
+			value: string | number | null | number[],
 		) => setForm((prev) => ({ ...prev, [field]: value }));
 
 		const open = (usuario?: Usuario) => {
@@ -53,10 +54,10 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					nome: usuario.nome ?? "",
 					sobrenome: usuario.sobrenome ?? "",
 					email: usuario.email,
-					senha: "",
 					cpf: usuario.cpf ?? "",
 					telefone: usuario.telefone ?? "",
 					dataNasc: usuario.dataNasc?.slice(0, 10) ?? "",
+					paroquiasPermitidas: usuario.paroquiasPermitidas ?? [],
 					perfilId: usuario.perfilId,
 				});
 			} else {
@@ -77,8 +78,10 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					const dto: UsuarioUpdateDto = {
 						nome: form.nome,
 						sobrenome: form.sobrenome,
+						cpf: form.cpf,
 						telefone: form.telefone,
 						dataNasc: form.dataNasc || undefined,
+						paroquiasPermitidas: form.paroquiasPermitidas,
 						perfilId: form.perfilId,
 					};
 					await APIService.putRequest({
@@ -146,7 +149,6 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 									<Label htmlFor="usuario-cpf">CPF</Label>
 									<Input
 										id="usuario-cpf"
-										disabled={Boolean(editing)}
 										placeholder="000.000.000-00"
 										value={form.cpf ?? ""}
 										onChange={(event) => setField("cpf", event.target.value)}
@@ -179,6 +181,23 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 						<section className="space-y-4">
 							<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+								Paróquias
+							</h3>
+							<div className="space-y-1">
+								<Label>Paróquias vinculadas</Label>
+								<MultiSelect<number>
+									value={form.paroquiasPermitidas}
+									onChange={(ids) => setField("paroquiasPermitidas", ids)}
+									fetchOptions={() =>
+										APIService.getRequest({ url: "/paroquias/select" })
+									}
+									placeholder="Selecione as paróquias..."
+								/>
+							</div>
+						</section>
+
+						<section className="space-y-4">
+							<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
 								Acesso
 							</h3>
 							<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -191,17 +210,6 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										disabled={Boolean(editing)}
 										value={form.email}
 										onChange={(event) => setField("email", event.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label htmlFor="usuario-senha">Senha *</Label>
-									<Input
-										id="usuario-senha"
-										type="password"
-										required={!editing}
-										disabled={Boolean(editing)}
-										value={form.senha}
-										onChange={(event) => setField("senha", event.target.value)}
 									/>
 								</div>
 								<div className="space-y-1">

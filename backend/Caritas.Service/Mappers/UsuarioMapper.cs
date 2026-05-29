@@ -13,6 +13,7 @@ namespace Caritas.Service.Mappers
                 Id = entity.Id,
                 Nome = entity.Nome,
                 Sobrenome = entity.Sobrenome,
+                Email = entity.Email,
                 Cpf = entity.Cpf,
                 Telefone = entity.Telefone,
                 DataNasc = entity.DataNasc,

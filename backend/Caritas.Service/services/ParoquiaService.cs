@@ -1,4 +1,5 @@
-﻿using Caritas.Models.DTOs.Endereço;
+﻿using Caritas.Models.DTOs.Common;
+using Caritas.Models.DTOs.Endereço;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
@@ -24,6 +25,13 @@ namespace Caritas.Service.services
                 Items = paged.Items.Select(p => p.ToDto()),
                 TotalCount = paged.TotalCount
             };
+        }
+
+        public async Task<List<SelectObjectDto>> GetAllSelectObject()
+        {
+            var allParoquias = await _paroquiaRepository.GetAllAsync();
+
+            return allParoquias.Select(p => p.ToSelectObjectDto()).ToList();
         }
 
         public async Task<ParoquiaDto> GetByIdAsync(int id)

@@ -16,18 +16,19 @@ export interface Usuario {
 	perfilId: number | null;
 	perfil?: Perfil | null;
 	ativo: boolean;
-	dataCriacao: string;
-	dataInativacao: string | null;
+	paroquiasPermitidas: number[];
+	criadoEm: string;
+	autalizadoEm: string | null;
 }
 
 export interface CreateUsuarioDto {
 	nome: string;
 	sobrenome: string;
 	email: string;
-	senha: string;
 	cpf?: string;
 	telefone?: string;
 	dataNasc?: string;
+	paroquiasPermitidas: number[];
 	perfilId?: number | null;
 }
 
@@ -36,6 +37,8 @@ export interface UsuarioUpdateDto {
 	sobrenome?: string;
 	telefone?: string;
 	dataNasc?: string;
+	cpf?: string;
+	paroquiasPermitidas: number[];
 	perfilId?: number | null;
 }
 

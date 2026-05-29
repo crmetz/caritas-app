@@ -315,8 +315,8 @@ namespace Caritas.Repository.Migrations
                     b.Property<DateTime?>("DataInativacao")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("DataNasc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly?>("DataNasc")
+                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .IsRequired()

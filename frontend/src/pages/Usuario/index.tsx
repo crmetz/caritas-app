@@ -58,7 +58,7 @@ const columns: Column<Usuario>[] = [
 		key: "dataCriacao",
 		header: "Criado em",
 		render: (usuario) =>
-			new Date(usuario.dataCriacao).toLocaleDateString("pt-BR"),
+			new Date(usuario.criadoEm).toLocaleDateString("pt-BR"),
 	},
 ];
 

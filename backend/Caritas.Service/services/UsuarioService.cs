@@ -52,13 +52,21 @@ public class UsuariosService
             Nome = dto.Nome,
             Sobrenome = dto.Sobrenome,
             Email = dto.Email,
+            Cpf = dto.Cpf,
             // TODO: armazenar senha hash. por enquanto é uma senha temporária em plaintext
             Senha = tempPassword,
             Telefone = dto.Telefone,
-            DataNasc = dto.DataNasc,
+            DataNasc = dto.DataNasc.GetValueOrDefault(),
             PerfilId = dto.PerfilId,
             Ativo = true,
         };
+
+  
+        foreach (var paroquiaId in dto.ParoquiasPermitidas)
+        {
+            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+        }
+      
 
         var created = await _usuarioRepository.AddAsync(usuario);
 
@@ -100,6 +108,7 @@ public class UsuariosService
         usuario.Telefone       = dto.Telefone ?? usuario.Telefone;
         usuario.DataNasc       = dto.DataNasc ?? usuario.DataNasc;
         usuario.PerfilId       = dto.PerfilId ?? usuario.PerfilId;
+        usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
         await _usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();

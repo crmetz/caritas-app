@@ -9,7 +9,7 @@ namespace Caritas.Models.DTOs.Usuario
         public string Email { get; set; }
         public string? Cpf { get; set; }
         public string? Telefone { get; set; }
-        public DateTime? DataNasc { get; set; }
+        public DateOnly? DataNasc { get; set; }
         public int? PerfilId { get; set; }
         public DateTime CriadoEm { get; set; }
         public DateTime? AtualizadoEm { get; set; }
