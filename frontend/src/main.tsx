@@ -8,6 +8,7 @@ import { AppLayout } from "./components/AppLayout";
 import FamiliaPage from "./pages/Familia";
 import ParoquiaPage from "./pages/Paroquia";
 import UsuarioPage from "./pages/Usuario";
+import LoginPage from "./pages/Login";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
@@ -22,6 +23,7 @@ createRoot(rootElement).render(
 					<Route path="/usuarios" element={<UsuarioPage />} />
 				</Routes>
 			</AppLayout>
+			{/* <LoginPage /> */}
 		</BrowserRouter>
 		<ToastContainer position="top-right" />
 	</StrictMode>,
