@@ -5,10 +5,10 @@ namespace Caritas.Models.DTOs.Authentication
     public class LoginDto
     {
         [Required]
+        [EmailAddress]
         public string Email { get; set; }
 
         [Required]
-        [EmailAddress]
         public string Password { get; set; }
     }
 }

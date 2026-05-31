@@ -1,21 +1,23 @@
 using System.Reflection;
 using Caritas.Models.Common;
 using Caritas.Models.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace Caritas.Repository.Context;
 
-public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : DbContext(options)
+public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : IdentityDbContext<Usuario, IdentityRole<int>, int>(options)
 {
     public DbSet<Familia> Familias => Set<Familia>();
     public DbSet<Pessoa> Pessoas => Set<Pessoa>();
-    public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Paroquia> Paroquias { get; set; }
     public DbSet<Endereco> Enderecos { get; set; }
     public DbSet<UsuarioParoquia> UsuarioParoquias { get; set; }
     public DbSet<Perfil> Perfis { get; set; }
     public DbSet<Permissao> Permissoes { get; set; }
     public DbSet<PerfilPermissao> PerfilPermissoes { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

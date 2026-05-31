@@ -14,12 +14,13 @@ public class UsuariosService
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IEmailService _emailService;
 
-    public UsuariosService(IUsuarioRepository usuarioRepository, IEmailService emailService)
+    public UsuariosService(IUsuarioRepository usuarioRepository)
     {
         _usuarioRepository = usuarioRepository;
-        _emailService = emailService;
     }
 
+
+    /* Removido temporariamente para implemetação do Identity
     public async Task<PagedResponseDto<UsuarioDto>> GetPagedAsync(int page, int pageSize)
     {
         var paged = await _usuarioRepository.GetPagedAsync(page, pageSize);
@@ -30,60 +31,23 @@ public class UsuariosService
             TotalCount = paged.TotalCount
         };
     }
+    */
 
     public async Task<UsuarioDto> GetByIdAsync(int id)
     {
-            var usuario = await _usuarioRepository.GetByIdAsync(id);
+        var usuario = await _usuarioRepository.GetByIdAsync(id);
 
-            if(usuario == null) throw new KeyNotFoundException($"Usuario com id {id} não encontrada.");
-            return usuario.ToDto();
+        if (usuario == null) throw new KeyNotFoundException($"Usuario com id {id} não encontrada.");
+        return usuario.ToDto();
     }
 
-    public async Task<UsuarioDto> CreateAsync(CreateUsuarioDto dto)
+    public async Task<UsuarioDto> CreateAsync(Usuario usuario, IList<int> paroquiasPermitidas)
     {
-        var existing = await _usuarioRepository.GetByEmailAsync(dto.Email);
-        if (existing is not null)
-            throw new InvalidOperationException("Já existe um usuário com este e-mail.");
-
-        var tempPassword = GenerateTemporaryPassword();
-
-        var usuario = new Usuario
-        {
-            Nome = dto.Nome,
-            Sobrenome = dto.Sobrenome,
-            Email = dto.Email,
-            Cpf = dto.Cpf,
-            // TODO: armazenar senha hash. por enquanto é uma senha temporária em plaintext
-            Senha = tempPassword,
-            Telefone = dto.Telefone,
-            DataNasc = dto.DataNasc.GetValueOrDefault(),
-            PerfilId = dto.PerfilId,
-            Ativo = true,
-        };
-
-  
-        foreach (var paroquiaId in dto.ParoquiasPermitidas)
-        {
+        foreach (var paroquiaId in paroquiasPermitidas)
             usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
-        }
-      
 
-        var created = await _usuarioRepository.AddAsync(usuario);
-
-        //funciona, mas deixei comentado enquanto não temos login
-        //try
-        //{
-        //    await _emailService.SendAsync(
-        //        to: dto.Email,
-        //        subject: AccountCreatedEmail.Subject,
-        //        body: AccountCreatedEmail.Build(dto.Nome));
-        //}
-        //catch (Exception ex)
-        //{
-        //    throw new Exception("Usuário criado, mas falha ao enviar email de boas-vindas.", ex);
-        //}
-
-        return created.ToDto();
+        await _usuarioRepository.UpdateAsync(usuario);
+        return usuario.ToDto();
     }
 
     private static string GenerateTemporaryPassword(int length = 12)
@@ -103,11 +67,11 @@ public class UsuariosService
         var usuario = await _usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
-        usuario.Nome           = dto.Nome ?? usuario.Nome;
-        usuario.Sobrenome      = dto.Sobrenome ?? usuario.Sobrenome;
-        usuario.Telefone       = dto.Telefone ?? usuario.Telefone;
-        usuario.DataNasc       = dto.DataNasc ?? usuario.DataNasc;
-        usuario.PerfilId       = dto.PerfilId ?? usuario.PerfilId;
+        usuario.Nome = dto.Nome ?? usuario.Nome;
+        usuario.Sobrenome = dto.Sobrenome ?? usuario.Sobrenome;
+        usuario.Telefone = dto.Telefone ?? usuario.Telefone;
+        usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
+        usuario.PerfilId = dto.PerfilId ?? usuario.PerfilId;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
         await _usuarioRepository.UpdateAsync(usuario);
@@ -119,8 +83,8 @@ public class UsuariosService
         var usuario = await _usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
-        usuario.Ativo            = false;
-        usuario.DataInativacao   = DateTime.UtcNow;
+        usuario.Ativo = false;
+        usuario.DataInativacao = DateTime.UtcNow;
 
         await _usuarioRepository.UpdateAsync(usuario);
     }
