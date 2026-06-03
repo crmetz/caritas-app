@@ -124,5 +124,5 @@ A tool roda na máquina local — gera os arquivos em `Caritas.Repository/Migrat
 ## A Fazer
 
 - [ ] Adicionar [React Hook Form](https://react-hook-form.com/) no frontend para gerenciamento de formulários
-- [ ] Atualizar backend para .NET 10
+- [x] Atualizar backend para .NET 10
 - [ ] Criar layout do sistema com a sidebar e paleta de cores de acordo com o prototipo
