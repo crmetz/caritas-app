@@ -120,9 +120,3 @@ dotnet ef migrations remove --project Caritas.Repository --startup-project Carit
 ```
 
 A tool roda na máquina local — gera os arquivos em `Caritas.Repository/Migrations/`. Não precisa do container pra isso. Ao rodar o backend as migrations são aplicadas no Postgres no startup automaticamente.
-
-## A Fazer
-
-- [ ] Adicionar [React Hook Form](https://react-hook-form.com/) no frontend para gerenciamento de formulários
-- [ ] Atualizar backend para .NET 10
-- [ ] Criar layout do sistema com a sidebar e paleta de cores de acordo com o prototipo
