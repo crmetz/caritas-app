@@ -11,8 +11,7 @@ namespace Caritas.Models.DTOs.Authentication
         public string Sobrenome { get; set; }
         [Required]
         public string Email { get; set; }
-        [Required]
-        public string Password { get; set; }
+        public string? Password { get; set; }
         public string? Cpf { get; set; }
         public string? Telefone { get; set; }
         public List<int>? ParoquiasPermitidas { get; set; }

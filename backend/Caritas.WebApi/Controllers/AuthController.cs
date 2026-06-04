@@ -17,7 +17,7 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CadastroDto dto)
     {
-        var (success, errors, usuario) = await _authService.RegisterAsync(dto);
+        var (success, errors, usuario, resetToken) = await _authService.RegisterAsync(dto);
 
         if (!success)
             return BadRequest(new { erros = errors });
@@ -28,7 +28,8 @@ public class AuthController(
             usuario.Nome,
             usuario.Sobrenome,
             usuario.Email,
-            ParoquiasPermitidas = usuario.UsuarioParoquias.Select(up => up.ParoquiaId)
+            ParoquiasPermitidas = usuario.UsuarioParoquias.Select(up => up.ParoquiaId),
+            ResetToken = resetToken
         });
     }
 
@@ -41,5 +42,21 @@ public class AuthController(
             return Unauthorized(new { mensagem = error });
 
         return Ok(new { token });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var usuario = await userManager.FindByEmailAsync(dto.Email);
+
+
+        if (usuario is null)
+            return NoContent();
+
+        var resultado = await userManager.ResetPasswordAsync(usuario, dto.Token, dto.Password);
+        if (!resultado.Succeeded)
+            return BadRequest(new { erros = resultado.Errors.Select(e => e.Description) });
+
+        return NoContent();
     }
 }

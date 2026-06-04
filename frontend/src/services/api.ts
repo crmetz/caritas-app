@@ -9,17 +9,28 @@ export interface PagedResponse<T> {
   totalCount: number;
 }
 
-// TODO: remover em produção — token fixo pra dev
-const DEV_TOKEN = import.meta.env.VITE_DEV_TOKEN;
+// DEV ONLY — login automático com usuário seed
+if (import.meta.env.DEV) {
+  let tokenPromise: Promise<string> | null = null;
 
-api.interceptors.request.use((config) => {
-  const token = import.meta.env.DEV ? DEV_TOKEN : localStorage.getItem("token");
-  
-  if (token)
+  const getDevToken = () => {
+    if (!tokenPromise) {
+      tokenPromise = axios
+        .post(`${import.meta.env.VITE_API_URL ?? "http://localhost:8080"}/api/auth/login`, {
+          email: "dev@caritas.com",
+          password: "Dev@12345",
+        })
+        .then((r) => r.data.token);
+    }
+    return tokenPromise;
+  };
+
+  api.interceptors.request.use(async (config) => {
+    const token = await getDevToken();
     config.headers.Authorization = `Bearer ${token}`;
-
-  return config;
-});
+    return config;
+  });
+}
 
 const APIService = {
   getRequest: <T>({ url, params }: { url: string; params?: object }) =>

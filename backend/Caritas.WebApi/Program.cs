@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CaritasDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
+builder.Services.AddIdentityCore<Usuario>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
@@ -22,8 +22,9 @@ builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = false;
 })
+.AddRoles<IdentityRole<int>>()
 .AddEntityFrameworkStores<CaritasDbContext>()
-.AddDefaultTokenProviders(); 
+.AddDefaultTokenProviders();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key não configurado.");
@@ -37,13 +38,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer           = true,
-        ValidateAudience         = true,
-        ValidateLifetime         = true,
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer              = builder.Configuration["Jwt:Issuer"],
-        ValidAudience            = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 
@@ -51,12 +52,12 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name         = "Authorization",
-        Type         = SecuritySchemeType.ApiKey,
-        Scheme       = "Bearer",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
         BearerFormat = "JWT",
-        In           = ParameterLocation.Header,
-        Description  = "Digite: Bearer {seu token}"
+        In = ParameterLocation.Header,
+        Description = "Digite: Bearer {seu token}"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -79,7 +80,6 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
@@ -100,12 +100,12 @@ using (var scope = app.Services.CreateScope())
         {
             var devUser = new Usuario
             {
-                UserName  = devEmail,
-                Email     = devEmail,
-                Nome      = "Dev",
+                UserName = devEmail,
+                Email = devEmail,
+                Nome = "Dev",
                 Sobrenome = "User",
-                Ativo     = true,
-                CriadoEm  = DateTime.UtcNow
+                Ativo = true,
+                CriadoEm = DateTime.UtcNow
             };
             await userManager.CreateAsync(devUser, "Dev@12345");
         }
