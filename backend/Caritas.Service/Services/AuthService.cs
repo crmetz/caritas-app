@@ -38,7 +38,7 @@ public class AuthService(
             }
         }
 
-        var tempPassword = "Senhatemp"; //GenerateTemporaryPassword()
+        var tempPassword = "Senhatemp123"; //GenerateTemporaryPassword()
         var passwordToUse = string.IsNullOrWhiteSpace(dto.Password)
         ? tempPassword
         : dto.Password;

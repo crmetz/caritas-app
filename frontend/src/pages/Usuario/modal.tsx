@@ -91,7 +91,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					toast.success("Usuário atualizado.");
 				} else {
 					await APIService.postRequest<Usuario>({
-						url: "/register",
+						url: "/auth/register",
 						body: {
 							...form,
 							dataNasc: form.dataNasc || undefined,
