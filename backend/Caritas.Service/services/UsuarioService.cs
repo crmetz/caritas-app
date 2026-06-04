@@ -19,6 +19,17 @@ public class UsuariosService
         _usuarioRepository = usuarioRepository;
     }
 
+     public async Task<PagedResponseDto<UsuarioDto>> GetPagedAsync(int page, int pageSize)
+        {
+            var paged = await _usuarioRepository.GetPagedAsync(page, pageSize);
+
+            return new PagedResponseDto<UsuarioDto>
+            {
+                Items = paged.Items.Select(p => p.ToDto()),
+                TotalCount = paged.TotalCount
+            };
+        }
+
     public async Task<UsuarioDto> GetByIdAsync(int id)
     {
         var usuario = await _usuarioRepository.GetByIdAsync(id);
@@ -59,6 +70,9 @@ public class UsuariosService
         usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
         usuario.PerfilId = dto.PerfilId ?? usuario.PerfilId;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
+
+        foreach (var paroquiaId in dto.ParoquiasPermitidas)
+            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
 
         await _usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();

@@ -7,11 +7,9 @@ namespace Caritas.Models.DTOs.Usuario
 
     public class UpdateUsuarioDto
     {
-        [Required]
         [StringLength(50)]
         public string? Nome { get; set; }
 
-        [Required]
         [StringLength(100)]
         public string? Sobrenome { get; set; }
         public string? Cpf { get; set; }

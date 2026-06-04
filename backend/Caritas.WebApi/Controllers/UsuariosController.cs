@@ -18,6 +18,15 @@ public class UsuariosController : BaseApiController
         _usuarioService = new UsuariosService(new UsuarioRepository(context));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetPaged(
+           [FromQuery] int page = 1,
+           [FromQuery] int pageSize = 10)
+    {
+        var result = await _usuarioService.GetPagedAsync(page, pageSize);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

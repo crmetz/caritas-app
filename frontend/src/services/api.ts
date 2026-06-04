@@ -9,6 +9,18 @@ export interface PagedResponse<T> {
   totalCount: number;
 }
 
+// TODO: remover em produção — token fixo pra dev
+const DEV_TOKEN = import.meta.env.VITE_DEV_TOKEN;
+
+api.interceptors.request.use((config) => {
+  const token = import.meta.env.DEV ? DEV_TOKEN : localStorage.getItem("token");
+  
+  if (token)
+    config.headers.Authorization = `Bearer ${token}`;
+
+  return config;
+});
+
 const APIService = {
   getRequest: <T>({ url, params }: { url: string; params?: object }) =>
     api.get<T>(url, { params }).then((r) => r.data),

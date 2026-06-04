@@ -89,6 +89,27 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CaritasDbContext>();
     await db.Database.MigrateAsync();
+    // Seed dev user
+    if (app.Environment.IsDevelopment())
+    {
+        using var seedScope = app.Services.CreateScope();
+        var userManager = seedScope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+
+        const string devEmail = "dev@caritas.com";
+        if (await userManager.FindByEmailAsync(devEmail) is null)
+        {
+            var devUser = new Usuario
+            {
+                UserName  = devEmail,
+                Email     = devEmail,
+                Nome      = "Dev",
+                Sobrenome = "User",
+                Ativo     = true,
+                CriadoEm  = DateTime.UtcNow
+            };
+            await userManager.CreateAsync(devUser, "Dev@12345");
+        }
+    }
 }
 
 app.UseMiddleware<ErrorHandlingMiddleware>();

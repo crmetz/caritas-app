@@ -1,6 +1,8 @@
+using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
 using Caritas.Repository.Context;
+using Caritas.Repository.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Caritas.Repository.Repositories;
@@ -8,6 +10,15 @@ namespace Caritas.Repository.Repositories;
 public class UsuarioRepository(CaritasDbContext context) : IUsuarioRepository
 {
     private readonly DbSet<Usuario> _dbSet = context.Set<Usuario>();
+
+    public async Task<PagedResponseDto<Usuario>> GetPagedAsync(int page, int pageSize)
+{
+    return await _dbSet
+        .Where(u => u.Ativo)
+        .Include(u => u.Perfil)
+        .OrderBy(u => u.Nome)
+        .ToPagedAsync(page, pageSize);
+}
 
     public async Task<Usuario?> GetByIdAsync(int id)
         => await _dbSet
