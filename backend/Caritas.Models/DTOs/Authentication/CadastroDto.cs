@@ -15,5 +15,6 @@ namespace Caritas.Models.DTOs.Authentication
         public string Password { get; set; }
         public string? Cpf { get; set; }
         public string? Telefone { get; set; }
+        public List<int>? ParoquiasPermitidas { get; set; }
     }
 }

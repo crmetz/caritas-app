@@ -23,6 +23,7 @@ public class Usuario : IdentityUser<int>
     public Usuario? UsuarioCriador { get; set; }
 
     public ICollection<Usuario> UsuariosCriados { get; set; } = new List<Usuario>();
+    public List<int>? ParoquiasPermitidas {get;set;}
 
     [ForeignKey(nameof(PerfilId))]
     public Perfil? Perfil { get; set; }

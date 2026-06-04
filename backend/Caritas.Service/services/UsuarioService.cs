@@ -19,20 +19,6 @@ public class UsuariosService
         _usuarioRepository = usuarioRepository;
     }
 
-
-    /* Removido temporariamente para implemetação do Identity
-    public async Task<PagedResponseDto<UsuarioDto>> GetPagedAsync(int page, int pageSize)
-    {
-        var paged = await _usuarioRepository.GetPagedAsync(page, pageSize);
-
-        return new PagedResponseDto<UsuarioDto>
-        {
-            Items = paged.Items.Select(p => p.ToDto()),
-            TotalCount = paged.TotalCount
-        };
-    }
-    */
-
     public async Task<UsuarioDto> GetByIdAsync(int id)
     {
         var usuario = await _usuarioRepository.GetByIdAsync(id);
