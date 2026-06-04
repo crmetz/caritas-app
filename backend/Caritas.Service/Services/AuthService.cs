@@ -7,7 +7,7 @@ using Caritas.Repository.Context;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-
+using System.Security.Cryptography;
 namespace Caritas.Service.Services;
 
 public class AuthService(
@@ -38,7 +38,7 @@ public class AuthService(
             }
         }
 
-        var tempPassword = "Senhatemp"; //mudar pra gerador de senha
+        var tempPassword = "Senhatemp"; //GenerateTemporaryPassword()
         var passwordToUse = string.IsNullOrWhiteSpace(dto.Password)
         ? tempPassword
         : dto.Password;
@@ -90,4 +90,27 @@ public class AuthService(
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    private static string GenerateTemporaryPassword()
+{
+    const string letrasUpper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const string letrasLower = "abcdefghijkmnpqrstuvwxyz";
+    const string numeros     = "23456789";
+    const string especiais   = "!@$?_-";
+    const string todos       = letrasUpper + letrasLower + numeros + especiais;
+
+    var bytes = RandomNumberGenerator.GetBytes(12);
+    var senha = new char[12];
+
+    // garante ao menos um de cada tipo exigido
+    senha[0] = letrasUpper[bytes[0] % letrasUpper.Length];
+    senha[1] = numeros[bytes[1] % numeros.Length];
+    senha[2] = especiais[bytes[2] % especiais.Length];
+
+    for (int i = 3; i < 12; i++)
+        senha[i] = todos[bytes[i] % todos.Length];
+
+    // embaralha pra não ter padrão fixo nos primeiros caracteres
+    return new string(senha.OrderBy(_ => RandomNumberGenerator.GetInt32(100)).ToArray());
+}
 }
