@@ -4,6 +4,7 @@ namespace Caritas.Models.DTOs.Familia;
 
 public class FamiliaUpdateDto
 {
+    public int ParoquiaId { get; set; }
     public int ResponsavelId { get; set; }
     public decimal RendaFamiliar { get; set; }
     public SituacaoMoradia SituacaoMoradia { get; set; }

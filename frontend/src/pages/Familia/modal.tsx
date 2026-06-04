@@ -1,9 +1,12 @@
 import {
 	type FormEvent,
 	forwardRef,
+	useEffect,
 	useImperativeHandle,
 	useState,
 } from "react";
+import { toast } from "react-toastify";
+import { Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -28,18 +31,31 @@ import {
 	type FamiliaModalProps,
 	type FamiliaModalRef,
 	type FamiliaUpdateDto,
+	type PessoaCreateDto,
 	SITUACAO_MORADIA_LABELS,
 	type SituacaoMoradia,
+	TIPO_DOCUMENTO_LABELS,
+	type TipoDocumentoAlternativo,
 	VULNERABILIDADE_FLAGS,
 } from "./interface";
 
-const INITIAL_CREATE: FamiliaCreateDto = {
-	responsavel: {
-		nome: "",
-		cpf: "",
-		dataNascimento: "",
-		possuiDeficiencia: false,
-	},
+type ModoIdentificacao = "cpf" | "nomeMae" | "documento";
+
+interface SelectOption {
+	value: number;
+	label: string;
+}
+
+const PESSOA_INICIAL: PessoaCreateDto = {
+	nome: "",
+	dataNascimento: "",
+	possuiDeficiencia: false,
+};
+
+const CREATE_INICIAL: FamiliaCreateDto = {
+	paroquiaId: 0,
+	responsavel: { ...PESSOA_INICIAL },
+	membros: [],
 	rendaFamiliar: 0,
 	situacaoMoradia: "Propria",
 	vulnerabilidade: 0,
@@ -51,21 +67,187 @@ const INITIAL_CREATE: FamiliaCreateDto = {
 	cep: "",
 };
 
+function detectarModoIdentificacao(p: PessoaCreateDto): ModoIdentificacao {
+	if (p.tipoDocumentoAlternativo) return "documento";
+	if (p.nomeMae) return "nomeMae";
+	return "cpf";
+}
+
+interface PessoaFormProps {
+	value: PessoaCreateDto;
+	onChange: (p: PessoaCreateDto) => void;
+	titulo: string;
+	showExtra?: boolean;
+}
+
+function PessoaForm({
+	value,
+	onChange,
+	titulo,
+	showExtra = false,
+}: PessoaFormProps) {
+	const [modo, setModo] = useState<ModoIdentificacao>(() =>
+		detectarModoIdentificacao(value),
+	);
+
+	const set = (field: keyof PessoaCreateDto, val: unknown) =>
+		onChange({ ...value, [field]: val });
+
+	const handleModoChange = (novoModo: ModoIdentificacao) => {
+		setModo(novoModo);
+		onChange({
+			...value,
+			cpf: undefined,
+			nomeMae: undefined,
+			tipoDocumentoAlternativo: undefined,
+			identificacaoAlternativa: undefined,
+		});
+	};
+
+	return (
+		<div className="space-y-3 rounded-md border p-4">
+			<p className="text-sm font-medium">{titulo}</p>
+
+			<div className="grid grid-cols-2 gap-3">
+				<div className="col-span-2 space-y-1">
+					<Label>Nome *</Label>
+					<Input
+						required
+						value={value.nome}
+						onChange={(e) => set("nome", e.target.value)}
+					/>
+				</div>
+
+				<div className="space-y-1">
+					<Label>Data de Nascimento *</Label>
+					<Input
+						type="date"
+						required
+						value={value.dataNascimento}
+						onChange={(e) => set("dataNascimento", e.target.value)}
+					/>
+				</div>
+
+				<div className="space-y-1">
+					<Label>Tipo de Identificação</Label>
+					<Select
+						value={modo}
+						onValueChange={(v) => handleModoChange(v as ModoIdentificacao)}
+					>
+						<SelectTrigger>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="cpf">CPF</SelectItem>
+							<SelectItem value="nomeMae">Nome da Mãe</SelectItem>
+							<SelectItem value="documento">Documento</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+
+				{modo === "cpf" && (
+					<div className="col-span-2 space-y-1">
+						<Label>CPF</Label>
+						<Input
+							placeholder="000.000.000-00"
+							value={value.cpf ?? ""}
+							onChange={(e) => set("cpf", e.target.value)}
+						/>
+					</div>
+				)}
+
+				{modo === "nomeMae" && (
+					<div className="col-span-2 space-y-1">
+						<Label>Nome da Mãe *</Label>
+						<Input
+							required
+							value={value.nomeMae ?? ""}
+							onChange={(e) => set("nomeMae", e.target.value)}
+						/>
+					</div>
+				)}
+
+				{modo === "documento" && (
+					<>
+						<div className="space-y-1">
+							<Label>Tipo de Documento *</Label>
+							<Select
+								value={value.tipoDocumentoAlternativo ?? ""}
+								onValueChange={(v) =>
+									set("tipoDocumentoAlternativo", v as TipoDocumentoAlternativo)
+								}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Selecione" />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.entries(TIPO_DOCUMENTO_LABELS).map(([k, v]) => (
+										<SelectItem key={k} value={k}>
+											{v}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="space-y-1">
+							<Label>Número do Documento *</Label>
+							<Input
+								required
+								value={value.identificacaoAlternativa ?? ""}
+								onChange={(e) =>
+									set("identificacaoAlternativa", e.target.value)
+								}
+							/>
+						</div>
+					</>
+				)}
+
+				{showExtra && (
+					<>
+						<div className="space-y-1">
+							<Label>Telefone</Label>
+							<Input
+								value={value.telefone ?? ""}
+								onChange={(e) => set("telefone", e.target.value)}
+							/>
+						</div>
+						<div className="space-y-1">
+							<Label>Profissão</Label>
+							<Input
+								value={value.profissao ?? ""}
+								onChange={(e) => set("profissao", e.target.value)}
+							/>
+						</div>
+					</>
+				)}
+			</div>
+		</div>
+	);
+}
+
 export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 	({ onSuccess }, ref) => {
 		const [isOpen, setIsOpen] = useState(false);
 		const [editing, setEditing] = useState<Familia | null>(null);
 		const [loading, setLoading] = useState(false);
-		const [form, setForm] = useState<FamiliaCreateDto>(INITIAL_CREATE);
+		const [form, setForm] = useState<FamiliaCreateDto>(CREATE_INICIAL);
+		const [paroquias, setParoquias] = useState<SelectOption[]>([]);
+		const [membroEmEdicao, setMembroEmEdicao] =
+			useState<PessoaCreateDto | null>(null);
+		const [adicionandoMembro, setAdicionandoMembro] = useState(false);
 
-		const setField = (field: string, value: unknown) =>
-			setForm((prev) => ({ ...prev, [field]: value }));
+		useEffect(() => {
+			if (isOpen) {
+				APIService.getRequest<SelectOption[]>({ url: "/paroquias/select" })
+					.then(setParoquias)
+					.catch(() => {});
+			}
+		}, [isOpen]);
 
-		const setRespField = (field: string, value: unknown) =>
-			setForm((prev) => ({
-				...prev,
-				responsavel: { ...prev.responsavel, [field]: value },
-			}));
+		const setField = <K extends keyof FamiliaCreateDto>(
+			field: K,
+			value: FamiliaCreateDto[K],
+		) => setForm((prev) => ({ ...prev, [field]: value }));
 
 		const toggleVulnerabilidade = (flag: number) =>
 			setField("vulnerabilidade", form.vulnerabilidade ^ flag);
@@ -76,6 +258,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 			try {
 				if (editing) {
 					const dto: FamiliaUpdateDto = {
+						paroquiaId: form.paroquiaId,
 						responsavelId: editing.responsavelId,
 						rendaFamiliar: form.rendaFamiliar,
 						situacaoMoradia: form.situacaoMoradia,
@@ -101,8 +284,42 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 				}
 				setIsOpen(false);
 				onSuccess();
+			} catch {
+				toast.error("Erro ao salvar família.");
 			} finally {
 				setLoading(false);
+			}
+		};
+
+		const handleAdicionarMembro = async () => {
+			if (!membroEmEdicao || !editing) return;
+			setAdicionandoMembro(true);
+			try {
+				await APIService.postRequest({
+					url: `/familias/${editing.id}/membros`,
+					body: membroEmEdicao,
+				});
+				setMembroEmEdicao(null);
+				onSuccess();
+				toast.success("Membro adicionado.");
+			} catch {
+				toast.error("Erro ao adicionar membro.");
+			} finally {
+				setAdicionandoMembro(false);
+			}
+		};
+
+		const handleRemoverMembro = async (pessoaId: number) => {
+			if (!editing) return;
+			if (!confirm("Remover este membro da família?")) return;
+			try {
+				await APIService.deleteRequest({
+					url: `/familias/${editing.id}/membros/${pessoaId}`,
+				});
+				onSuccess();
+				toast.success("Membro removido.");
+			} catch {
+				toast.error("Erro ao remover membro.");
 			}
 		};
 
@@ -110,13 +327,9 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 			if (familia) {
 				setEditing(familia);
 				setForm({
-					responsavel: {
-						nome: familia.responsavel?.nome ?? "",
-						cpf: familia.responsavel?.cpf ?? "",
-						dataNascimento:
-							familia.responsavel?.dataNascimento.slice(0, 10) ?? "",
-						possuiDeficiencia: familia.responsavel?.possuiDeficiencia ?? false,
-					},
+					paroquiaId: familia.paroquiaId,
+					responsavel: { ...PESSOA_INICIAL },
+					membros: [],
 					rendaFamiliar: familia.rendaFamiliar,
 					situacaoMoradia: familia.situacaoMoradia,
 					vulnerabilidade: familia.vulnerabilidade,
@@ -131,14 +344,13 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 				});
 			} else {
 				setEditing(null);
-				setForm(INITIAL_CREATE);
+				setForm(CREATE_INICIAL);
 			}
+			setMembroEmEdicao(null);
 			setIsOpen(true);
 		};
 
-		useImperativeHandle(ref, () => ({
-			open,
-		}));
+		useImperativeHandle(ref, () => ({ open }));
 
 		return (
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -150,50 +362,202 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 					</DialogHeader>
 
 					<form onSubmit={handleSubmit} className="space-y-6">
+						{/* Paróquia */}
+						<section className="space-y-3">
+							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+								Paróquia
+							</h3>
+							<div className="space-y-1">
+								<Label>Paróquia *</Label>
+								<Select
+									required
+									value={form.paroquiaId ? String(form.paroquiaId) : ""}
+									onValueChange={(v) => setField("paroquiaId", Number(v))}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Selecione a paróquia" />
+									</SelectTrigger>
+									<SelectContent>
+										{paroquias.map((p) => (
+											<SelectItem key={p.value} value={String(p.value)}>
+												{p.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						</section>
+
+						{/* Responsável */}
 						{!editing && (
-							<section className="space-y-4">
-								<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+							<section className="space-y-3">
+								<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
 									Responsável
 								</h3>
-								<div className="grid grid-cols-2 gap-4">
-									<div className="col-span-2 space-y-1">
-										<Label htmlFor="resp-nome">Nome *</Label>
-										<Input
-											required
-											value={form.responsavel.nome}
-											onChange={(e) => setRespField("nome", e.target.value)}
-										/>
-									</div>
-									<div className="space-y-1">
-										<Label htmlFor="resp-cpf">CPF</Label>
-										<Input
-											placeholder="000.000.000-00"
-											value={form.responsavel.cpf ?? ""}
-											onChange={(e) => setRespField("cpf", e.target.value)}
-										/>
-									</div>
-									<div className="space-y-1">
-										<Label htmlFor="resp-nasc">Data de Nascimento *</Label>
-										<Input
-											type="date"
-											required
-											value={form.responsavel.dataNascimento}
-											onChange={(e) =>
-												setRespField("dataNascimento", e.target.value)
-											}
-										/>
-									</div>
-								</div>
+								<PessoaForm
+									titulo="Dados do Responsável"
+									value={form.responsavel}
+									onChange={(p) => setField("responsavel", p)}
+									showExtra
+								/>
 							</section>
 						)}
 
+						{/* Membros */}
+						<section className="space-y-3">
+							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+								Membros
+							</h3>
+
+							{editing ? (
+								<div className="space-y-2">
+									{editing.membros.map((m) => (
+										<div
+											key={m.id}
+											className="flex items-center justify-between rounded-md border px-3 py-2"
+										>
+											<div>
+												<p className="text-sm font-medium">{m.nome}</p>
+												<p className="text-xs text-muted-foreground">
+													Nasc. {m.dataNascimento.slice(0, 10)}
+												</p>
+											</div>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7 text-destructive hover:text-destructive"
+												onClick={() => handleRemoverMembro(m.id)}
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										</div>
+									))}
+
+									{membroEmEdicao ? (
+										<div className="space-y-2">
+											<PessoaForm
+												titulo="Novo Membro"
+												value={membroEmEdicao}
+												onChange={setMembroEmEdicao}
+											/>
+											<div className="flex gap-2">
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={() => setMembroEmEdicao(null)}
+												>
+													Cancelar
+												</Button>
+												<Button
+													type="button"
+													size="sm"
+													disabled={adicionandoMembro}
+													onClick={handleAdicionarMembro}
+												>
+													{adicionandoMembro ? "Salvando..." : "Confirmar"}
+												</Button>
+											</div>
+										</div>
+									) : (
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
+										>
+											<UserPlus className="h-4 w-4" />
+											Adicionar Membro
+										</Button>
+									)}
+								</div>
+							) : (
+								<div className="space-y-2">
+									{form.membros.map((m, i) => (
+										<div
+											key={i}
+											className="flex items-center justify-between rounded-md border px-3 py-2"
+										>
+											<div>
+												<p className="text-sm font-medium">
+													{m.nome || "Sem nome"}
+												</p>
+												<p className="text-xs text-muted-foreground">
+													Nasc. {m.dataNascimento || "—"}
+												</p>
+											</div>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7 text-destructive hover:text-destructive"
+												onClick={() =>
+													setField(
+														"membros",
+														form.membros.filter((_, idx) => idx !== i),
+													)
+												}
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										</div>
+									))}
+
+									{membroEmEdicao ? (
+										<div className="space-y-2">
+											<PessoaForm
+												titulo="Novo Membro"
+												value={membroEmEdicao}
+												onChange={setMembroEmEdicao}
+											/>
+											<div className="flex gap-2">
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={() => setMembroEmEdicao(null)}
+												>
+													Cancelar
+												</Button>
+												<Button
+													type="button"
+													size="sm"
+													onClick={() => {
+														setField("membros", [
+															...form.membros,
+															membroEmEdicao,
+														]);
+														setMembroEmEdicao(null);
+													}}
+												>
+													Confirmar
+												</Button>
+											</div>
+										</div>
+									) : (
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
+										>
+											<UserPlus className="h-4 w-4" />
+											Adicionar Membro
+										</Button>
+									)}
+								</div>
+							)}
+						</section>
+
+						{/* Dados Socioeconômicos */}
 						<section className="space-y-4">
-							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
 								Dados Socioeconômicos
 							</h3>
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-1">
-									<Label htmlFor="renda">Renda Familiar (R$) *</Label>
+									<Label>Renda Familiar (R$) *</Label>
 									<Input
 										type="number"
 										min="0"
@@ -251,7 +615,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 							</div>
 
 							<div className="space-y-1">
-								<Label htmlFor="obs">Observações</Label>
+								<Label>Observações</Label>
 								<Textarea
 									rows={3}
 									value={form.observacoes ?? ""}
@@ -260,13 +624,14 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 							</div>
 						</section>
 
+						{/* Endereço */}
 						<section className="space-y-4">
-							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
 								Endereço
 							</h3>
 							<div className="grid grid-cols-3 gap-4">
 								<div className="col-span-2 space-y-1">
-									<Label htmlFor="rua">Rua *</Label>
+									<Label>Rua *</Label>
 									<Input
 										required
 										value={form.rua}
@@ -274,7 +639,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="numero">Número *</Label>
+									<Label>Número *</Label>
 									<Input
 										required
 										value={form.numero}
@@ -282,14 +647,14 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="complemento">Complemento</Label>
+									<Label>Complemento</Label>
 									<Input
 										value={form.complemento ?? ""}
 										onChange={(e) => setField("complemento", e.target.value)}
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="bairro">Bairro *</Label>
+									<Label>Bairro *</Label>
 									<Input
 										required
 										value={form.bairro}
@@ -297,7 +662,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="cep">CEP *</Label>
+									<Label>CEP *</Label>
 									<Input
 										required
 										placeholder="00000-000"
@@ -306,7 +671,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 									/>
 								</div>
 								<div className="col-span-2 space-y-1">
-									<Label htmlFor="cidade">Cidade *</Label>
+									<Label>Cidade *</Label>
 									<Input
 										required
 										value={form.cidade}
@@ -314,7 +679,7 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 									/>
 								</div>
 								<div className="space-y-1">
-									<Label htmlFor="estado">Estado *</Label>
+									<Label>Estado *</Label>
 									<Input
 										required
 										maxLength={2}

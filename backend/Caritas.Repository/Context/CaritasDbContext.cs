@@ -1,4 +1,3 @@
-using System.Reflection;
 using Caritas.Models.Common;
 using Caritas.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +18,6 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : DbCo
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         modelBuilder.Entity<Perfil>()
             .HasIndex(p => p.Nome)
@@ -39,6 +37,29 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : DbCo
             .HasOne(u => u.UsuarioCriador)
             .WithMany(u => u.UsuariosCriados)
             .HasForeignKey(u => u.UsuarioCriadorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Pessoa>()
+            .HasIndex(p => p.Cpf)
+            .IsUnique()
+            .HasFilter("\"Cpf\" IS NOT NULL");
+
+        modelBuilder.Entity<Familia>()
+            .HasOne(f => f.Responsavel)
+            .WithMany()
+            .HasForeignKey(f => f.ResponsavelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Familia>()
+            .HasMany(f => f.Membros)
+            .WithOne(p => p.Familia)
+            .HasForeignKey(p => p.FamiliaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Familia>()
+            .HasOne(f => f.Paroquia)
+            .WithMany()
+            .HasForeignKey(f => f.ParoquiaId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 

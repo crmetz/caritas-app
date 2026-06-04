@@ -6,6 +6,8 @@ namespace Caritas.Models.DTOs.Familia;
 public class FamiliaResponseDto
 {
     public int Id { get; set; }
+    public int ParoquiaId { get; set; }
+    public string ParoquiaNome { get; set; } = string.Empty;
     public int ResponsavelId { get; set; }
     public PessoaResponseDto? Responsavel { get; set; }
     public IEnumerable<PessoaResponseDto> Membros { get; set; } = [];

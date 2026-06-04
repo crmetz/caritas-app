@@ -17,7 +17,7 @@ createRoot(rootElement).render(
 		<BrowserRouter>
 			<AppLayout>
 				<Routes>
-					<Route path="/" element={<FamiliaPage />} />
+					<Route path="/familias" element={<FamiliaPage />} />
 					<Route path="/paroquias" element={<ParoquiaPage />} />
 					<Route path="/usuarios" element={<UsuarioPage />} />
 				</Routes>

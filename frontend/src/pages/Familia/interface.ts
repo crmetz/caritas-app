@@ -5,18 +5,20 @@ export type SituacaoMoradia =
 	| "Irregular"
 	| "Abrigo";
 
-export type Vulnerabilidade =
-	| "Desemprego"
-	| "InsegurancaAlimentar"
-	| "ViolenciaDomestica"
-	| "MoradiaPrecaria"
-	| "Deficiencia"
-	| "DependenciaQuimica";
+export type TipoDocumentoAlternativo =
+	| "Rg"
+	| "Passaporte"
+	| "Cnh"
+	| "Ctps"
+	| "DocumentoEstrangeiro"
+	| "Outros";
 
 export interface Pessoa {
 	id: number;
 	nome: string;
 	cpf: string | null;
+	nomeMae: string | null;
+	tipoDocumentoAlternativo: TipoDocumentoAlternativo | null;
 	identificacaoAlternativa: string | null;
 	dataNascimento: string;
 	telefone: string | null;
@@ -25,12 +27,14 @@ export interface Pessoa {
 	possuiDeficiencia: boolean;
 	observacoes: string | null;
 	familiaId: number | null;
-	createdAt: string;
-	updatedAt: string;
+	criadoEm: string;
+	atualizadoEm: string;
 }
 
 export interface Familia {
 	id: number;
+	paroquiaId: number;
+	paroquiaNome: string;
 	responsavelId: number;
 	responsavel: Pessoa | null;
 	membros: Pessoa[];
@@ -45,13 +49,15 @@ export interface Familia {
 	cidade: string;
 	estado: string;
 	cep: string;
-	createdAt: string;
-	updatedAt: string;
+	criadoEm: string;
+	atualizadoEm: string;
 }
 
 export interface PessoaCreateDto {
 	nome: string;
 	cpf?: string;
+	nomeMae?: string;
+	tipoDocumentoAlternativo?: TipoDocumentoAlternativo;
 	identificacaoAlternativa?: string;
 	dataNascimento: string;
 	telefone?: string;
@@ -62,7 +68,9 @@ export interface PessoaCreateDto {
 }
 
 export interface FamiliaCreateDto {
+	paroquiaId: number;
 	responsavel: PessoaCreateDto;
+	membros: PessoaCreateDto[];
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
 	vulnerabilidade: number;
@@ -77,6 +85,7 @@ export interface FamiliaCreateDto {
 }
 
 export interface FamiliaUpdateDto {
+	paroquiaId: number;
 	responsavelId: number;
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
@@ -97,6 +106,15 @@ export const SITUACAO_MORADIA_LABELS: Record<SituacaoMoradia, string> = {
 	Cedida: "Cedida",
 	Irregular: "Irregular",
 	Abrigo: "Abrigo",
+};
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumentoAlternativo, string> = {
+	Rg: "RG",
+	Passaporte: "Passaporte",
+	Cnh: "CNH",
+	Ctps: "CTPS",
+	DocumentoEstrangeiro: "Documento Estrangeiro",
+	Outros: "Outros",
 };
 
 export const VULNERABILIDADE_FLAGS: { value: number; label: string }[] = [

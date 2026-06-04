@@ -97,9 +97,11 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("ParoquiaId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("RendaFamiliar")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("ResponsavelId")
                         .HasColumnType("integer");
@@ -116,6 +118,8 @@ namespace Caritas.Repository.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParoquiaId");
 
                     b.HasIndex("ResponsavelId");
 
@@ -266,6 +270,10 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("NomeMae")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Observacoes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -280,6 +288,9 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("Telefone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("TipoDocumentoAlternativo")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -375,11 +386,19 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
                 {
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("ParoquiaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Caritas.Models.Entities.Pessoa", "Responsavel")
                         .WithMany()
                         .HasForeignKey("ResponsavelId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Paroquia");
 
                     b.Navigation("Responsavel");
                 });
