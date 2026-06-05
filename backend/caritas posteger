@@ -1,0 +1,1557 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict GZ24b8LybJ3a6QUNkGaMc81xqMhxYEolpO3EKXFy5JYyNpmIyqCfJM1ZFcepI4N
+
+-- Dumped from database version 18.4
+-- Dumped by pg_dump version 18.4
+
+-- Started on 2026-06-02 15:46:45
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 249 (class 1255 OID 16677)
+-- Name: fn_atualizar_saldo_caixa(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_atualizar_saldo_caixa() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+
+    IF UPPER(NEW.tipo_movimentacao) = 'ENTRADA' THEN
+
+        UPDATE caixa
+           SET saldo_atual = saldo_atual + NEW.valor
+         WHERE id_caixa = NEW.id_caixa;
+
+    ELSIF UPPER(NEW.tipo_movimentacao) = 'SAIDA' THEN
+
+        UPDATE caixa
+           SET saldo_atual = saldo_atual - NEW.valor
+         WHERE id_caixa = NEW.id_caixa;
+
+    END IF;
+
+    RETURN NEW;
+
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_atualizar_saldo_caixa() OWNER TO postgres;
+
+--
+-- TOC entry 251 (class 1255 OID 16681)
+-- Name: fn_entrada_estoque_doacao(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_entrada_estoque_doacao() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_paroquia INTEGER;
+BEGIN
+
+    SELECT id_paroquia
+      INTO v_paroquia
+      FROM doacao
+     WHERE id_doacao = NEW.id_doacao;
+
+    IF EXISTS (
+        SELECT 1
+          FROM estoque
+         WHERE id_item = NEW.id_item
+           AND id_paroquia = v_paroquia
+    ) THEN
+
+        UPDATE estoque
+           SET quantidade = quantidade + NEW.quantidade
+         WHERE id_item = NEW.id_item
+           AND id_paroquia = v_paroquia;
+
+    ELSE
+
+        INSERT INTO estoque
+        (
+            id_paroquia,
+            id_item,
+            quantidade,
+            validade
+        )
+        VALUES
+        (
+            v_paroquia,
+            NEW.id_item,
+            NEW.quantidade,
+            NEW.validade
+        );
+
+    END IF;
+
+    RETURN NEW;
+
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_entrada_estoque_doacao() OWNER TO postgres;
+
+--
+-- TOC entry 250 (class 1255 OID 16679)
+-- Name: fn_item_venda_registro(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_item_venda_registro() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+
+    -- Atualiza subtotal
+    UPDATE item_venda_registro
+       SET subtotal = quantidade * preco_unitario
+     WHERE id_item_venda_registro = NEW.id_item_venda_registro;
+
+    -- Atualiza estoque disponível para venda
+    UPDATE item_venda
+       SET quantidade_disponivel =
+           quantidade_disponivel - NEW.quantidade
+     WHERE id_item_venda = NEW.id_item_venda;
+
+    -- Atualiza total da venda
+    UPDATE venda
+       SET valor_total =
+       (
+           SELECT COALESCE(SUM(subtotal),0)
+           FROM item_venda_registro
+           WHERE id_venda = NEW.id_venda
+       )
+     WHERE id_venda = NEW.id_venda;
+
+    RETURN NEW;
+
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_item_venda_registro() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 244 (class 1259 OID 16611)
+-- Name: atendimento; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.atendimento (
+    id_atendimento integer NOT NULL,
+    id_familia integer NOT NULL,
+    id_usuario integer NOT NULL,
+    data_atendimento timestamp without time zone NOT NULL,
+    tipo_atendimento character varying(100),
+    observacao text
+);
+
+
+ALTER TABLE public.atendimento OWNER TO postgres;
+
+--
+-- TOC entry 243 (class 1259 OID 16610)
+-- Name: atendimento_id_atendimento_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.atendimento_id_atendimento_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.atendimento_id_atendimento_seq OWNER TO postgres;
+
+--
+-- TOC entry 5089 (class 0 OID 0)
+-- Dependencies: 243
+-- Name: atendimento_id_atendimento_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.atendimento_id_atendimento_seq OWNED BY public.atendimento.id_atendimento;
+
+
+--
+-- TOC entry 246 (class 1259 OID 16634)
+-- Name: caixa; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.caixa (
+    id_caixa integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    nome character varying(100),
+    saldo_atual numeric(14,2) DEFAULT 0,
+    status character varying(30)
+);
+
+
+ALTER TABLE public.caixa OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1259 OID 16633)
+-- Name: caixa_id_caixa_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.caixa_id_caixa_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.caixa_id_caixa_seq OWNER TO postgres;
+
+--
+-- TOC entry 5090 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: caixa_id_caixa_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.caixa_id_caixa_seq OWNED BY public.caixa.id_caixa;
+
+
+--
+-- TOC entry 220 (class 1259 OID 16390)
+-- Name: diocese; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.diocese (
+    id_diocese integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    cidade character varying(100),
+    telefone character varying(20),
+    email character varying(150)
+);
+
+
+ALTER TABLE public.diocese OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 16389)
+-- Name: diocese_id_diocese_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.diocese_id_diocese_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.diocese_id_diocese_seq OWNER TO postgres;
+
+--
+-- TOC entry 5091 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: diocese_id_diocese_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.diocese_id_diocese_seq OWNED BY public.diocese.id_diocese;
+
+
+--
+-- TOC entry 232 (class 1259 OID 16487)
+-- Name: doacao; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.doacao (
+    id_doacao integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    data_doacao date NOT NULL,
+    origem character varying(150),
+    observacao text
+);
+
+
+ALTER TABLE public.doacao OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 16486)
+-- Name: doacao_id_doacao_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.doacao_id_doacao_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.doacao_id_doacao_seq OWNER TO postgres;
+
+--
+-- TOC entry 5092 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: doacao_id_doacao_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.doacao_id_doacao_seq OWNED BY public.doacao.id_doacao;
+
+
+--
+-- TOC entry 230 (class 1259 OID 16465)
+-- Name: estoque; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.estoque (
+    id_estoque integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    id_item integer NOT NULL,
+    quantidade integer DEFAULT 0 NOT NULL,
+    local_armazenamento character varying(150),
+    validade date,
+    CONSTRAINT chk_estoque_positivo CHECK ((quantidade >= 0))
+);
+
+
+ALTER TABLE public.estoque OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 16464)
+-- Name: estoque_id_estoque_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.estoque_id_estoque_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.estoque_id_estoque_seq OWNER TO postgres;
+
+--
+-- TOC entry 5093 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: estoque_id_estoque_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.estoque_id_estoque_seq OWNED BY public.estoque.id_estoque;
+
+
+--
+-- TOC entry 226 (class 1259 OID 16437)
+-- Name: familia; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.familia (
+    id_familia integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    nome_responsavel character varying(150) NOT NULL,
+    endereco character varying(255),
+    telefone character varying(20),
+    situacao character varying(50),
+    observacao text
+);
+
+
+ALTER TABLE public.familia OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1259 OID 16436)
+-- Name: familia_id_familia_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.familia_id_familia_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.familia_id_familia_seq OWNER TO postgres;
+
+--
+-- TOC entry 5094 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: familia_id_familia_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.familia_id_familia_seq OWNED BY public.familia.id_familia;
+
+
+--
+-- TOC entry 228 (class 1259 OID 16454)
+-- Name: item; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.item (
+    id_item integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    tipo_item character varying(50),
+    descricao text,
+    unidade_medida character varying(30)
+);
+
+
+ALTER TABLE public.item OWNER TO postgres;
+
+--
+-- TOC entry 234 (class 1259 OID 16504)
+-- Name: item_doacao; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.item_doacao (
+    id_item_doacao integer NOT NULL,
+    id_doacao integer NOT NULL,
+    id_item integer NOT NULL,
+    quantidade integer NOT NULL,
+    estado_conservacao character varying(100),
+    validade date
+);
+
+
+ALTER TABLE public.item_doacao OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1259 OID 16503)
+-- Name: item_doacao_id_item_doacao_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.item_doacao_id_item_doacao_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.item_doacao_id_item_doacao_seq OWNER TO postgres;
+
+--
+-- TOC entry 5095 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: item_doacao_id_item_doacao_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.item_doacao_id_item_doacao_seq OWNED BY public.item_doacao.id_item_doacao;
+
+
+--
+-- TOC entry 227 (class 1259 OID 16453)
+-- Name: item_id_item_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.item_id_item_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.item_id_item_seq OWNER TO postgres;
+
+--
+-- TOC entry 5096 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: item_id_item_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.item_id_item_seq OWNED BY public.item.id_item;
+
+
+--
+-- TOC entry 238 (class 1259 OID 16542)
+-- Name: item_venda; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.item_venda (
+    id_item_venda integer NOT NULL,
+    id_item integer NOT NULL,
+    id_ponto_venda integer NOT NULL,
+    preco numeric(12,2) NOT NULL,
+    quantidade_disponivel integer DEFAULT 0,
+    status character varying(50),
+    CONSTRAINT chk_item_venda_positivo CHECK ((quantidade_disponivel >= 0))
+);
+
+
+ALTER TABLE public.item_venda OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 16541)
+-- Name: item_venda_id_item_venda_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.item_venda_id_item_venda_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.item_venda_id_item_venda_seq OWNER TO postgres;
+
+--
+-- TOC entry 5097 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: item_venda_id_item_venda_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.item_venda_id_item_venda_seq OWNED BY public.item_venda.id_item_venda;
+
+
+--
+-- TOC entry 242 (class 1259 OID 16588)
+-- Name: item_venda_registro; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.item_venda_registro (
+    id_item_venda_registro integer NOT NULL,
+    id_venda integer NOT NULL,
+    id_item_venda integer NOT NULL,
+    quantidade integer NOT NULL,
+    preco_unitario numeric(12,2) NOT NULL,
+    subtotal numeric(12,2) NOT NULL
+);
+
+
+ALTER TABLE public.item_venda_registro OWNER TO postgres;
+
+--
+-- TOC entry 241 (class 1259 OID 16587)
+-- Name: item_venda_registro_id_item_venda_registro_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.item_venda_registro_id_item_venda_registro_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.item_venda_registro_id_item_venda_registro_seq OWNER TO postgres;
+
+--
+-- TOC entry 5098 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: item_venda_registro_id_item_venda_registro_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.item_venda_registro_id_item_venda_registro_seq OWNED BY public.item_venda_registro.id_item_venda_registro;
+
+
+--
+-- TOC entry 248 (class 1259 OID 16649)
+-- Name: movimentacao_caixa; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.movimentacao_caixa (
+    id_movimentacao integer NOT NULL,
+    id_caixa integer NOT NULL,
+    id_venda integer,
+    id_atendimento integer,
+    data_movimentacao timestamp without time zone NOT NULL,
+    tipo_movimentacao character varying(30),
+    descricao text,
+    valor numeric(14,2) NOT NULL
+);
+
+
+ALTER TABLE public.movimentacao_caixa OWNER TO postgres;
+
+--
+-- TOC entry 247 (class 1259 OID 16648)
+-- Name: movimentacao_caixa_id_movimentacao_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.movimentacao_caixa_id_movimentacao_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.movimentacao_caixa_id_movimentacao_seq OWNER TO postgres;
+
+--
+-- TOC entry 5099 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: movimentacao_caixa_id_movimentacao_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.movimentacao_caixa_id_movimentacao_seq OWNED BY public.movimentacao_caixa.id_movimentacao;
+
+
+--
+-- TOC entry 222 (class 1259 OID 16399)
+-- Name: paroquia; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.paroquia (
+    id_paroquia integer NOT NULL,
+    id_diocese integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    endereco character varying(255),
+    telefone character varying(20),
+    email character varying(150)
+);
+
+
+ALTER TABLE public.paroquia OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 16398)
+-- Name: paroquia_id_paroquia_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.paroquia_id_paroquia_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.paroquia_id_paroquia_seq OWNER TO postgres;
+
+--
+-- TOC entry 5100 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: paroquia_id_paroquia_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.paroquia_id_paroquia_seq OWNED BY public.paroquia.id_paroquia;
+
+
+--
+-- TOC entry 236 (class 1259 OID 16525)
+-- Name: ponto_venda; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ponto_venda (
+    id_ponto_venda integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    nome character varying(150),
+    tipo_ponto_venda character varying(50),
+    descricao text,
+    ativo boolean DEFAULT true
+);
+
+
+ALTER TABLE public.ponto_venda OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1259 OID 16524)
+-- Name: ponto_venda_id_ponto_venda_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.ponto_venda_id_ponto_venda_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ponto_venda_id_ponto_venda_seq OWNER TO postgres;
+
+--
+-- TOC entry 5101 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: ponto_venda_id_ponto_venda_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.ponto_venda_id_ponto_venda_seq OWNED BY public.ponto_venda.id_ponto_venda;
+
+
+--
+-- TOC entry 224 (class 1259 OID 16416)
+-- Name: usuario; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.usuario (
+    id_usuario integer NOT NULL,
+    id_paroquia integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    email character varying(150),
+    senha character varying(255) NOT NULL,
+    tipo_usuario character varying(50),
+    ativo boolean DEFAULT true
+);
+
+
+ALTER TABLE public.usuario OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 16415)
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.usuario_id_usuario_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.usuario_id_usuario_seq OWNER TO postgres;
+
+--
+-- TOC entry 5102 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.usuario_id_usuario_seq OWNED BY public.usuario.id_usuario;
+
+
+--
+-- TOC entry 240 (class 1259 OID 16564)
+-- Name: venda; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.venda (
+    id_venda integer NOT NULL,
+    id_ponto_venda integer NOT NULL,
+    id_usuario integer NOT NULL,
+    data_venda timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    valor_total numeric(12,2),
+    forma_pagamento character varying(50),
+    observacao text
+);
+
+
+ALTER TABLE public.venda OWNER TO postgres;
+
+--
+-- TOC entry 239 (class 1259 OID 16563)
+-- Name: venda_id_venda_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.venda_id_venda_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.venda_id_venda_seq OWNER TO postgres;
+
+--
+-- TOC entry 5103 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: venda_id_venda_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.venda_id_venda_seq OWNED BY public.venda.id_venda;
+
+
+--
+-- TOC entry 4845 (class 2604 OID 16614)
+-- Name: atendimento id_atendimento; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.atendimento ALTER COLUMN id_atendimento SET DEFAULT nextval('public.atendimento_id_atendimento_seq'::regclass);
+
+
+--
+-- TOC entry 4846 (class 2604 OID 16637)
+-- Name: caixa id_caixa; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.caixa ALTER COLUMN id_caixa SET DEFAULT nextval('public.caixa_id_caixa_seq'::regclass);
+
+
+--
+-- TOC entry 4828 (class 2604 OID 16393)
+-- Name: diocese id_diocese; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.diocese ALTER COLUMN id_diocese SET DEFAULT nextval('public.diocese_id_diocese_seq'::regclass);
+
+
+--
+-- TOC entry 4836 (class 2604 OID 16490)
+-- Name: doacao id_doacao; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doacao ALTER COLUMN id_doacao SET DEFAULT nextval('public.doacao_id_doacao_seq'::regclass);
+
+
+--
+-- TOC entry 4834 (class 2604 OID 16468)
+-- Name: estoque id_estoque; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque ALTER COLUMN id_estoque SET DEFAULT nextval('public.estoque_id_estoque_seq'::regclass);
+
+
+--
+-- TOC entry 4832 (class 2604 OID 16440)
+-- Name: familia id_familia; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.familia ALTER COLUMN id_familia SET DEFAULT nextval('public.familia_id_familia_seq'::regclass);
+
+
+--
+-- TOC entry 4833 (class 2604 OID 16457)
+-- Name: item id_item; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item ALTER COLUMN id_item SET DEFAULT nextval('public.item_id_item_seq'::regclass);
+
+
+--
+-- TOC entry 4837 (class 2604 OID 16507)
+-- Name: item_doacao id_item_doacao; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_doacao ALTER COLUMN id_item_doacao SET DEFAULT nextval('public.item_doacao_id_item_doacao_seq'::regclass);
+
+
+--
+-- TOC entry 4840 (class 2604 OID 16545)
+-- Name: item_venda id_item_venda; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda ALTER COLUMN id_item_venda SET DEFAULT nextval('public.item_venda_id_item_venda_seq'::regclass);
+
+
+--
+-- TOC entry 4844 (class 2604 OID 16591)
+-- Name: item_venda_registro id_item_venda_registro; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda_registro ALTER COLUMN id_item_venda_registro SET DEFAULT nextval('public.item_venda_registro_id_item_venda_registro_seq'::regclass);
+
+
+--
+-- TOC entry 4848 (class 2604 OID 16652)
+-- Name: movimentacao_caixa id_movimentacao; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movimentacao_caixa ALTER COLUMN id_movimentacao SET DEFAULT nextval('public.movimentacao_caixa_id_movimentacao_seq'::regclass);
+
+
+--
+-- TOC entry 4829 (class 2604 OID 16402)
+-- Name: paroquia id_paroquia; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.paroquia ALTER COLUMN id_paroquia SET DEFAULT nextval('public.paroquia_id_paroquia_seq'::regclass);
+
+
+--
+-- TOC entry 4838 (class 2604 OID 16528)
+-- Name: ponto_venda id_ponto_venda; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ponto_venda ALTER COLUMN id_ponto_venda SET DEFAULT nextval('public.ponto_venda_id_ponto_venda_seq'::regclass);
+
+
+--
+-- TOC entry 4830 (class 2604 OID 16419)
+-- Name: usuario id_usuario; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuario ALTER COLUMN id_usuario SET DEFAULT nextval('public.usuario_id_usuario_seq'::regclass);
+
+
+--
+-- TOC entry 4842 (class 2604 OID 16567)
+-- Name: venda id_venda; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda ALTER COLUMN id_venda SET DEFAULT nextval('public.venda_id_venda_seq'::regclass);
+
+
+--
+-- TOC entry 5079 (class 0 OID 16611)
+-- Dependencies: 244
+-- Data for Name: atendimento; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.atendimento (id_atendimento, id_familia, id_usuario, data_atendimento, tipo_atendimento, observacao) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5081 (class 0 OID 16634)
+-- Dependencies: 246
+-- Data for Name: caixa; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.caixa (id_caixa, id_paroquia, nome, saldo_atual, status) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5055 (class 0 OID 16390)
+-- Dependencies: 220
+-- Data for Name: diocese; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.diocese (id_diocese, nome, cidade, telefone, email) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5067 (class 0 OID 16487)
+-- Dependencies: 232
+-- Data for Name: doacao; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.doacao (id_doacao, id_paroquia, data_doacao, origem, observacao) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5065 (class 0 OID 16465)
+-- Dependencies: 230
+-- Data for Name: estoque; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.estoque (id_estoque, id_paroquia, id_item, quantidade, local_armazenamento, validade) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5061 (class 0 OID 16437)
+-- Dependencies: 226
+-- Data for Name: familia; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.familia (id_familia, id_paroquia, nome_responsavel, endereco, telefone, situacao, observacao) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5063 (class 0 OID 16454)
+-- Dependencies: 228
+-- Data for Name: item; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.item (id_item, nome, tipo_item, descricao, unidade_medida) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5069 (class 0 OID 16504)
+-- Dependencies: 234
+-- Data for Name: item_doacao; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.item_doacao (id_item_doacao, id_doacao, id_item, quantidade, estado_conservacao, validade) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5073 (class 0 OID 16542)
+-- Dependencies: 238
+-- Data for Name: item_venda; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.item_venda (id_item_venda, id_item, id_ponto_venda, preco, quantidade_disponivel, status) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5077 (class 0 OID 16588)
+-- Dependencies: 242
+-- Data for Name: item_venda_registro; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.item_venda_registro (id_item_venda_registro, id_venda, id_item_venda, quantidade, preco_unitario, subtotal) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5083 (class 0 OID 16649)
+-- Dependencies: 248
+-- Data for Name: movimentacao_caixa; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.movimentacao_caixa (id_movimentacao, id_caixa, id_venda, id_atendimento, data_movimentacao, tipo_movimentacao, descricao, valor) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5057 (class 0 OID 16399)
+-- Dependencies: 222
+-- Data for Name: paroquia; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.paroquia (id_paroquia, id_diocese, nome, endereco, telefone, email) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5071 (class 0 OID 16525)
+-- Dependencies: 236
+-- Data for Name: ponto_venda; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.ponto_venda (id_ponto_venda, id_paroquia, nome, tipo_ponto_venda, descricao, ativo) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5059 (class 0 OID 16416)
+-- Dependencies: 224
+-- Data for Name: usuario; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.usuario (id_usuario, id_paroquia, nome, email, senha, tipo_usuario, ativo) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5075 (class 0 OID 16564)
+-- Dependencies: 240
+-- Data for Name: venda; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.venda (id_venda, id_ponto_venda, id_usuario, data_venda, valor_total, forma_pagamento, observacao) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5104 (class 0 OID 0)
+-- Dependencies: 243
+-- Name: atendimento_id_atendimento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.atendimento_id_atendimento_seq', 1, false);
+
+
+--
+-- TOC entry 5105 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: caixa_id_caixa_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.caixa_id_caixa_seq', 1, false);
+
+
+--
+-- TOC entry 5106 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: diocese_id_diocese_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.diocese_id_diocese_seq', 1, false);
+
+
+--
+-- TOC entry 5107 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: doacao_id_doacao_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.doacao_id_doacao_seq', 1, false);
+
+
+--
+-- TOC entry 5108 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: estoque_id_estoque_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.estoque_id_estoque_seq', 1, false);
+
+
+--
+-- TOC entry 5109 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: familia_id_familia_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.familia_id_familia_seq', 1, false);
+
+
+--
+-- TOC entry 5110 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: item_doacao_id_item_doacao_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.item_doacao_id_item_doacao_seq', 1, false);
+
+
+--
+-- TOC entry 5111 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: item_id_item_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.item_id_item_seq', 1, false);
+
+
+--
+-- TOC entry 5112 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: item_venda_id_item_venda_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.item_venda_id_item_venda_seq', 1, false);
+
+
+--
+-- TOC entry 5113 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: item_venda_registro_id_item_venda_registro_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.item_venda_registro_id_item_venda_registro_seq', 1, false);
+
+
+--
+-- TOC entry 5114 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: movimentacao_caixa_id_movimentacao_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.movimentacao_caixa_id_movimentacao_seq', 1, false);
+
+
+--
+-- TOC entry 5115 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: paroquia_id_paroquia_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.paroquia_id_paroquia_seq', 1, false);
+
+
+--
+-- TOC entry 5116 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: ponto_venda_id_ponto_venda_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.ponto_venda_id_ponto_venda_seq', 1, false);
+
+
+--
+-- TOC entry 5117 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: usuario_id_usuario_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.usuario_id_usuario_seq', 1, false);
+
+
+--
+-- TOC entry 5118 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: venda_id_venda_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.venda_id_venda_seq', 1, false);
+
+
+--
+-- TOC entry 4878 (class 2606 OID 16622)
+-- Name: atendimento atendimento_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.atendimento
+    ADD CONSTRAINT atendimento_pkey PRIMARY KEY (id_atendimento);
+
+
+--
+-- TOC entry 4880 (class 2606 OID 16642)
+-- Name: caixa caixa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.caixa
+    ADD CONSTRAINT caixa_pkey PRIMARY KEY (id_caixa);
+
+
+--
+-- TOC entry 4852 (class 2606 OID 16397)
+-- Name: diocese diocese_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.diocese
+    ADD CONSTRAINT diocese_pkey PRIMARY KEY (id_diocese);
+
+
+--
+-- TOC entry 4866 (class 2606 OID 16497)
+-- Name: doacao doacao_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doacao
+    ADD CONSTRAINT doacao_pkey PRIMARY KEY (id_doacao);
+
+
+--
+-- TOC entry 4864 (class 2606 OID 16475)
+-- Name: estoque estoque_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT estoque_pkey PRIMARY KEY (id_estoque);
+
+
+--
+-- TOC entry 4860 (class 2606 OID 16447)
+-- Name: familia familia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.familia
+    ADD CONSTRAINT familia_pkey PRIMARY KEY (id_familia);
+
+
+--
+-- TOC entry 4868 (class 2606 OID 16513)
+-- Name: item_doacao item_doacao_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_doacao
+    ADD CONSTRAINT item_doacao_pkey PRIMARY KEY (id_item_doacao);
+
+
+--
+-- TOC entry 4862 (class 2606 OID 16463)
+-- Name: item item_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT item_pkey PRIMARY KEY (id_item);
+
+
+--
+-- TOC entry 4872 (class 2606 OID 16552)
+-- Name: item_venda item_venda_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda
+    ADD CONSTRAINT item_venda_pkey PRIMARY KEY (id_item_venda);
+
+
+--
+-- TOC entry 4876 (class 2606 OID 16599)
+-- Name: item_venda_registro item_venda_registro_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda_registro
+    ADD CONSTRAINT item_venda_registro_pkey PRIMARY KEY (id_item_venda_registro);
+
+
+--
+-- TOC entry 4882 (class 2606 OID 16660)
+-- Name: movimentacao_caixa movimentacao_caixa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movimentacao_caixa
+    ADD CONSTRAINT movimentacao_caixa_pkey PRIMARY KEY (id_movimentacao);
+
+
+--
+-- TOC entry 4854 (class 2606 OID 16409)
+-- Name: paroquia paroquia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.paroquia
+    ADD CONSTRAINT paroquia_pkey PRIMARY KEY (id_paroquia);
+
+
+--
+-- TOC entry 4870 (class 2606 OID 16535)
+-- Name: ponto_venda ponto_venda_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ponto_venda
+    ADD CONSTRAINT ponto_venda_pkey PRIMARY KEY (id_ponto_venda);
+
+
+--
+-- TOC entry 4856 (class 2606 OID 16430)
+-- Name: usuario usuario_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuario
+    ADD CONSTRAINT usuario_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 4858 (class 2606 OID 16428)
+-- Name: usuario usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuario
+    ADD CONSTRAINT usuario_pkey PRIMARY KEY (id_usuario);
+
+
+--
+-- TOC entry 4874 (class 2606 OID 16576)
+-- Name: venda venda_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT venda_pkey PRIMARY KEY (id_venda);
+
+
+--
+-- TOC entry 4904 (class 2620 OID 16682)
+-- Name: item_doacao trg_item_doacao; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_item_doacao AFTER INSERT ON public.item_doacao FOR EACH ROW EXECUTE FUNCTION public.fn_entrada_estoque_doacao();
+
+
+--
+-- TOC entry 4905 (class 2620 OID 16680)
+-- Name: item_venda_registro trg_item_venda_registro; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_item_venda_registro AFTER INSERT ON public.item_venda_registro FOR EACH ROW EXECUTE FUNCTION public.fn_item_venda_registro();
+
+
+--
+-- TOC entry 4906 (class 2620 OID 16678)
+-- Name: movimentacao_caixa trg_movimentacao_caixa; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_movimentacao_caixa AFTER INSERT ON public.movimentacao_caixa FOR EACH ROW EXECUTE FUNCTION public.fn_atualizar_saldo_caixa();
+
+
+--
+-- TOC entry 4898 (class 2606 OID 16623)
+-- Name: atendimento fk_atendimento_familia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.atendimento
+    ADD CONSTRAINT fk_atendimento_familia FOREIGN KEY (id_familia) REFERENCES public.familia(id_familia);
+
+
+--
+-- TOC entry 4899 (class 2606 OID 16628)
+-- Name: atendimento fk_atendimento_usuario; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.atendimento
+    ADD CONSTRAINT fk_atendimento_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario);
+
+
+--
+-- TOC entry 4900 (class 2606 OID 16643)
+-- Name: caixa fk_caixa_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.caixa
+    ADD CONSTRAINT fk_caixa_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4888 (class 2606 OID 16498)
+-- Name: doacao fk_doacao_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doacao
+    ADD CONSTRAINT fk_doacao_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4886 (class 2606 OID 16481)
+-- Name: estoque fk_estoque_item; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT fk_estoque_item FOREIGN KEY (id_item) REFERENCES public.item(id_item);
+
+
+--
+-- TOC entry 4887 (class 2606 OID 16476)
+-- Name: estoque fk_estoque_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT fk_estoque_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4885 (class 2606 OID 16448)
+-- Name: familia fk_familia_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.familia
+    ADD CONSTRAINT fk_familia_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4889 (class 2606 OID 16514)
+-- Name: item_doacao fk_item_doacao_doacao; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_doacao
+    ADD CONSTRAINT fk_item_doacao_doacao FOREIGN KEY (id_doacao) REFERENCES public.doacao(id_doacao);
+
+
+--
+-- TOC entry 4890 (class 2606 OID 16519)
+-- Name: item_doacao fk_item_doacao_item; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_doacao
+    ADD CONSTRAINT fk_item_doacao_item FOREIGN KEY (id_item) REFERENCES public.item(id_item);
+
+
+--
+-- TOC entry 4892 (class 2606 OID 16553)
+-- Name: item_venda fk_item_venda_item; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda
+    ADD CONSTRAINT fk_item_venda_item FOREIGN KEY (id_item) REFERENCES public.item(id_item);
+
+
+--
+-- TOC entry 4893 (class 2606 OID 16558)
+-- Name: item_venda fk_item_venda_ponto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda
+    ADD CONSTRAINT fk_item_venda_ponto FOREIGN KEY (id_ponto_venda) REFERENCES public.ponto_venda(id_ponto_venda);
+
+
+--
+-- TOC entry 4901 (class 2606 OID 16671)
+-- Name: movimentacao_caixa fk_mov_atendimento; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movimentacao_caixa
+    ADD CONSTRAINT fk_mov_atendimento FOREIGN KEY (id_atendimento) REFERENCES public.atendimento(id_atendimento);
+
+
+--
+-- TOC entry 4902 (class 2606 OID 16661)
+-- Name: movimentacao_caixa fk_mov_caixa; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movimentacao_caixa
+    ADD CONSTRAINT fk_mov_caixa FOREIGN KEY (id_caixa) REFERENCES public.caixa(id_caixa);
+
+
+--
+-- TOC entry 4903 (class 2606 OID 16666)
+-- Name: movimentacao_caixa fk_mov_venda; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movimentacao_caixa
+    ADD CONSTRAINT fk_mov_venda FOREIGN KEY (id_venda) REFERENCES public.venda(id_venda);
+
+
+--
+-- TOC entry 4883 (class 2606 OID 16410)
+-- Name: paroquia fk_paroquia_diocese; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.paroquia
+    ADD CONSTRAINT fk_paroquia_diocese FOREIGN KEY (id_diocese) REFERENCES public.diocese(id_diocese);
+
+
+--
+-- TOC entry 4891 (class 2606 OID 16536)
+-- Name: ponto_venda fk_ponto_venda_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ponto_venda
+    ADD CONSTRAINT fk_ponto_venda_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4896 (class 2606 OID 16605)
+-- Name: item_venda_registro fk_registro_item_venda; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda_registro
+    ADD CONSTRAINT fk_registro_item_venda FOREIGN KEY (id_item_venda) REFERENCES public.item_venda(id_item_venda);
+
+
+--
+-- TOC entry 4897 (class 2606 OID 16600)
+-- Name: item_venda_registro fk_registro_venda; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.item_venda_registro
+    ADD CONSTRAINT fk_registro_venda FOREIGN KEY (id_venda) REFERENCES public.venda(id_venda);
+
+
+--
+-- TOC entry 4884 (class 2606 OID 16431)
+-- Name: usuario fk_usuario_paroquia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuario
+    ADD CONSTRAINT fk_usuario_paroquia FOREIGN KEY (id_paroquia) REFERENCES public.paroquia(id_paroquia);
+
+
+--
+-- TOC entry 4894 (class 2606 OID 16577)
+-- Name: venda fk_venda_ponto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT fk_venda_ponto FOREIGN KEY (id_ponto_venda) REFERENCES public.ponto_venda(id_ponto_venda);
+
+
+--
+-- TOC entry 4895 (class 2606 OID 16582)
+-- Name: venda fk_venda_usuario; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT fk_venda_usuario FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario);
+
+
+-- Completed on 2026-06-02 15:46:47
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict GZ24b8LybJ3a6QUNkGaMc81xqMhxYEolpO3EKXFy5JYyNpmIyqCfJM1ZFcepI4N
+

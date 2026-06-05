@@ -6,7 +6,7 @@ Sistema para gestão de famílias atendidas e doações em paróquias.
 
 | Camada     | Tecnologia                                      |
 |------------|-------------------------------------------------|
-| Backend    | ASP.NET Core 8, C#                              |
+| Backend    | ASP.NET Core 10, C#                              |
 | ORM        | Entity Framework Core 9 (code-first + migrations) |
 | Banco      | PostgreSQL 16                                   |
 | Infra      | Docker + Docker Compose                         |
@@ -37,7 +37,7 @@ Caritas.WebApi      → Controllers, Middleware, Swagger, entrypoint HTTP
 ## Pré-requisitos
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Node.js v22.22.3](https://nodejs.org/)
 - [Biome 2.2.6](https://biomejs.dev/) — instalado e configurado como formatter/linter padrão no VSCode (extensão [`biomejs.biome`](https://marketplace.visualstudio.com/items?itemName=biomejs.biome))
 - `dotnet-ef` (tool global, ver seção [Migrations](#migrations-ef-core))
@@ -120,9 +120,3 @@ dotnet ef migrations remove --project Caritas.Repository --startup-project Carit
 ```
 
 A tool roda na máquina local — gera os arquivos em `Caritas.Repository/Migrations/`. Não precisa do container pra isso. Ao rodar o backend as migrations são aplicadas no Postgres no startup automaticamente.
-
-## A Fazer
-
-- [ ] Adicionar [React Hook Form](https://react-hook-form.com/) no frontend para gerenciamento de formulários
-- [ ] Atualizar backend para .NET 10
-- [ ] Criar layout do sistema com a sidebar e paleta de cores de acordo com o prototipo
