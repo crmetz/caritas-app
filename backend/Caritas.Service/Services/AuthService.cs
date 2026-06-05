@@ -39,11 +39,8 @@ public class AuthService(
         }
 
         var tempPassword = "Senhatemp123"; //GenerateTemporaryPassword()
-        var passwordToUse = string.IsNullOrWhiteSpace(dto.Password)
-        ? tempPassword
-        : dto.Password;
 
-        var resultado = await userManager.CreateAsync(usuario, passwordToUse);
+        var resultado = await userManager.CreateAsync(usuario, tempPassword);
 
         if (!resultado.Succeeded)
             return (false, resultado.Errors.Select(e => e.Description), null, null);
@@ -53,18 +50,23 @@ public class AuthService(
         return (true, Enumerable.Empty<string>(), usuario, resetToken);
     }
 
-    public async Task<(bool Success, string? Token, string? Error)> LoginAsync(LoginDto dto)
+    public async Task<LoginResponseDto> LoginAsync(LoginDto dto)
     {
         var usuario = await userManager.FindByEmailAsync(dto.Email);
 
         if (usuario is null || !await userManager.CheckPasswordAsync(usuario, dto.Password))
-            return (false, null, "Email ou senha inválidos.");
+            throw new UnauthorizedAccessException("Email ou senha incorretos.");
 
         if (!usuario.Ativo)
-            return (false, null, "Usuário inativo.");
+            throw new UnauthorizedAccessException("Usuário inativo. Contate o administrador.");
 
         var token = GenerateToken(usuario);
-        return (true, token, null);
+        return new LoginResponseDto
+        {
+            Nome = usuario.Nome,
+            Sobrenome = usuario.Sobrenome,
+            Token = token
+        };
     }
 
     public async Task<String> GeneratePasswordResetTokenAsync(string userEmail)
