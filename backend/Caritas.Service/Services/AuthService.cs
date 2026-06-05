@@ -89,7 +89,12 @@ public class AuthService(
             return (Success:false, Errors:["Usuário não encontrado"]);
         }
 
-        await userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+        var result = await userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+
+        if (!result.Succeeded)
+        {
+            return (Success: false, Errors: result.Errors.Select(e => e.Description).ToList());
+        }
 
         return (Success: true, Errors:[]);
     }
@@ -103,7 +108,12 @@ public class AuthService(
             return (Success:false, Errors:["Usuário não encontrado"]);
         }
 
-        await userManager.ChangePasswordAsync(user, dto.Password, dto.NewPassword);
+        var result = await userManager.ChangePasswordAsync(user, dto.Password, dto.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            return (Success: false, Errors: result.Errors.Select(e => e.Description).ToList());
+        }
 
         return (Success: true, Errors:[]);
     }
