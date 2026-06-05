@@ -36,12 +36,9 @@ public class AuthController(
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var (success, token, error) = await _authService.LoginAsync(dto);
+        var result = await _authService.LoginAsync(dto);
 
-        if (!success)
-            return Unauthorized(new { mensagem = error });
-
-        return Ok(new { token });
+        return Ok(result);
     }
 
     [HttpPost("reset-password")]

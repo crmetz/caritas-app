@@ -25,6 +25,7 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
             KeyNotFoundException  => StatusCodes.Status404NotFound,
             ArgumentException     => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status422UnprocessableEntity,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             _                     => StatusCodes.Status500InternalServerError,
         };
 
@@ -36,6 +37,7 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
                 KeyNotFoundException      => "Recurso não encontrado",
                 ArgumentException         => "Dados inválidos",
                 InvalidOperationException => "Operação inválida",
+                UnauthorizedAccessException => "Acesso não autorizado",
                 _                         => "Erro interno do servidor",
             },
             Detail = ex.Message,
