@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "@/components/ui/MultiSelect";
+import { MultiSelect, type SelectOption } from "@/components/ui/MultiSelect";
 import APIService from "@/services/api";
 import type {
 	CreateUsuarioDto,
@@ -35,11 +35,17 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
 		const [fetchingUser, setFetchingUser] = useState(false);
+		const [paroquiasOptions, setParoquiasOptions] = useState<SelectOption<number>[]>([]);
 
-		const { register, handleSubmit, reset, control } =
+		const { register, handleSubmit, reset, control, setValue } =
 			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
 
 		const open = async (id?: number) => {
+			const opcoesParoquia = await APIService.getRequest<SelectOption<number>[]>({
+				url: "/paroquias/select",
+			}).catch(() => [] as SelectOption<number>[]);
+			setParoquiasOptions(opcoesParoquia);
+
 			if (id !== undefined) {
 				setEditingId(id);
 				setIsOpen(true);
@@ -173,10 +179,11 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										render={({ field }) => (
 											<MultiSelect<number>
 												value={field.value ?? []}
-												onChange={field.onChange}
-												fetchOptions={() =>
-													APIService.getRequest({ url: "/paroquias/select" })
-												}
+												onChange={(vals) => 
+													setValue("paroquiasPermitidas", vals, {
+														shouldDirty: true,
+													})}
+												options={paroquiasOptions}
 												placeholder="Selecione as paróquias..."
 											/>
 										)}

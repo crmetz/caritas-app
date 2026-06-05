@@ -12,7 +12,6 @@ namespace Caritas.Models.DTOs.Usuario
         public DateOnly? DataNasc { get; set; }
         public int? PerfilId { get; set; }
         public DateTime CriadoEm { get; set; }
-        public DateTime? AtualizadoEm { get; set; }
         public List<int>? ParoquiasPermitidas { get; set; }
     };
 }

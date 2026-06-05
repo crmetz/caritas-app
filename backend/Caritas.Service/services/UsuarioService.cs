@@ -71,8 +71,16 @@ public class UsuariosService
         usuario.PerfilId = dto.PerfilId ?? usuario.PerfilId;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
+        var paroquiasToRemove = usuario.UsuarioParoquias
+            .Where(up => !dto.ParoquiasPermitidas.Contains(up.ParoquiaId))
+            .ToList();
+
+        foreach (var up in paroquiasToRemove)
+            usuario.UsuarioParoquias.Remove(up);
+
         foreach (var paroquiaId in dto.ParoquiasPermitidas)
-            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+            if (!usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
+                usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
 
         await _usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();

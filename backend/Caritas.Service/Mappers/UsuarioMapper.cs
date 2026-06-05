@@ -19,7 +19,7 @@ namespace Caritas.Service.Mappers
                 DataNasc = entity.DataNasc,
                 PerfilId = entity.PerfilId,
                 CriadoEm = entity.CriadoEm,
-                AtualizadoEm = entity.AtualizadoEm
+                ParoquiasPermitidas = entity.UsuarioParoquias.Select(up => up.ParoquiaId).ToList()
             };
         }
 

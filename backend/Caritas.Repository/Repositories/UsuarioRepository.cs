@@ -23,6 +23,7 @@ public class UsuarioRepository(CaritasDbContext context) : IUsuarioRepository
     public async Task<Usuario?> GetByIdAsync(int id)
         => await _dbSet
             .Include(u => u.Perfil)
+            .Include(u => u.UsuarioParoquias)
             .FirstOrDefaultAsync(u => u.Id == id && u.Ativo);
 
     public async Task<Usuario?> GetByEmailAsync(string email)

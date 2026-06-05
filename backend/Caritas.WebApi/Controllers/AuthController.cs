@@ -19,24 +19,13 @@ public class AuthController(
 {
     private readonly AuthService _authService = new(userManager, context, configuration);
 
-    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CadastroDto dto)
     {
-        var (success, errors, usuario, resetToken) = await _authService.RegisterAsync(dto);
+        var (usuario, resetToken) = await _authService.RegisterAsync(dto);
 
-        if (!success)
-            return BadRequest(new { erros = errors });
 
-        return CreatedAtAction(nameof(Register), new { id = usuario!.Id }, new
-        {
-            usuario.Id,
-            usuario.Nome,
-            usuario.Sobrenome,
-            usuario.Email,
-            ParoquiasPermitidas = usuario.UsuarioParoquias.Select(up => up.ParoquiaId),
-            ResetToken = resetToken
-        });
+        return CreatedAtAction(nameof(Register), new { usuario, resetToken});
     }
 
     [AllowAnonymous]
@@ -67,10 +56,7 @@ public class AuthController(
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {   
         dto.Token = Uri.UnescapeDataString(dto.Token);
-        var result = await _authService.ResetPasswordAsync(dto);
-
-        if (!result.Success)
-            return BadRequest(new { erros = result.Errors });
+        await _authService.ResetPasswordAsync(dto);
 
         return NoContent();
     }
@@ -78,10 +64,7 @@ public class AuthController(
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
     {
-        var result = await _authService.ChangePasswordAsync(dto);
-
-        if (!result.Success)
-            return BadRequest(new { erros = result.Errors });
+        await _authService.ChangePasswordAsync(dto);   
 
         return NoContent();
     }
