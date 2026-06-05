@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Services.Email.Templates;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Caritas.WebApi.Controllers;
 
+[Authorize]
 public class AuthController(
     UserManager<Usuario> userManager,
     CaritasDbContext context,
@@ -17,6 +19,7 @@ public class AuthController(
 {
     private readonly AuthService _authService = new(userManager, context, configuration);
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CadastroDto dto)
     {
@@ -36,6 +39,7 @@ public class AuthController(
         });
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
@@ -44,27 +48,40 @@ public class AuthController(
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] string userEmail)
     {
         var token = await _authService.GeneratePasswordResetTokenAsync(userEmail);
 
-        if (String.IsNullOrEmpty(token))
-            return NoContent();    
-
-        await emailService.SendAsync(userEmail, "Recuperação de senha", PasswordRecoverEmail.Build(token));
+        if (!String.IsNullOrEmpty(token))
+        {
+            await emailService.SendAsync(userEmail, "Recuperação de senha", PasswordRecoverEmail.Build(token));
+        }
 
         return NoContent();
     }
 
+    [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {   
         dto.Token = Uri.UnescapeDataString(dto.Token);
-        var resultado = await _authService.ResetPasswordAsync(dto);
+        var result = await _authService.ResetPasswordAsync(dto);
 
-        if (!resultado.Succeeded)
-            return BadRequest(new { erros = resultado.Errors.Select(e => e.Description) });
+        if (!result.Success)
+            return BadRequest(new { erros = result.Errors });
+
+        return NoContent();
+    }
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+    {
+        var result = await _authService.ChangePasswordAsync(dto);
+
+        if (!result.Success)
+            return BadRequest(new { erros = result.Errors });
 
         return NoContent();
     }
