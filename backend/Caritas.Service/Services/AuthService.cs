@@ -67,6 +67,28 @@ public class AuthService(
         return (true, token, null);
     }
 
+    public async Task<String> GeneratePasswordResetTokenAsync(string userEmail)
+    {
+        var user = await userManager.FindByEmailAsync(userEmail);
+
+        if(user == null)
+        {
+            return null;
+        }
+
+        return await userManager.GeneratePasswordResetTokenAsync(user);
+    }
+    public async Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto dto)
+    {
+        var user = await userManager.FindByEmailAsync(dto.Email);
+
+        if(user == null)
+        {
+            return IdentityResult.Failed([new IdentityError() { Description = "Usuário não encontrado"}]);
+        }
+
+        return await userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+    }
     private string GenerateToken(Usuario usuario)
     {
         var jwtKey = configuration["Jwt:Key"]!;

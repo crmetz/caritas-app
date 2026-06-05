@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Caritas.Models.Settings;
+using Caritas.Models.Interfaces.Services;
+using Caritas.Service.Services.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +81,10 @@ builder.Services.AddSwaggerGen(options =>
 
 
 builder.Services.AddAuthorization();
+
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(opt =>
