@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Caritas.Models.DTOs.Usuario;
+using Caritas.Service.Mappers;
 namespace Caritas.Service.Services;
 
 public class AuthService(
@@ -15,7 +17,7 @@ public class AuthService(
     CaritasDbContext context,
     IConfiguration configuration)
 {
-    public async Task<(bool Success, IEnumerable<string> Errors, Usuario? Usuario, string? resetToken)> RegisterAsync(CadastroDto dto)
+    public async Task<(UsuarioDto Usuario, string? resetToken)> RegisterAsync(CadastroDto dto)
     {
         var usuario = new Usuario
         {
@@ -43,11 +45,11 @@ public class AuthService(
         var resultado = await userManager.CreateAsync(usuario, tempPassword);
 
         if (!resultado.Succeeded)
-            return (false, resultado.Errors.Select(e => e.Description), null, null);
+            throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
 
-        return (true, Enumerable.Empty<string>(), usuario, resetToken);
+        return (usuario.ToDto(), resetToken);
     }
 
     public async Task<LoginResponseDto> LoginAsync(LoginDto dto)
