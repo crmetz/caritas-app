@@ -19,13 +19,13 @@ public class UsuariosService
         _usuarioRepository = usuarioRepository;
     }
 
-     public async Task<PagedResponseDto<UsuarioDto>> GetPagedAsync(int page, int pageSize)
+     public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(int page, int pageSize)
         {
             var paged = await _usuarioRepository.GetPagedAsync(page, pageSize);
 
-            return new PagedResponseDto<UsuarioDto>
+            return new PagedResponseDto<UsuarioResponseDto>
             {
-                Items = paged.Items.Select(p => p.ToDto()),
+                Items = paged.Items.Select(p => p.ToResponseDto()),
                 TotalCount = paged.TotalCount
             };
         }

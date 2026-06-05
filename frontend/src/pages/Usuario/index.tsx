@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import APIService, { type PagedResponse } from "@/services/api";
 import {
-	type Usuario,
 	type UsuarioModalRef,
 	usuarioNomeCompleto,
+	type UsuarioResponseDto,
 } from "./interface";
 import { UsuarioModal } from "./modal";
 
-const columns: Column<Usuario>[] = [
+const columns: Column<UsuarioResponseDto>[] = [
 	{
 		key: "nome",
 		header: "Usuário",
@@ -34,17 +34,17 @@ const columns: Column<Usuario>[] = [
 		render: (usuario) =>
 			usuario.telefone || <span className="text-muted-foreground">-</span>,
 	},
-	{
-		key: "perfil",
-		header: "Perfil",
-		render: (usuario) =>
-			usuario.perfil?.nome ??
-			(usuario.perfilId ? (
-				`Perfil #${usuario.perfilId}`
-			) : (
-				<span className="text-muted-foreground">-</span>
-			)),
-	},
+	// {
+	// 	key: "perfil",
+	// 	header: "Perfil",
+	// 	render: (usuario) =>
+	// 		usuario.perfil?.nome ??
+	// 		(usuario.perfilId ? (
+	// 			`Perfil #${usuario.perfilId}`
+	// 		) : (
+	// 			<span className="text-muted-foreground">-</span>
+	// 		)),
+	// },
 	{
 		key: "ativo",
 		header: "Status",
@@ -64,7 +64,7 @@ const columns: Column<Usuario>[] = [
 
 export default function UsuarioPage() {
 	const modalRef = useRef<UsuarioModalRef>(null);
-	const [data, setData] = useState<Usuario[]>([]);
+	const [data, setData] = useState<UsuarioResponseDto[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [pagination, setPagination] = useState({
 		page: 1,
@@ -76,7 +76,7 @@ export default function UsuarioPage() {
 		async (page: number) => {
 			setLoading(true);
 			try {
-				const result = await APIService.getRequest<PagedResponse<Usuario>>({
+				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
 					url: "/usuarios",
 					params: { page, pageSize: pagination.pageSize },
 				});
@@ -99,7 +99,7 @@ export default function UsuarioPage() {
 		load(1);
 	}, [load]);
 
-	const handleDelete = async (usuario: Usuario) => {
+	const handleDelete = async (usuario: UsuarioResponseDto) => {
 		if (!confirm(`Inativar o usuário ${usuarioNomeCompleto(usuario)}?`)) return;
 
 		try {
@@ -136,8 +136,6 @@ export default function UsuarioPage() {
 						<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 text-muted-foreground" />
 						<Input className="pl-12" placeholder="Buscar usuário..." />
 					</div>
-					<Input placeholder="Todos os perfis" readOnly />
-					<Input placeholder="Todos os status" readOnly />
 				</div>
 			</div>
 
@@ -149,7 +147,7 @@ export default function UsuarioPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={(usuario) => modalRef.current?.open(usuario)}
+				onEdit={(usuario) => modalRef.current?.open(usuario.id)}
 				onDelete={handleDelete}
 			/>
 
