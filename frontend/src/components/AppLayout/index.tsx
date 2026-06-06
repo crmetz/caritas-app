@@ -1,8 +1,7 @@
-import type { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout() {
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
 		cn(
 			"rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors hover:bg-card",
@@ -27,7 +26,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 					</nav>
 				</div>
 			</header>
-			<main className="mx-auto w-full max-w-7xl p-6">{children}</main>
+			<main className="mx-auto w-full max-w-7xl p-6">
+				<Outlet />
+			</main>
 		</div>
 	);
 }

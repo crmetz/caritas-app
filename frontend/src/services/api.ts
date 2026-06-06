@@ -9,28 +9,13 @@ export interface PagedResponse<T> {
   totalCount: number;
 }
 
-// DEV ONLY — login automático com usuário seed
-if (import.meta.env.DEV) {
-  let tokenPromise: Promise<string> | null = null;
-
-  const getDevToken = () => {
-    if (!tokenPromise) {
-      tokenPromise = axios
-        .post(`${import.meta.env.VITE_API_URL ?? "http://localhost:8080"}/api/auth/login`, {
-          email: "dev@caritas.com",
-          password: "Dev@12345",
-        })
-        .then((r) => r.data.token);
-    }
-    return tokenPromise;
-  };
-
-  api.interceptors.request.use(async (config) => {
-    const token = await getDevToken();
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
-}
+  }
+  return config;
+});
 
 const APIService = {
   getRequest: <T>({ url, params }: { url: string; params?: object }) =>

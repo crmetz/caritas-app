@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using Caritas.Models.DTOs.Authentication;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
+using Caritas.Service.Services.Email.Templates;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -15,9 +17,10 @@ namespace Caritas.Service.Services;
 public class AuthService(
     UserManager<Usuario> userManager,
     CaritasDbContext context,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    IEmailService emailService)
 {
-    public async Task<(UsuarioDto Usuario, string? resetToken)> RegisterAsync(CadastroDto dto)
+    public async Task<UsuarioDto> RegisterAsync(CadastroDto dto)
     {
         var usuario = new Usuario
         {
@@ -40,7 +43,7 @@ public class AuthService(
             }
         }
 
-        var tempPassword = "Senhatemp123"; //GenerateTemporaryPassword()
+        var tempPassword = "SenhaTemp@123"; //GenerateTemporaryPassword();
 
         var resultado = await userManager.CreateAsync(usuario, tempPassword);
 
@@ -48,8 +51,11 @@ public class AuthService(
             throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
+        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(usuario.Email!)}&token={Uri.EscapeDataString(resetToken)}";
+        await emailService.SendAsync(usuario.Email!, FirstAccessEmail.Subject, FirstAccessEmail.Build(usuario.Nome!, link));
 
-        return (usuario.ToDto(), resetToken);
+        return usuario.ToDto();
     }
 
     public async Task<LoginResponseDto> LoginAsync(LoginDto dto)

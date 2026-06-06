@@ -17,15 +17,13 @@ public class AuthController(
     IEmailService emailService,
     IConfiguration configuration) : BaseApiController
 {
-    private readonly AuthService _authService = new(userManager, context, configuration);
+    private readonly AuthService _authService = new(userManager, context, configuration, emailService);
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CadastroDto dto)
     {
-        var (usuario, resetToken) = await _authService.RegisterAsync(dto);
-
-
-        return CreatedAtAction(nameof(Register), new { usuario, resetToken});
+        var usuario = await _authService.RegisterAsync(dto);
+        return CreatedAtAction(nameof(Register), new { id = usuario.Id }, usuario);
     }
 
     [AllowAnonymous]
@@ -43,9 +41,11 @@ public class AuthController(
     {
         var token = await _authService.GeneratePasswordResetTokenAsync(userEmail);
 
-        if (!String.IsNullOrEmpty(token))
+        if (!string.IsNullOrEmpty(token))
         {
-            await emailService.SendAsync(userEmail, "Recuperação de senha", PasswordRecoverEmail.Build(token));
+            var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+            var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(userEmail)}&token={Uri.EscapeDataString(token)}";
+            await emailService.SendAsync(userEmail, PasswordRecoverEmail.Subject, PasswordRecoverEmail.Build(link));
         }
 
         return NoContent();
@@ -54,10 +54,8 @@ public class AuthController(
     [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
-    {   
-        dto.Token = Uri.UnescapeDataString(dto.Token);
+    {
         await _authService.ResetPasswordAsync(dto);
-
         return NoContent();
     }
 

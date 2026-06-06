@@ -4,15 +4,17 @@ namespace Caritas.Service.Services.Email.Templates
     //Se quiserem algo mais flexível, considerem refatorar.
     public static class PasswordRecoverEmail
     {
-        public static string Build(string token) => EmailLayout.Wrap($@"
+        public static string Build(string link) => EmailLayout.Wrap($@"
         <div class='header'>
             <h1>Cáritas</h1>
         </div>
         <div class='body'>
             <p>Olá,</p>
             <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-            <p>Para criar uma nova senha, acesse o link:</p>
-            <a href='url?token={Uri.EscapeDataString(token)}'>Redefinir senha<a>
+            <p>Para criar uma nova senha, clique no botão abaixo:</p>
+            <p style='text-align: center; margin: 24px 0;'>
+                <a href='{link}' style='background-color: #c0392b; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;'>Redefinir senha</a>
+            </p>
             <p>Por motivos de segurança, este link expirará em 24 horas.</p>
             <p>Se você não solicitou a redefinição de senha, pode ignorar este e-mail. Sua conta permanecerá segura e nenhuma alteração será realizada.</p>
         </div>
