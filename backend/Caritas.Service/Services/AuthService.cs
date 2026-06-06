@@ -82,42 +82,39 @@ public class AuthService(
 
         return await userManager.GeneratePasswordResetTokenAsync(user);
     }
-    public async Task<(bool Success, IEnumerable<string> Errors)> ResetPasswordAsync(ResetPasswordDto dto)
+    public async Task ResetPasswordAsync(ResetPasswordDto dto)
     {
         var user = await userManager.FindByEmailAsync(dto.Email);
 
         if(user == null)
         {
-            return (Success:false, Errors:["Usuário não encontrado"]);
+            throw new KeyNotFoundException("Usuário não encontrado");
         }
 
         var result = await userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
 
         if (!result.Succeeded)
         {
-            return (Success: false, Errors: result.Errors.Select(e => e.Description).ToList());
+            throw new Exception("Erro ao resetar senha: " + string.Join(", ", result.Errors.Select(e => e.Description)));
         }
 
-        return (Success: true, Errors:[]);
     }
 
-    public async Task<(bool Success, IEnumerable<string> Errors)>  ChangePasswordAsync(ChangePasswordDto dto)
+    public async Task  ChangePasswordAsync(ChangePasswordDto dto)
     {
         var user = await userManager.FindByEmailAsync(dto.Email);
 
         if(user == null)
         {
-            return (Success:false, Errors:["Usuário não encontrado"]);
+            throw new KeyNotFoundException("Usuário não encontrado");
         }
 
         var result = await userManager.ChangePasswordAsync(user, dto.Password, dto.NewPassword);
 
         if (!result.Succeeded)
         {
-            return (Success: false, Errors: result.Errors.Select(e => e.Description).ToList());
+            throw new Exception("Erro ao alterar senha: " + string.Join(", ", result.Errors.Select(e => e.Description)));
         }
-
-        return (Success: true, Errors:[]);
     }
 
     private string GenerateToken(Usuario usuario)
