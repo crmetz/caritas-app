@@ -3,6 +3,7 @@ using System;
 using Caritas.Repository.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Caritas.Repository.Migrations
 {
     [DbContext(typeof(CaritasDbContext))]
-    partial class CaritasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260525203602_PadronizarLinguagemBanco")]
+    partial class PadronizarLinguagemBanco
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,7 +148,8 @@ namespace Caritas.Repository.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EnderecoId");
+                    b.HasIndex("EnderecoId")
+                        .IsUnique();
 
                     b.ToTable("Paroquia");
                 });
@@ -315,8 +319,8 @@ namespace Caritas.Repository.Migrations
                     b.Property<DateTime?>("DataInativacao")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly?>("DataNasc")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("DataNasc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -387,8 +391,8 @@ namespace Caritas.Repository.Migrations
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
                 {
                     b.HasOne("Caritas.Models.Entities.Endereco", "Endereco")
-                        .WithMany()
-                        .HasForeignKey("EnderecoId");
+                        .WithOne("Paroquia")
+                        .HasForeignKey("Caritas.Models.Entities.Paroquia", "EnderecoId");
 
                     b.Navigation("Endereco");
                 });
@@ -465,6 +469,11 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("Paroquia");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
+                {
+                    b.Navigation("Paroquia");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>

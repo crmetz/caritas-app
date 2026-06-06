@@ -3,6 +3,7 @@ using System;
 using Caritas.Repository.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Caritas.Repository.Migrations
 {
     [DbContext(typeof(CaritasDbContext))]
-    partial class CaritasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523153222_EstadoInicial")]
+    partial class EstadoInicial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,11 +27,11 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Bairro")
                         .HasColumnType("text");
@@ -58,9 +61,6 @@ namespace Caritas.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Bairro")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -80,7 +80,7 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Estado")
@@ -112,6 +112,9 @@ namespace Caritas.Repository.Migrations
                     b.Property<int>("SituacaoMoradia")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Vulnerabilidade")
                         .HasColumnType("integer");
 
@@ -124,20 +127,14 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("EnderecoId")
-                        .HasColumnType("integer");
+                    b.Property<long?>("EnderecoId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -145,24 +142,19 @@ namespace Caritas.Repository.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EnderecoId");
+                    b.HasIndex("EnderecoId")
+                        .IsUnique();
 
                     b.ToTable("Paroquia");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Perfil", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Descricao")
                         .HasColumnType("text");
@@ -171,8 +163,8 @@ namespace Caritas.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("PerfilPaiId")
-                        .HasColumnType("integer");
+                    b.Property<long?>("PerfilPaiId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -186,20 +178,20 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.PerfilPermissao", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Ativa")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("PerfilId")
-                        .HasColumnType("integer");
+                    b.Property<long>("PerfilId")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("PermissaoId")
-                        .HasColumnType("integer");
+                    b.Property<long>("PermissaoId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -212,11 +204,11 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Permissao", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Codigo")
                         .HasColumnType("text");
@@ -237,14 +229,11 @@ namespace Caritas.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Cpf")
                         .HasMaxLength(14)
                         .HasColumnType("character varying(14)");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateOnly>("DataNascimento")
@@ -281,6 +270,9 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Cpf")
@@ -294,29 +286,26 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Usuario", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Cpf")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<DateTime>("DataCriacao")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DataInativacao")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly?>("DataNasc")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("DataNasc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -325,8 +314,8 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("Nome")
                         .HasColumnType("text");
 
-                    b.Property<int?>("PerfilId")
-                        .HasColumnType("integer");
+                    b.Property<long?>("PerfilId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Senha")
                         .IsRequired()
@@ -338,8 +327,8 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("Telefone")
                         .HasColumnType("text");
 
-                    b.Property<int?>("UsuarioCriadorId")
-                        .HasColumnType("integer");
+                    b.Property<long?>("UsuarioCriadorId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -352,17 +341,17 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.UsuarioParoquia", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("ParoquiaId")
-                        .HasColumnType("integer");
+                    b.Property<long>("ParoquiaId")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("integer");
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -387,8 +376,8 @@ namespace Caritas.Repository.Migrations
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
                 {
                     b.HasOne("Caritas.Models.Entities.Endereco", "Endereco")
-                        .WithMany()
-                        .HasForeignKey("EnderecoId");
+                        .WithOne("Paroquia")
+                        .HasForeignKey("Caritas.Models.Entities.Paroquia", "EnderecoId");
 
                     b.Navigation("Endereco");
                 });
@@ -465,6 +454,11 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("Paroquia");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
+                {
+                    b.Navigation("Paroquia");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
