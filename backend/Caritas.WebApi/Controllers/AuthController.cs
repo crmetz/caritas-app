@@ -35,6 +35,14 @@ public class AuthController(
         return Ok(result);
     }
 
+    [HttpGet("session")]
+    public async Task<IActionResult> Session()
+    {
+        var result = await _authService.GetSessionAsync(UsuarioId);
+
+        return Ok(result);
+    }
+
     [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] string userEmail)

@@ -1,17 +1,15 @@
 using Caritas.Models.Common;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Caritas.Models.Entities;
 
 [Table("Perfil")]
-public class Perfil : AuditableEntity
+public class Perfil : IdentityRole<int>
 {
-    [Required]
-    public string Nome { get; set; } = string.Empty;
-
-    public string? Descricao { get; set; }
-
+    public string Descricao { get; set; }
+    public bool Estatico { get; set; }
     public int? PerfilPaiId { get; set; }
 
     [ForeignKey(nameof(PerfilPaiId))]
@@ -20,6 +18,6 @@ public class Perfil : AuditableEntity
     public ICollection<Perfil> SubPerfis { get; set; } = new List<Perfil>();
 
     // Navegações
-    public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+    // O vínculo usuário↔perfil é gerenciado pelo Identity via AspNetUserRoles.
     public ICollection<PerfilPermissao> PerfilPermissoes { get; set; } = new List<PerfilPermissao>();
 }

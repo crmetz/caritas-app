@@ -68,7 +68,6 @@ public class UsuariosService
         usuario.Sobrenome = dto.Sobrenome ?? usuario.Sobrenome;
         usuario.Telefone = dto.Telefone ?? usuario.Telefone;
         usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
-        usuario.PerfilId = dto.PerfilId ?? usuario.PerfilId;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
         var paroquiasToRemove = usuario.UsuarioParoquias

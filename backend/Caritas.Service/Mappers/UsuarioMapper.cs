@@ -17,7 +17,6 @@ namespace Caritas.Service.Mappers
                 Cpf = entity.Cpf,
                 Telefone = entity.Telefone,
                 DataNasc = entity.DataNasc,
-                PerfilId = entity.PerfilId,
                 CriadoEm = entity.CriadoEm,
                 ParoquiasPermitidas = entity.UsuarioParoquias.Select(up => up.ParoquiaId).ToList()
             };
@@ -33,7 +32,6 @@ namespace Caritas.Service.Mappers
                 Cpf = dto.Cpf,
                 Telefone = dto.Telefone,
                 DataNasc = dto.DataNasc,
-                PerfilId = dto.PerfilId,
             };
         }
 

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Caritas.Repository.Context;
 
-public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : IdentityDbContext<Usuario, IdentityRole<int>, int>(options)
+public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : IdentityDbContext<Usuario, Perfil, int>(options)
 {
     public DbSet<Familia> Familias => Set<Familia>();
     public DbSet<Pessoa> Pessoas => Set<Pessoa>();
@@ -24,7 +24,7 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         modelBuilder.Entity<Perfil>()
-            .HasIndex(p => p.Nome)
+            .HasIndex(p => p.Name)
             .IsUnique();
 
         modelBuilder.Entity<Perfil>()
