@@ -12,6 +12,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Service.Mappers;
+using Caritas.Models.Constants;
+using Caritas.Models.DTOs.Common;
+using Microsoft.EntityFrameworkCore;
 namespace Caritas.Service.Services;
 
 public class AuthService(
@@ -71,9 +74,33 @@ public class AuthService(
         var token = GenerateToken(usuario);
         return new LoginResponseDto
         {
+            Token = token
+        };
+    }
+
+    public async Task<SessionDto> GetSessionAsync(int usuarioId)
+    {
+        var usuario = await userManager.FindByIdAsync(usuarioId.ToString())
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+
+        var isAdmin = await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin);
+
+        var paroquias = isAdmin
+            ? await context.Paroquias
+                .Select(p => new SelectObjectDto { Value = p.Id, Label = p.Nome })
+                .ToListAsync()
+            : await context.UsuarioParoquias
+                .Where(up => up.UsuarioId == usuario.Id)
+                .Select(up => new SelectObjectDto { Value = up.ParoquiaId, Label = up.Paroquia!.Nome })
+                .ToListAsync();
+
+        return new SessionDto
+        {
             Nome = usuario.Nome,
             Sobrenome = usuario.Sobrenome,
-            Token = token
+            Email = usuario.Email,
+            IsAdmin = isAdmin,
+            ParoquiasPermitidas = paroquias,
         };
     }
 

@@ -1,12 +1,21 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/components/SessionProvider";
 
 export function AppLayout() {
+	const { session, paroquiaAtual, setParoquiaAtual, logout } = useSession();
+	const navigate = useNavigate();
+
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
 		cn(
 			"rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors hover:bg-card",
 			isActive ? "border-border bg-card text-foreground" : "border-transparent bg-transparent text-muted-foreground",
 		);
+
+	function handleLogout() {
+		logout();
+		navigate("/login", { replace: true });
+	}
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -24,6 +33,37 @@ export function AppLayout() {
 							Usuários
 						</NavLink>
 					</nav>
+					<div className="ml-auto flex items-center gap-4">
+						{session && session.paroquiasPermitidas.length > 0 && (
+							<select
+								id="paroquia-select"
+								className="rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground"
+								value={paroquiaAtual?.value ?? ""}
+								onChange={(e) => {
+									const selecionada = session.paroquiasPermitidas.find((p) => String(p.value) === e.target.value);
+									if (selecionada) setParoquiaAtual(selecionada);
+								}}
+							>
+								{session.paroquiasPermitidas.map((p) => (
+									<option key={p.value} value={p.value}>
+										{p.label}
+									</option>
+								))}
+							</select>
+						)}
+						{session && (
+							<span className="text-sm font-medium text-muted-foreground">
+								{session.nome} {session.sobrenome}
+							</span>
+						)}
+						<button
+							type="button"
+							onClick={handleLogout}
+							className="rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+						>
+							Sair
+						</button>
+					</div>
 				</div>
 			</header>
 			<main className="mx-auto w-full max-w-7xl p-6">

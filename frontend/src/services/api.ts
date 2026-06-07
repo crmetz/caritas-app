@@ -14,6 +14,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const paroquiaId = localStorage.getItem("paroquiaAtualId");
+  if (paroquiaId) {
+    config.headers["X-Paroquia-Id"] = paroquiaId;
+  }
   return config;
 });
 

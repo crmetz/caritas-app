@@ -15,14 +15,12 @@ public class UsuarioRepository(CaritasDbContext context) : IUsuarioRepository
 {
     return await _dbSet
         .Where(u => u.Ativo)
-        .Include(u => u.Perfil)
         .OrderBy(u => u.Nome)
         .ToPagedAsync(page, pageSize);
 }
 
     public async Task<Usuario?> GetByIdAsync(int id)
         => await _dbSet
-            .Include(u => u.Perfil)
             .Include(u => u.UsuarioParoquias)
             .FirstOrDefaultAsync(u => u.Id == id && u.Ativo);
 

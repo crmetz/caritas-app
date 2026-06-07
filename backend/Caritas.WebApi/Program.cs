@@ -1,3 +1,4 @@
+using Caritas.Models.Constants;
 using Caritas.Models.Entities;
 using Caritas.Repository.Context;
 using Caritas.WebApi.Middleware;
@@ -10,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using Caritas.Models.Settings;
 using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Services.Email;
+using Caritas.Service.Session;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +27,7 @@ builder.Services.AddIdentityCore<Usuario>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = false;
 })
-.AddRoles<IdentityRole<int>>()
+.AddRoles<Perfil>()
 .AddEntityFrameworkStores<CaritasDbContext>()
 .AddDefaultTokenProviders();
 
@@ -82,6 +84,9 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentSession, CurrentSession>();
+
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -115,6 +120,24 @@ using (var scope = app.Services.CreateScope())
                 CriadoEm = DateTime.UtcNow
             };
             await userManager.CreateAsync(devUser, "Dev@12345");
+        }
+
+        var roleManager = seedScope.ServiceProvider.GetRequiredService<RoleManager<Perfil>>();
+
+        if (await roleManager.FindByNameAsync(PerfisPadrao.Admin) is null)
+        {
+            await roleManager.CreateAsync(new Perfil
+            {
+                Name = PerfisPadrao.Admin,
+                Estatico = true,
+                Descricao = "Perfil de admnistrador do sistema"
+            });
+        }
+
+        var createdUser = await userManager.FindByEmailAsync(devEmail);
+        if (createdUser != null && !await userManager.IsInRoleAsync(createdUser, PerfisPadrao.Admin))
+        {
+            await userManager.AddToRoleAsync(createdUser, PerfisPadrao.Admin);
         }
     }
 }

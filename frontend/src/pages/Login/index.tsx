@@ -1,6 +1,7 @@
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/SessionProvider";
 import APIService from "@/services/api";
 import { Eye, EyeOff } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useState } from "react";
@@ -22,6 +23,7 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [forgotSent, setForgotSent] = useState(false);
 	const navigate = useNavigate();
+	const { refreshSession } = useSession();
 
 	function handleChange(e: ChangeEvent<HTMLInputElement>) {
 		setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,9 +33,9 @@ export default function LoginPage() {
 		e.preventDefault();
 		setIsLoading(true);
 		try {
-			const data = await APIService.postRequest<{ token: string; nome: string }>({ url: "/auth/login", body: form });
+			const data = await APIService.postRequest<{ token: string }>({ url: "/auth/login", body: form });
 			localStorage.setItem("token", data.token);
-			localStorage.setItem("nome", data.nome);
+			await refreshSession();
 			navigate("/");
 		} catch {
 			toast.error("E-mail ou senha incorretos.");
