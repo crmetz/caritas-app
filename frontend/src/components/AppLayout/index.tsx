@@ -32,6 +32,9 @@ export function AppLayout() {
 						<NavLink to="/usuarios" className={linkClassName}>
 							Usuários
 						</NavLink>
+						<NavLink to="/caixa" className={linkClassName}>
+							Caixa
+						</NavLink>
 					</nav>
 					<div className="ml-auto flex items-center gap-4">
 						{session && session.paroquiasPermitidas.length > 0 && (
