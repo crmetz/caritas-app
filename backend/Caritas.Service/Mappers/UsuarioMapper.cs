@@ -17,9 +17,8 @@ namespace Caritas.Service.Mappers
                 Cpf = entity.Cpf,
                 Telefone = entity.Telefone,
                 DataNasc = entity.DataNasc,
-                PerfilId = entity.PerfilId,
                 CriadoEm = entity.CriadoEm,
-                AtualizadoEm = entity.AtualizadoEm
+                ParoquiasPermitidas = entity.UsuarioParoquias.Select(up => up.ParoquiaId).ToList()
             };
         }
 
@@ -33,7 +32,20 @@ namespace Caritas.Service.Mappers
                 Cpf = dto.Cpf,
                 Telefone = dto.Telefone,
                 DataNasc = dto.DataNasc,
-                PerfilId = dto.PerfilId,
+            };
+        }
+
+        public static UsuarioResponseDto ToResponseDto(this Usuario entity)
+        {
+            return new UsuarioResponseDto
+            {
+                Id = entity.Id,
+                Nome = entity.Nome,
+                Sobrenome = entity.Sobrenome,
+                Email = entity.Email,
+                Telefone = entity.Telefone,
+                Ativo = entity.Ativo,
+                CriadoEm = entity.CriadoEm
             };
         }
     }

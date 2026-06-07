@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Caritas.Repository.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Caritas.Repository.Migrations
 {
     [DbContext(typeof(CaritasDbContext))]
-    partial class CaritasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260606183907_AdicionarIdentity")]
+    partial class AdicionarIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -159,40 +162,30 @@ namespace Caritas.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Descricao")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("Estatico")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int?>("PerfilPaiId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Nome")
                         .IsUnique();
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
 
                     b.HasIndex("PerfilPaiId");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("Perfil");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.PerfilPermissao", b =>
@@ -366,6 +359,9 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PerfilId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
@@ -400,6 +396,8 @@ namespace Caritas.Repository.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
+                    b.HasIndex("PerfilId");
+
                     b.HasIndex("UsuarioCriadorId");
 
                     b.ToTable("AspNetUsers", (string)null);
@@ -426,6 +424,35 @@ namespace Caritas.Repository.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("UsuarioParoquia");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -592,10 +619,16 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Caritas.Models.Entities.Usuario", b =>
                 {
+                    b.HasOne("Caritas.Models.Entities.Perfil", "Perfil")
+                        .WithMany("Usuarios")
+                        .HasForeignKey("PerfilId");
+
                     b.HasOne("Caritas.Models.Entities.Usuario", "UsuarioCriador")
                         .WithMany("UsuariosCriados")
                         .HasForeignKey("UsuarioCriadorId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Perfil");
 
                     b.Navigation("UsuarioCriador");
                 });
@@ -621,7 +654,7 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("Caritas.Models.Entities.Perfil", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -648,7 +681,7 @@ namespace Caritas.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.HasOne("Caritas.Models.Entities.Perfil", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -685,6 +718,8 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("PerfilPermissoes");
 
                     b.Navigation("SubPerfis");
+
+                    b.Navigation("Usuarios");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Permissao", b =>
