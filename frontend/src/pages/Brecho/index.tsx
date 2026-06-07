@@ -1,4 +1,4 @@
-import { Plus, ShoppingCart } from 'lucide-react'
+import { FlaskConical, Plus, ShoppingCart } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -15,6 +15,9 @@ import {
 import APIService, { type PagedResponse } from '@/services/api'
 import { PecaModal } from './modal'
 import type { ParoquiaSelect, PecaBrecho, PecaModalRef } from './interface'
+
+// TODO(auth): substituir por paroquiaId vinda do token JWT do usuário logado
+const PAROQUIA_KEY = 'brecho_paroquia_id'
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -48,10 +51,21 @@ export default function BrechoPage() {
     APIService.getRequest<ParoquiaSelect[]>({ url: '/paroquias/select' })
       .then((list) => {
         setParoquias(list)
-        if (list.length > 0) setParoquiaId(list[0].value)
+        if (list.length === 0) return
+
+        const saved = Number(localStorage.getItem(PAROQUIA_KEY))
+        const valid = saved && list.some((p) => p.value === saved)
+        const id = valid ? saved : list[0].value
+        setParoquiaId(id)
+        localStorage.setItem(PAROQUIA_KEY, String(id))
       })
       .catch(() => toast.error('Erro ao carregar paróquias.'))
   }, [])
+
+  const handleParoquiaChange = (id: number) => {
+    setParoquiaId(id)
+    localStorage.setItem(PAROQUIA_KEY, String(id))
+  }
 
   const load = useCallback(
     async (page: number) => {
@@ -111,21 +125,27 @@ export default function BrechoPage() {
         </div>
       </div>
 
-      <Select
-        value={paroquiaId?.toString() ?? ''}
-        onValueChange={(v) => setParoquiaId(Number(v))}
-      >
-        <SelectTrigger className="w-64">
-          <SelectValue placeholder="Selecionar paróquia..." />
-        </SelectTrigger>
-        <SelectContent>
-          {paroquias.map((p) => (
-            <SelectItem key={p.value} value={p.value.toString()}>
-              {p.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-3">
+        <Select
+          value={paroquiaId?.toString() ?? ''}
+          onValueChange={(v) => handleParoquiaChange(Number(v))}
+        >
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Selecionar paróquia..." />
+          </SelectTrigger>
+          <SelectContent>
+            {paroquias.map((p) => (
+              <SelectItem key={p.value} value={p.value.toString()}>
+                {p.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground border border-dashed rounded-lg px-2.5 py-1.5">
+          <FlaskConical className="h-3.5 w-3.5" />
+          Modo teste — será identificado pelo login
+        </span>
+      </div>
 
       <DataTable
         columns={columns}
