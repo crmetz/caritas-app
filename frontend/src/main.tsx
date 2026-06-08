@@ -15,6 +15,8 @@ import BazarVendaPage from "./pages/BazarVenda";
 import BrechoPage from "./pages/Brecho";
 import BrechoHistoricoPage from "./pages/BrechoHistorico";
 import BrechoVendaPage from "./pages/BrechoVenda";
+import CaixaPage from "./pages/Caixa";
+import CaixaRelatorioPage from "./pages/CaixaRelatorio";
 import FamiliaPage from "./pages/Familia";
 import ParoquiaPage from "./pages/Paroquia";
 import UsuarioPage from "./pages/Usuario";
@@ -40,6 +42,8 @@ createRoot(rootElement).render(
 						<Route path="/brecho" element={<BrechoPage />} />
 						<Route path="/brecho/nova-venda" element={<BrechoVendaPage />} />
 						<Route path="/brecho/historico" element={<BrechoHistoricoPage />} />
+						<Route path="/caixa" element={<CaixaPage />} />
+						<Route path="/caixa/relatorio" element={<CaixaRelatorioPage />} />
 					</Route>
 				</Route>
 					<Route path="*" element={<Navigate to="/" replace />} />
