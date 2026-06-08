@@ -10,6 +10,7 @@ import { SessionProvider } from "./components/SessionProvider";
 import LoginPage from "./pages/Login";
 import ResetPassowrdPage from "./pages/ResetPassword";
 import BrechoPage from "./pages/Brecho";
+import BrechoHistoricoPage from "./pages/BrechoHistorico";
 import BrechoVendaPage from "./pages/BrechoVenda";
 import FamiliaPage from "./pages/Familia";
 import ParoquiaPage from "./pages/Paroquia";
@@ -32,6 +33,7 @@ createRoot(rootElement).render(
 						<Route path="/usuarios" element={<UsuarioPage />} />
 						<Route path="/brecho" element={<BrechoPage />} />
 						<Route path="/brecho/nova-venda" element={<BrechoVendaPage />} />
+						<Route path="/brecho/historico" element={<BrechoHistoricoPage />} />
 					</Route>
 				</Route>
 					<Route path="*" element={<Navigate to="/" replace />} />

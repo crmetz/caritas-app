@@ -1,4 +1,4 @@
-import { FlaskConical, Plus, ShoppingCart } from 'lucide-react'
+import { ClipboardList, FlaskConical, Plus, ShoppingCart } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -110,6 +110,14 @@ export default function BrechoPage() {
           <p className="text-sm text-muted-foreground">Peças disponíveis por paróquia</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/brecho/historico')}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Histórico
+          </Button>
           <Button
             variant="outline"
             onClick={() => navigate('/brecho/nova-venda', { state: { paroquiaId } })}

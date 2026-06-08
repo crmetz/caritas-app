@@ -124,6 +124,64 @@ public class BrechoService(CaritasDbContext context)
         await transaction.CommitAsync();
     }
 
+    public async Task<PagedResponseDto<VendaBrechoResponseDto>> GetVendasPagedAsync(
+        int paroquiaId, int page, int pageSize)
+    {
+        var paged = await context.VendasBrecho
+            .Include(v => v.Itens).ThenInclude(i => i.Peca)
+            .Where(v => v.ParoquiaId == paroquiaId)
+            .OrderByDescending(v => v.DataVenda)
+            .ToPagedAsync(page, pageSize);
+
+        return new PagedResponseDto<VendaBrechoResponseDto>
+        {
+            Items = paged.Items.Select(MapVenda),
+            TotalCount = paged.TotalCount,
+        };
+    }
+
+    public async Task DeleteVendaAsync(int id)
+    {
+        var venda = await context.VendasBrecho
+            .Include(v => v.Itens).ThenInclude(i => i.Peca)
+            .Include(v => v.LancamentoCaixa)
+            .FirstOrDefaultAsync(v => v.Id == id)
+            ?? throw new KeyNotFoundException($"Venda com id {id} não encontrada.");
+
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        // Restaurar estoque de cada peça
+        foreach (var item in venda.Itens)
+            item.Peca.Quantidade += item.Quantidade;
+
+        // Remover lançamento automático do caixa vinculado
+        if (venda.LancamentoCaixa is not null)
+            context.LancamentosCaixa.Remove(venda.LancamentoCaixa);
+
+        context.VendasBrecho.Remove(venda);
+        await context.SaveChangesAsync();
+        await transaction.CommitAsync();
+    }
+
+    private static VendaBrechoResponseDto MapVenda(VendaBrecho v) => new()
+    {
+        Id = v.Id,
+        DataVenda = v.DataVenda,
+        CompradorNome = v.CompradorNome,
+        CompradorCpf = v.CompradorCpf,
+        CompradorIdentificacaoAlternativa = v.CompradorIdentificacaoAlternativa,
+        FormaPagamento = v.FormaPagamento,
+        ValorTotal = v.ValorTotal,
+        QuantidadeItens = v.Itens.Sum(i => i.Quantidade),
+        Itens = v.Itens.Select(i => new ItemVendaBrechoResponseDto
+        {
+            Categoria = i.Peca.Categoria,
+            Quantidade = i.Quantidade,
+            ValorUnitario = i.ValorUnitario,
+        }),
+        CriadoEm = v.CriadoEm,
+    };
+
     private static PecaResponseDto MapPeca(Peca p) => new()
     {
         Id = p.Id,

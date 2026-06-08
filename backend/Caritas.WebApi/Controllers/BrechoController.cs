@@ -47,4 +47,21 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         await _brechoService.CreateVendaAsync(dto);
         return Created(string.Empty, null);
     }
+
+    [HttpGet("vendas")]
+    public async Task<IActionResult> GetVendas(
+        [FromQuery] int paroquiaId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 15)
+    {
+        var result = await _brechoService.GetVendasPagedAsync(paroquiaId, page, pageSize);
+        return Ok(result);
+    }
+
+    [HttpDelete("vendas/{id:int}")]
+    public async Task<IActionResult> DeleteVenda(int id)
+    {
+        await _brechoService.DeleteVendaAsync(id);
+        return NoContent();
+    }
 }
