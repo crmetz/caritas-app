@@ -18,6 +18,14 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
     public DbSet<Permissao> Permissoes { get; set; }
     public DbSet<PerfilPermissao> PerfilPermissoes { get; set; }
 
+    public DbSet<Remessa> Remessas { get; set; }
+    public DbSet<Peca> Pecas { get; set; }
+    public DbSet<VendaBazar> VendasBazar { get; set; }
+    public DbSet<ItemVendaBazar> ItensVendaBazar { get; set; }
+    public DbSet<VendaBrecho> VendasBrecho { get; set; }
+    public DbSet<ItemVendaBrecho> ItensVendaBrecho { get; set; }
+    public DbSet<LancamentoCaixa> LancamentosCaixa { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -41,6 +49,12 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
             .HasOne(u => u.UsuarioCriador)
             .WithMany(u => u.UsuariosCriados)
             .HasForeignKey(u => u.UsuarioCriadorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<LancamentoCaixa>()
+            .HasOne(l => l.VendaBrecho)
+            .WithOne(v => v.LancamentoCaixa)
+            .HasForeignKey<LancamentoCaixa>(l => l.VendaBrechoId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 

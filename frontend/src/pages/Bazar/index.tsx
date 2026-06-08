@@ -1,0 +1,109 @@
+import { FileText, Plus, ShoppingCart } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { DataTable } from '@/components/DataTable'
+import type { Column } from '@/components/DataTable/interface'
+import { Button } from '@/components/ui/button'
+import APIService, { type PagedResponse } from '@/services/api'
+import { PecaModal } from './modal'
+import type { PecaBazar, PecaModalRef } from './interface'
+
+const fmtCurrency = (v: number) =>
+  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const columns: Column<PecaBazar>[] = [
+  { key: 'categoria', header: 'Categoria' },
+  { key: 'descricao', header: 'Descrição', render: (p) => p.descricao ?? '—' },
+  {
+    key: 'quantidade',
+    header: 'Quantidade',
+    render: (p) => (
+      <span className={p.quantidade === 0 ? 'text-destructive font-medium' : ''}>
+        {p.quantidade}
+      </span>
+    ),
+  },
+  { key: 'preco', header: 'Preço', render: (p) => fmtCurrency(p.preco) },
+]
+
+export default function BazarPage() {
+  const navigate = useNavigate()
+  const pecaModalRef = useRef<PecaModalRef>(null)
+
+  const [data, setData] = useState<PecaBazar[]>([])
+  const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10, totalCount: 0 })
+
+  const load = useCallback(
+    async (page: number) => {
+      setLoading(true)
+      try {
+        const result = await APIService.getRequest<PagedResponse<PecaBazar>>({
+          url: '/bazar/pecas',
+          params: { page, pageSize: pagination.pageSize },
+        })
+        setData(result.items)
+        setPagination((prev) => ({ ...prev, page, totalCount: result.totalCount }))
+      } catch {
+        toast.error('Erro ao carregar estoque.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [pagination.pageSize],
+  )
+
+  useEffect(() => {
+    load(1)
+  }, [load])
+
+  const handleDelete = async (peca: PecaBazar) => {
+    if (!confirm(`Remover "${peca.categoria}" do estoque?`)) return
+    try {
+      await APIService.deleteRequest({ url: `/bazar/pecas/${peca.id}` })
+      toast.success('Peça removida.')
+      load(pagination.page)
+    } catch {
+      toast.error('Erro ao remover peça.')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Bazar — Estoque</h1>
+          <p className="text-sm text-muted-foreground">Peças disponíveis para venda</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to="/bazar/relatorio">
+            <Button variant="outline" size="sm">
+              <FileText className="h-4 w-4" />
+              Relatório
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={() => navigate('/bazar/nova-venda')}>
+            <ShoppingCart className="h-4 w-4" />
+            Registrar Venda
+          </Button>
+          <Button onClick={() => pecaModalRef.current?.open()}>
+            <Plus className="h-4 w-4" />
+            Nova Peça
+          </Button>
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={data}
+        pagination={{ ...pagination, onPageChange: (page) => load(page) }}
+        isLoading={loading}
+        onEdit={(p) => pecaModalRef.current?.open(p)}
+        onDelete={handleDelete}
+      />
+
+      <PecaModal ref={pecaModalRef} onSuccess={() => load(pagination.page)} />
+    </div>
+  )
+}
