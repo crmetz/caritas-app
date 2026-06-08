@@ -1,8 +1,3 @@
-export interface ParoquiaSelect {
-  value: number
-  label: string
-}
-
 export interface PecaBrecho {
   id: number
   categoria: string

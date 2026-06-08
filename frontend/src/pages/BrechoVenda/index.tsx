@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,12 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useSession } from '@/components/SessionProvider'
 import APIService, { type PagedResponse } from '@/services/api'
 import type { CreateVendaDto, FormaPagamento, ItemVenda, PecaOpcao } from './interface'
 import { FORMA_PAGAMENTO_LABELS } from './interface'
-
-// TODO(auth): substituir por paroquiaId vinda do token JWT do usuário logado
-const PAROQUIA_KEY = 'brecho_paroquia_id'
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -46,11 +44,8 @@ const validateCpf = (cpf: string): boolean => {
 
 export default function BrechoVendaPage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const paroquiaId: number =
-    (location.state as { paroquiaId?: number })?.paroquiaId ||
-    Number(localStorage.getItem(PAROQUIA_KEY)) ||
-    0
+  const { paroquiaAtual } = useSession()
+  const paroquiaId = paroquiaAtual?.value ?? 0
 
   const [pecas, setPecas] = useState<PecaOpcao[]>([])
   const [itens, setItens] = useState<ItemVenda[]>([emptyItem()])

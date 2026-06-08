@@ -24,7 +24,3 @@ export interface VendaBrecho {
   criadoEm: string
 }
 
-export interface ParoquiaSelect {
-  value: number
-  label: string
-}

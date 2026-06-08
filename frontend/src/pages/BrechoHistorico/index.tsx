@@ -6,18 +6,10 @@ import { DataTable } from '@/components/DataTable'
 import type { Column } from '@/components/DataTable/interface'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useSession } from '@/components/SessionProvider'
 import APIService, { type PagedResponse } from '@/services/api'
-import type { ParoquiaSelect, VendaBrecho } from './interface'
+import type { VendaBrecho } from './interface'
 import { FORMA_PAGAMENTO_LABELS } from './interface'
-
-const PAROQUIA_KEY = 'brecho_paroquia_id'
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -32,32 +24,19 @@ const fmtDateTime = (iso: string) =>
   })
 
 export default function BrechoHistoricoPage() {
-  const [paroquias, setParoquias] = useState<ParoquiaSelect[]>([])
-  const [paroquiaId, setParoquiaId] = useState<number | null>(null)
+  const { paroquiaAtual } = useSession()
   const [data, setData] = useState<VendaBrecho[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 15, totalCount: 0 })
 
-  useEffect(() => {
-    APIService.getRequest<ParoquiaSelect[]>({ url: '/paroquias/select' })
-      .then((list) => {
-        setParoquias(list)
-        if (list.length === 0) return
-        const saved = Number(localStorage.getItem(PAROQUIA_KEY))
-        const id = saved && list.some((p) => p.value === saved) ? saved : list[0].value
-        setParoquiaId(id)
-      })
-      .catch(() => toast.error('Erro ao carregar paróquias.'))
-  }, [])
-
   const load = useCallback(
     async (page: number) => {
-      if (!paroquiaId) return
+      if (!paroquiaAtual) return
       setLoading(true)
       try {
         const result = await APIService.getRequest<PagedResponse<VendaBrecho>>({
           url: '/brecho/vendas',
-          params: { paroquiaId, page, pageSize: pagination.pageSize },
+          params: { paroquiaId: paroquiaAtual.value, page, pageSize: pagination.pageSize },
         })
         setData(result.items)
         setPagination((prev) => ({ ...prev, page, totalCount: result.totalCount }))
@@ -67,12 +46,12 @@ export default function BrechoHistoricoPage() {
         setLoading(false)
       }
     },
-    [paroquiaId, pagination.pageSize],
+    [paroquiaAtual, pagination.pageSize],
   )
 
   useEffect(() => {
-    if (paroquiaId) load(1)
-  }, [paroquiaId, load])
+    load(1)
+  }, [load])
 
   const handleDelete = async (venda: VendaBrecho) => {
     if (
@@ -177,26 +156,10 @@ export default function BrechoHistoricoPage() {
         <div>
           <h1 className="text-xl font-semibold">Brechó — Histórico de Vendas</h1>
           <p className="text-sm text-muted-foreground">
-            Registro de todas as vendas realizadas
+            {paroquiaAtual?.label ?? '—'}
           </p>
         </div>
       </div>
-
-      <Select
-        value={paroquiaId?.toString() ?? ''}
-        onValueChange={(v) => setParoquiaId(Number(v))}
-      >
-        <SelectTrigger className="w-64">
-          <SelectValue placeholder="Selecionar paróquia..." />
-        </SelectTrigger>
-        <SelectContent>
-          {paroquias.map((p) => (
-            <SelectItem key={p.value} value={p.value.toString()}>
-              {p.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
 
       <DataTable
         columns={columns}
