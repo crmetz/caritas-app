@@ -1,20 +1,14 @@
 import { ArrowLeft } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useSession } from '@/components/SessionProvider'
 import APIService from '@/services/api'
 import { DESTINO_LABELS, ORIGEM_LABELS } from '../Caixa/interface'
-import type { ParoquiaSelect, RelatorioCaixa } from './interface'
+import type { RelatorioCaixa } from './interface'
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -27,28 +21,18 @@ const firstOfMonth = () => {
 }
 
 export default function CaixaRelatorioPage() {
-  const [paroquias, setParoquias] = useState<ParoquiaSelect[]>([])
-  const [paroquiaId, setParoquiaId] = useState<number | null>(null)
+  const { paroquiaAtual } = useSession()
   const [dataInicio, setDataInicio] = useState(firstOfMonth())
   const [dataFim, setDataFim] = useState(today())
   const [relatorio, setRelatorio] = useState<RelatorioCaixa | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    APIService.getRequest<ParoquiaSelect[]>({ url: '/paroquias/select' })
-      .then((list) => {
-        setParoquias(list)
-        if (list.length > 0) setParoquiaId(list[0].value)
-      })
-      .catch(() => toast.error('Erro ao carregar paróquias.'))
-  }, [])
-
   const gerar = async () => {
-    if (!paroquiaId) return
+    if (!paroquiaAtual) return
     setLoading(true)
     try {
       const result = await APIService.getRequest<RelatorioCaixa>({
-        url: `/caixa/${paroquiaId}/relatorio`,
+        url: `/caixa/${paroquiaAtual.value}/relatorio`,
         params: { dataInicio, dataFim },
       })
       setRelatorio(result)
@@ -69,30 +53,14 @@ export default function CaixaRelatorioPage() {
         </Link>
         <div>
           <h1 className="text-xl font-semibold">Relatório do Caixa</h1>
-          <p className="text-sm text-muted-foreground">Resumo de movimentações por período</p>
+          <p className="text-sm text-muted-foreground">
+            {paroquiaAtual?.label ?? '—'}
+          </p>
         </div>
       </div>
 
       <div className="rounded-xl border bg-card p-6">
-        <div className="grid grid-cols-4 gap-4 items-end">
-          <div className="space-y-1">
-            <Label>Paróquia</Label>
-            <Select
-              value={paroquiaId?.toString() ?? ''}
-              onValueChange={(v) => setParoquiaId(Number(v))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {paroquias.map((p) => (
-                  <SelectItem key={p.value} value={p.value.toString()}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="grid grid-cols-3 gap-4 items-end">
           <div className="space-y-1">
             <Label>Data início</Label>
             <Input
@@ -109,7 +77,7 @@ export default function CaixaRelatorioPage() {
               onChange={(e) => setDataFim(e.target.value)}
             />
           </div>
-          <Button onClick={gerar} disabled={loading || !paroquiaId}>
+          <Button onClick={gerar} disabled={loading || !paroquiaAtual}>
             {loading ? 'Gerando...' : 'Gerar Relatório'}
           </Button>
         </div>

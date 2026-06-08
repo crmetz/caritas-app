@@ -22,11 +22,6 @@ export interface FamiliaResumo {
   nomeResponsavel: string
 }
 
-export interface ParoquiaSelect {
-  value: number
-  label: string
-}
-
 export interface LancamentoCaixa {
   id: number
   data: string

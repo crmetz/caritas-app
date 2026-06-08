@@ -2,11 +2,6 @@ import type { DestinoSaida, OrigemEntrada } from '../Caixa/interface'
 
 export type { DestinoSaida, OrigemEntrada }
 
-export interface ParoquiaSelect {
-  value: number
-  label: string
-}
-
 export interface EntradaPorOrigem {
   origem: OrigemEntrada
   total: number

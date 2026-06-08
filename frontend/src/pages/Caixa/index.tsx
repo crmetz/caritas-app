@@ -6,13 +6,7 @@ import { DataTable } from '@/components/DataTable'
 import type { Column } from '@/components/DataTable/interface'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useSession } from '@/components/SessionProvider'
 import APIService, { type PagedResponse } from '@/services/api'
 import { EntradaModal } from './EntradaModal'
 import { SaidaModal } from './SaidaModal'
@@ -21,7 +15,6 @@ import {
   type EntradaModalRef,
   type LancamentoCaixa,
   ORIGEM_LABELS,
-  type ParoquiaSelect,
   type SaidaModalRef,
 } from './interface'
 
@@ -33,29 +26,19 @@ const fmtDate = (s: string) => new Date(s).toLocaleDateString('pt-BR')
 export default function CaixaPage() {
   const entradaRef = useRef<EntradaModalRef>(null)
   const saidaRef = useRef<SaidaModalRef>(null)
+  const { paroquiaAtual } = useSession()
 
-  const [paroquias, setParoquias] = useState<ParoquiaSelect[]>([])
-  const [paroquiaId, setParoquiaId] = useState<number | null>(null)
   const [data, setData] = useState<LancamentoCaixa[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 15, totalCount: 0 })
 
-  useEffect(() => {
-    APIService.getRequest<ParoquiaSelect[]>({ url: '/paroquias/select' })
-      .then((list) => {
-        setParoquias(list)
-        if (list.length > 0) setParoquiaId(list[0].value)
-      })
-      .catch(() => toast.error('Erro ao carregar paróquias.'))
-  }, [])
-
   const load = useCallback(
     async (page: number) => {
-      if (!paroquiaId) return
+      if (!paroquiaAtual) return
       setLoading(true)
       try {
         const result = await APIService.getRequest<PagedResponse<LancamentoCaixa>>({
-          url: `/caixa/${paroquiaId}/lancamentos`,
+          url: `/caixa/${paroquiaAtual.value}/lancamentos`,
           params: { page, pageSize: pagination.pageSize },
         })
         setData(result.items)
@@ -66,12 +49,12 @@ export default function CaixaPage() {
         setLoading(false)
       }
     },
-    [paroquiaId, pagination.pageSize],
+    [paroquiaAtual, pagination.pageSize],
   )
 
   useEffect(() => {
-    if (paroquiaId) load(1)
-  }, [paroquiaId, load])
+    load(1)
+  }, [load])
 
   const handleDelete = async (lancamento: LancamentoCaixa) => {
     if (!confirm('Remover este lançamento?')) return
@@ -167,7 +150,9 @@ export default function CaixaPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Caixa Paroquial</h1>
-          <p className="text-sm text-muted-foreground">Movimentações financeiras da paróquia</p>
+          <p className="text-sm text-muted-foreground">
+            {paroquiaAtual?.label ?? '—'}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/caixa/relatorio">
@@ -179,33 +164,17 @@ export default function CaixaPage() {
           <Button
             variant="outline"
             onClick={() => saidaRef.current?.open()}
-            disabled={!paroquiaId}
+            disabled={!paroquiaAtual}
           >
             <ArrowDownCircle className="h-4 w-4" />
             Registrar Saída
           </Button>
-          <Button onClick={() => entradaRef.current?.open()} disabled={!paroquiaId}>
+          <Button onClick={() => entradaRef.current?.open()} disabled={!paroquiaAtual}>
             <Plus className="h-4 w-4" />
             Entrada Manual
           </Button>
         </div>
       </div>
-
-      <Select
-        value={paroquiaId?.toString() ?? ''}
-        onValueChange={(v) => setParoquiaId(Number(v))}
-      >
-        <SelectTrigger className="w-64">
-          <SelectValue placeholder="Selecionar paróquia..." />
-        </SelectTrigger>
-        <SelectContent>
-          {paroquias.map((p) => (
-            <SelectItem key={p.value} value={p.value.toString()}>
-              {p.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border bg-card p-4 space-y-1">
@@ -233,16 +202,16 @@ export default function CaixaPage() {
         isLoading={loading}
       />
 
-      {!!paroquiaId && (
+      {!!paroquiaAtual && (
         <>
           <EntradaModal
             ref={entradaRef}
-            paroquiaId={paroquiaId}
+            paroquiaId={paroquiaAtual.value}
             onSuccess={() => load(pagination.page)}
           />
           <SaidaModal
             ref={saidaRef}
-            paroquiaId={paroquiaId}
+            paroquiaId={paroquiaAtual.value}
             onSuccess={() => load(pagination.page)}
           />
         </>
