@@ -12,6 +12,9 @@ import ResetPassowrdPage from "./pages/ResetPassword";
 import BazarPage from "./pages/Bazar";
 import BazarRelatorioPage from "./pages/BazarRelatorio";
 import BazarVendaPage from "./pages/BazarVenda";
+import BrechoPage from "./pages/Brecho";
+import BrechoHistoricoPage from "./pages/BrechoHistorico";
+import BrechoVendaPage from "./pages/BrechoVenda";
 import FamiliaPage from "./pages/Familia";
 import ParoquiaPage from "./pages/Paroquia";
 import UsuarioPage from "./pages/Usuario";
@@ -34,6 +37,9 @@ createRoot(rootElement).render(
 						<Route path="/bazar" element={<BazarPage />} />
 						<Route path="/bazar/nova-venda" element={<BazarVendaPage />} />
 						<Route path="/bazar/relatorio" element={<BazarRelatorioPage />} />
+						<Route path="/brecho" element={<BrechoPage />} />
+						<Route path="/brecho/nova-venda" element={<BrechoVendaPage />} />
+						<Route path="/brecho/historico" element={<BrechoHistoricoPage />} />
 					</Route>
 				</Route>
 					<Route path="*" element={<Navigate to="/" replace />} />

@@ -35,6 +35,9 @@ export function AppLayout() {
 						<NavLink to="/bazar" className={linkClassName}>
 							Bazar
 						</NavLink>
+						<NavLink to="/brecho" className={linkClassName}>
+							Brechó
+						</NavLink>
 					</nav>
 					<div className="ml-auto flex items-center gap-4">
 						{session && session.paroquiasPermitidas.length > 0 && (
