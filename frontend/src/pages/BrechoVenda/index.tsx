@@ -89,6 +89,10 @@ export default function BrechoVendaPage() {
     (item) => item.pecaId && item.quantidade > disponivel(item.pecaId),
   )
 
+  const compradorInvalido =
+    !comprador.nome.trim() ||
+    (!comprador.cpf.trim() && !comprador.identificacaoAlternativa.trim())
+
   const handleSubmit = async () => {
     if (itens.some((i) => !i.pecaId)) {
       toast.error('Selecione uma peça em todos os itens.')
@@ -288,7 +292,7 @@ export default function BrechoVendaPage() {
         <Button variant="outline" onClick={() => navigate('/brecho')}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} disabled={loading || itensComErro.length > 0}>
+        <Button onClick={handleSubmit} disabled={loading || itensComErro.length > 0 || compradorInvalido}>
           {loading ? 'Registrando...' : 'Confirmar Venda'}
         </Button>
       </div>
