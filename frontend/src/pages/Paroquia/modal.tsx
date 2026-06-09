@@ -1,10 +1,8 @@
-import {
-	type FormEvent,
-	forwardRef,
-	useImperativeHandle,
-	useState,
-} from "react";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { forwardRef, useImperativeHandle, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import * as yup from "yup";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -23,40 +21,49 @@ import type {
 	ParoquiaUpdateDto,
 } from "./interface";
 
-const INITIAL_FORM: ParoquiaCreateDto = {
+const schema = yup.object({
+	nome: yup.string().required("Nome é obrigatório"),
+	endereco: yup.object({
+		rua: yup.string().default(""),
+		numero: yup.string().default(""),
+		cep: yup
+			.string()
+			.matches(/^\d{5}-\d{3}$/, {
+				message: "CEP inválido (00000-000)",
+				excludeEmptyString: true,
+			})
+			.default(""),
+		bairro: yup.string().default(""),
+		cidade: yup.string().default(""),
+	}).default({}),
+});
+
+type ParoquiaFormValues = yup.InferType<typeof schema>;
+
+const EMPTY_FORM: ParoquiaFormValues = {
 	nome: "",
-	endereco: {
-		rua: "",
-		numero: "",
-		cep: "",
-		bairro: "",
-		cidade: "",
-	},
+	endereco: { rua: "", numero: "", cep: "", bairro: "", cidade: "" },
 };
 
 export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 	({ onSuccess }, ref) => {
 		const [isOpen, setIsOpen] = useState(false);
 		const [editing, setEditing] = useState<Paroquia | null>(null);
-		const [loading, setLoading] = useState(false);
-		const [form, setForm] = useState<ParoquiaCreateDto>(INITIAL_FORM);
 
-		const setField = (field: keyof ParoquiaCreateDto, value: string) =>
-			setForm((prev) => ({ ...prev, [field]: value }));
-
-		const setEnderecoField = (
-			field: keyof ParoquiaCreateDto["endereco"],
-			value: string,
-		) =>
-			setForm((prev) => ({
-				...prev,
-				endereco: { ...prev.endereco, [field]: value },
-			}));
+		const {
+			register,
+			handleSubmit,
+			reset,
+			formState: { errors, isSubmitting },
+		} = useForm<ParoquiaFormValues>({
+			resolver: yupResolver(schema),
+			defaultValues: EMPTY_FORM,
+		});
 
 		const open = (paroquia?: Paroquia) => {
 			if (paroquia) {
 				setEditing(paroquia);
-				setForm({
+				reset({
 					nome: paroquia.nome,
 					endereco: {
 						rua: paroquia.endereco?.rua ?? "",
@@ -68,21 +75,18 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 				});
 			} else {
 				setEditing(null);
-				setForm(INITIAL_FORM);
+				reset(EMPTY_FORM);
 			}
 			setIsOpen(true);
 		};
 
 		useImperativeHandle(ref, () => ({ open }));
 
-		const handleSubmit = async (event: FormEvent) => {
-			event.preventDefault();
-			setLoading(true);
-
+		const onSubmit = async (values: ParoquiaFormValues) => {
 			try {
 				if (editing) {
 					const dto: ParoquiaUpdateDto = {
-						...form,
+						...values,
 						enderecoId: editing.enderecoId,
 					};
 					await APIService.putRequest({
@@ -93,17 +97,14 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 				} else {
 					await APIService.postRequest<Paroquia>({
 						url: "/paroquias",
-						body: form,
+						body: values as ParoquiaCreateDto,
 					});
 					toast.success("Paróquia cadastrada.");
 				}
-
 				setIsOpen(false);
 				onSuccess();
 			} catch {
 				toast.error("Erro ao salvar paróquia.");
-			} finally {
-				setLoading(false);
 			}
 		};
 
@@ -116,19 +117,17 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 						</DialogTitle>
 					</DialogHeader>
 
-					<form onSubmit={handleSubmit} className="space-y-6">
+					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 						<section className="space-y-4">
 							<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
 								Dados da Paróquia
 							</h3>
 							<div className="space-y-1">
 								<Label htmlFor="paroquia-nome">Nome *</Label>
-								<Input
-									id="paroquia-nome"
-									required
-									value={form.nome}
-									onChange={(event) => setField("nome", event.target.value)}
-								/>
+								<Input id="paroquia-nome" {...register("nome")} />
+								{errors.nome && (
+									<p className="text-destructive text-xs">{errors.nome.message}</p>
+								)}
 							</div>
 						</section>
 
@@ -139,54 +138,32 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 							<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 								<div className="space-y-1 md:col-span-2">
 									<Label htmlFor="paroquia-rua">Rua</Label>
-									<Input
-										id="paroquia-rua"
-										value={form.endereco.rua ?? ""}
-										onChange={(event) =>
-											setEnderecoField("rua", event.target.value)
-										}
-									/>
+									<Input id="paroquia-rua" {...register("endereco.rua")} />
 								</div>
 								<div className="space-y-1">
 									<Label htmlFor="paroquia-numero">Número</Label>
-									<Input
-										id="paroquia-numero"
-										value={form.endereco.numero ?? ""}
-										onChange={(event) =>
-											setEnderecoField("numero", event.target.value)
-										}
-									/>
+									<Input id="paroquia-numero" {...register("endereco.numero")} />
 								</div>
 								<div className="space-y-1">
 									<Label htmlFor="paroquia-bairro">Bairro</Label>
-									<Input
-										id="paroquia-bairro"
-										value={form.endereco.bairro ?? ""}
-										onChange={(event) =>
-											setEnderecoField("bairro", event.target.value)
-										}
-									/>
+									<Input id="paroquia-bairro" {...register("endereco.bairro")} />
 								</div>
 								<div className="space-y-1">
 									<Label htmlFor="paroquia-cidade">Cidade</Label>
-									<Input
-										id="paroquia-cidade"
-										value={form.endereco.cidade ?? ""}
-										onChange={(event) =>
-											setEnderecoField("cidade", event.target.value)
-										}
-									/>
+									<Input id="paroquia-cidade" {...register("endereco.cidade")} />
 								</div>
 								<div className="space-y-1">
 									<Label htmlFor="paroquia-cep">CEP</Label>
 									<Input
 										id="paroquia-cep"
 										placeholder="00000-000"
-										value={form.endereco.cep ?? ""}
-										onChange={(event) =>
-											setEnderecoField("cep", event.target.value)
-										}
+										{...register("endereco.cep")}
 									/>
+									{errors.endereco?.cep && (
+										<p className="text-destructive text-xs">
+											{errors.endereco.cep.message}
+										</p>
+									)}
 								</div>
 							</div>
 						</section>
@@ -199,8 +176,8 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 							>
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={loading}>
-								{loading ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
 							</Button>
 						</div>
 					</form>

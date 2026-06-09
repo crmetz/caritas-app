@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 
 type SelectValue = string | number | boolean;
 
-export interface SelectOption<T = string> {
+export interface SelectOption<T = number> {
 	value: T;
 	label: string;
 }
 
-interface MultiSelectProps<T = string> {
+interface MultiSelectProps<T = number> {
 	value: T[];
 	onChange: (values: T[]) => void;
 	options?: SelectOption<T>[];

@@ -72,6 +72,17 @@ npm run dev
 
 Frontend disponível em `http://localhost:5173`.
 
+## Autenticação
+
+Ao rodar a API em ambiente de **Development**, um usuário administrador é criado automaticamente no startup (seed), caso ainda não exista. Use-o para fazer login:
+
+| Campo | Valor             |
+|-------|-------------------|
+| Email | `dev@caritas.com` |
+| Senha | `Dev@12345`       |
+
+Esse usuário possuirá acesso a todas as paróquias.
+
 ## Variáveis de Ambiente
 
 ### Frontend — `frontend/.env.local`

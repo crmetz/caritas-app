@@ -7,8 +7,8 @@ export interface Perfil {
 
 export interface Usuario {
 	id: number;
-	nome: string | null;
-	sobrenome: string | null;
+	nome: string;
+	sobrenome: string;
 	email: string;
 	cpf: string | null;
 	telefone: string | null;
@@ -21,35 +21,37 @@ export interface Usuario {
 	autalizadoEm: string | null;
 }
 
+export interface UsuarioResponseDto {
+	id: number;
+	nome: string;
+	email: string;
+	sobrenome: string;
+	telefone: string | null;
+	ativo: boolean;
+	criadoEm: string;
+}
+
 export interface CreateUsuarioDto {
 	nome: string;
 	sobrenome: string;
 	email: string;
-	cpf?: string;
-	telefone?: string;
-	dataNasc?: string;
+	cpf: string | undefined;
+	telefone: string | undefined;
+	dataNasc: string | undefined;
 	paroquiasPermitidas: number[];
 	perfilId?: number | null;
 }
 
-export interface UsuarioUpdateDto {
-	nome?: string;
-	sobrenome?: string;
-	telefone?: string;
-	dataNasc?: string;
-	cpf?: string;
-	paroquiasPermitidas: number[];
-	perfilId?: number | null;
-}
+export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {};
 
 export interface UsuarioModalRef {
-	open: (usuario?: Usuario) => void;
+	open: (id?: number) => void;
 }
 
 export interface UsuarioModalProps {
 	onSuccess: () => void;
 }
 
-export function usuarioNomeCompleto(usuario: Usuario) {
+export function usuarioNomeCompleto(usuario: Usuario | UsuarioResponseDto) {
 	return [usuario.nome, usuario.sobrenome].filter(Boolean).join(" ") || "-";
 }
