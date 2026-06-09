@@ -8,7 +8,8 @@ namespace Caritas.Models.Interfaces
     {
         Task<Usuario?> GetByIdAsync(int id);
         Task<Usuario?> GetByEmailAsync(string email);
-        Task<PagedResponseDto<Usuario?>> GetPagedAsync(int page, int pageSize);
+        Task<PagedResponseDto<Usuario>> GetPagedAsync(int page, int pageSize, IList<int>? paroquiaIds = null);
+        Task<IList<int>> GetParoquiaIdsByUserIdAsync(int userId);
         Task UpdateAsync(Usuario usuario);
         Task DeleteAsync(int id);
     }

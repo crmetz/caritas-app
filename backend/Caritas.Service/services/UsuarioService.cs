@@ -1,67 +1,41 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
-using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Mappers;
-using System.Security.Cryptography;
+using Caritas.Service.Session;
+using Microsoft.AspNetCore.Identity;
 
 namespace Caritas.Service.Services;
 
-public class UsuariosService
+public class UsuariosService(
+    IUsuarioRepository usuarioRepository,
+    UserManager<Usuario> userManager,
+    ICurrentSession currentSession)
 {
-
-    private readonly IUsuarioRepository _usuarioRepository;
-    private readonly IEmailService _emailService;
-
-    public UsuariosService(IUsuarioRepository usuarioRepository)
+    public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(int page, int pageSize)
     {
-        _usuarioRepository = usuarioRepository;
-    }
+        var paroquiaIds = await GetParoquiasFilterAsync();
+        var paged = await usuarioRepository.GetPagedAsync(page, pageSize, paroquiaIds);
 
-     public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(int page, int pageSize)
+        return new PagedResponseDto<UsuarioResponseDto>
         {
-            var paged = await _usuarioRepository.GetPagedAsync(page, pageSize);
-
-            return new PagedResponseDto<UsuarioResponseDto>
-            {
-                Items = paged.Items.Select(p => p.ToResponseDto()),
-                TotalCount = paged.TotalCount
-            };
-        }
+            Items = paged.Items.Select(p => p.ToResponseDto()),
+            TotalCount = paged.TotalCount
+        };
+    }
 
     public async Task<UsuarioDto> GetByIdAsync(int id)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(id);
-
-        if (usuario == null) throw new KeyNotFoundException($"Usuario com id {id} não encontrada.");
+        var usuario = await usuarioRepository.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
         return usuario.ToDto();
-    }
-
-    public async Task<UsuarioDto> CreateAsync(Usuario usuario, IList<int> paroquiasPermitidas)
-    {
-        foreach (var paroquiaId in paroquiasPermitidas)
-            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
-
-        await _usuarioRepository.UpdateAsync(usuario);
-        return usuario.ToDto();
-    }
-
-    private static string GenerateTemporaryPassword(int length = 12)
-    {
-        const string allowed = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@$?_-";
-        var bytes = RandomNumberGenerator.GetBytes(length);
-        var chars = new char[length];
-        for (int i = 0; i < length; i++)
-        {
-            chars[i] = allowed[bytes[i] % allowed.Length];
-        }
-        return new string(chars);
     }
 
     public async Task<UsuarioDto> UpdateAsync(int id, UpdateUsuarioDto dto)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(id)
+        var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
         usuario.Nome = dto.Nome ?? usuario.Nome;
@@ -81,18 +55,32 @@ public class UsuariosService
             if (!usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
                 usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
 
-        await _usuarioRepository.UpdateAsync(usuario);
+        await usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();
     }
 
     public async Task DeactivateAsync(int id)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(id)
+        var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
         usuario.Ativo = false;
         usuario.DataInativacao = DateTime.UtcNow;
 
-        await _usuarioRepository.UpdateAsync(usuario);
+        await usuarioRepository.UpdateAsync(usuario);
+    }
+
+    private async Task<IList<int>?> GetParoquiasFilterAsync()
+    {
+        var usuarioId = currentSession.UsuarioId
+            ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
+        var usuario = await userManager.FindByIdAsync(usuarioId.ToString())
+            ?? throw new UnauthorizedAccessException("Usuário não encontrado.");
+
+        if (await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin))
+            return null;
+
+        return await usuarioRepository.GetParoquiaIdsByUserIdAsync(usuarioId);
     }
 }

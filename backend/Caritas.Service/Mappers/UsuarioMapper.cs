@@ -1,3 +1,4 @@
+using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
 
@@ -18,7 +19,9 @@ namespace Caritas.Service.Mappers
                 Telefone = entity.Telefone,
                 DataNasc = entity.DataNasc,
                 CriadoEm = entity.CriadoEm,
-                ParoquiasPermitidas = entity.UsuarioParoquias.Select(up => up.ParoquiaId).ToList()
+                ParoquiasPermitidas = entity.UsuarioParoquias
+                    .Select(up => new SelectObjectDto { Value = up.ParoquiaId, Label = up.Paroquia?.Nome })
+                    .ToList()
             };
         }
 

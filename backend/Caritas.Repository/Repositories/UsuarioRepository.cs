@@ -11,21 +11,32 @@ public class UsuarioRepository(CaritasDbContext context) : IUsuarioRepository
 {
     private readonly DbSet<Usuario> _dbSet = context.Set<Usuario>();
 
-    public async Task<PagedResponseDto<Usuario>> GetPagedAsync(int page, int pageSize)
-{
-    return await _dbSet
-        .Where(u => u.Ativo)
-        .OrderBy(u => u.Nome)
-        .ToPagedAsync(page, pageSize);
-}
+    public async Task<PagedResponseDto<Usuario>> GetPagedAsync(int page, int pageSize, IList<int>? paroquiaIds = null)
+    {
+        var query = _dbSet.AsQueryable();
+
+        if (paroquiaIds != null)
+            query = query.Where(u => u.UsuarioParoquias.Any(up => paroquiaIds.Contains(up.ParoquiaId)));
+
+        return await query
+            .OrderBy(u => u.Nome)
+            .ToPagedAsync(page, pageSize);
+    }
 
     public async Task<Usuario?> GetByIdAsync(int id)
         => await _dbSet
             .Include(u => u.UsuarioParoquias)
-            .FirstOrDefaultAsync(u => u.Id == id && u.Ativo);
+                .ThenInclude(up => up.Paroquia)
+            .FirstOrDefaultAsync(u => u.Id == id);
 
     public async Task<Usuario?> GetByEmailAsync(string email)
         => await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+
+    public async Task<IList<int>> GetParoquiaIdsByUserIdAsync(int userId)
+        => await context.UsuarioParoquias
+            .Where(up => up.UsuarioId == userId)
+            .Select(up => up.ParoquiaId)
+            .ToListAsync();
 
     public async Task UpdateAsync(Usuario usuario)
     {
