@@ -117,6 +117,26 @@ public class FamiliaService(CaritasDbContext context)
         return pessoa.ToResponseDto();
     }
 
+    public async Task<PessoaResponseDto> AtualizarMembroAsync(int familiaId, int pessoaId, PessoaCreateDto dto)
+    {
+        var familia = await _familiaRepository.GetWithMembrosAsync(familiaId)
+            ?? throw new KeyNotFoundException($"Família com id {familiaId} não encontrada.");
+
+        var pessoa = familia.ResponsavelId == pessoaId
+            ? familia.Responsavel
+            : familia.Membros.FirstOrDefault(p => p.Id == pessoaId);
+
+        if (pessoa is null || pessoa.FamiliaId != familiaId)
+            throw new KeyNotFoundException($"Pessoa com id {pessoaId} não encontrada nesta família.");
+
+        ValidarIdentificacao(dto);
+
+        pessoa.UpdateFromDto(dto);
+        await context.SaveChangesAsync();
+
+        return pessoa.ToResponseDto();
+    }
+
     public async Task RemoverMembroAsync(int familiaId, int pessoaId)
     {
         var familia = await _familiaRepository.GetWithMembrosAsync(familiaId)

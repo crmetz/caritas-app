@@ -28,14 +28,29 @@ public static class PessoaMapper
     {
         Nome = dto.Nome,
         Cpf = string.IsNullOrWhiteSpace(dto.Cpf) ? null : dto.Cpf,
-        NomeMae = dto.NomeMae,
+        NomeMae = string.IsNullOrWhiteSpace(dto.NomeMae) ? null : dto.NomeMae,
         TipoDocumentoAlternativo = dto.TipoDocumentoAlternativo,
-        IdentificacaoAlternativa = dto.IdentificacaoAlternativa,
+        IdentificacaoAlternativa = string.IsNullOrWhiteSpace(dto.IdentificacaoAlternativa) ? null : dto.IdentificacaoAlternativa,
         DataNascimento = dto.DataNascimento,
-        Telefone = dto.Telefone,
-        Escolaridade = dto.Escolaridade,
-        Profissao = dto.Profissao,
+        Telefone = string.IsNullOrWhiteSpace(dto.Telefone) ? null : dto.Telefone,
+        Escolaridade = string.IsNullOrWhiteSpace(dto.Escolaridade) ? null : dto.Escolaridade,
+        Profissao = string.IsNullOrWhiteSpace(dto.Profissao) ? null : dto.Profissao,
         PossuiDeficiencia = dto.PossuiDeficiencia,
-        Observacoes = dto.Observacoes,
+        Observacoes = string.IsNullOrWhiteSpace(dto.Observacoes) ? null : dto.Observacoes,
     };
+
+    public static void UpdateFromDto(this Pessoa pessoa, PessoaCreateDto dto)
+    {
+        pessoa.Nome = dto.Nome;
+        pessoa.Cpf = string.IsNullOrWhiteSpace(dto.Cpf) ? null : dto.Cpf;
+        pessoa.NomeMae = string.IsNullOrWhiteSpace(dto.NomeMae) ? null : dto.NomeMae;
+        pessoa.TipoDocumentoAlternativo = dto.TipoDocumentoAlternativo;
+        pessoa.IdentificacaoAlternativa = string.IsNullOrWhiteSpace(dto.IdentificacaoAlternativa) ? null : dto.IdentificacaoAlternativa;
+        pessoa.DataNascimento = dto.DataNascimento;
+        pessoa.Telefone = string.IsNullOrWhiteSpace(dto.Telefone) ? null : dto.Telefone;
+        pessoa.Escolaridade = string.IsNullOrWhiteSpace(dto.Escolaridade) ? null : dto.Escolaridade;
+        pessoa.Profissao = string.IsNullOrWhiteSpace(dto.Profissao) ? null : dto.Profissao;
+        pessoa.PossuiDeficiencia = dto.PossuiDeficiencia;
+        pessoa.Observacoes = string.IsNullOrWhiteSpace(dto.Observacoes) ? null : dto.Observacoes;
+    }
 }

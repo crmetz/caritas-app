@@ -12,7 +12,9 @@ public static class FamiliaMapper
         ParoquiaNome = f.Paroquia?.Nome ?? string.Empty,
         ResponsavelId = f.ResponsavelId,
         Responsavel = f.Responsavel?.ToResponseDto(),
-        Membros = f.Membros?.Select(p => p.ToResponseDto()) ?? [],
+        Membros = f.Membros?
+            .Where(p => p.Id != f.ResponsavelId)
+            .Select(p => p.ToResponseDto()) ?? [],
         RendaFamiliar = f.RendaFamiliar,
         SituacaoMoradia = f.SituacaoMoradia,
         Vulnerabilidade = f.Vulnerabilidade,

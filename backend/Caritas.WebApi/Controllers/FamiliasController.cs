@@ -55,6 +55,13 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    [HttpPut("{id:int}/membros/{pessoaId:int}")]
+    public async Task<IActionResult> AtualizarMembro(int id, int pessoaId, [FromBody] PessoaCreateDto dto)
+    {
+        var result = await _familiaService.AtualizarMembroAsync(id, pessoaId, dto);
+        return Ok(result);
+    }
+
     [HttpDelete("{id:int}/membros/{pessoaId:int}")]
     public async Task<IActionResult> RemoverMembro(int id, int pessoaId)
     {

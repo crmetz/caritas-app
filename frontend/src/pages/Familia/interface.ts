@@ -13,6 +13,15 @@ export type TipoDocumentoAlternativo =
 	| "DocumentoEstrangeiro"
 	| "Outros";
 
+export type Escolaridade =
+	| "SemEscolaridade"
+	| "FundamentalIncompleto"
+	| "FundamentalCompleto"
+	| "MedioIncompleto"
+	| "MedioCompleto"
+	| "SuperiorIncompleto"
+	| "SuperiorCompleto";
+
 export interface Pessoa {
 	id: number;
 	nome: string;
@@ -22,7 +31,7 @@ export interface Pessoa {
 	identificacaoAlternativa: string | null;
 	dataNascimento: string;
 	telefone: string | null;
-	escolaridade: string | null;
+	escolaridade: Escolaridade | null;
 	profissao: string | null;
 	possuiDeficiencia: boolean;
 	observacoes: string | null;
@@ -36,7 +45,7 @@ export interface Familia {
 	paroquiaId: number;
 	paroquiaNome: string;
 	responsavelId: number;
-	responsavel: Pessoa | null;
+	responsavel: Pessoa;
 	membros: Pessoa[];
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
@@ -61,7 +70,7 @@ export interface PessoaCreateDto {
 	identificacaoAlternativa?: string;
 	dataNascimento: string;
 	telefone?: string;
-	escolaridade?: string;
+	escolaridade?: Escolaridade;
 	profissao?: string;
 	possuiDeficiencia: boolean;
 	observacoes?: string;
@@ -115,6 +124,16 @@ export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumentoAlternativo, string> = {
 	Ctps: "CTPS",
 	DocumentoEstrangeiro: "Documento Estrangeiro",
 	Outros: "Outros",
+};
+
+export const ESCOLARIDADE_LABELS: Record<Escolaridade, string> = {
+	SemEscolaridade: "Sem Escolaridade",
+	FundamentalIncompleto: "Fundamental Incompleto",
+	FundamentalCompleto: "Fundamental Completo",
+	MedioIncompleto: "Médio Incompleto",
+	MedioCompleto: "Médio Completo",
+	SuperiorIncompleto: "Superior Incompleto",
+	SuperiorCompleto: "Superior Completo",
 };
 
 export const VULNERABILIDADE_FLAGS: { value: number; label: string }[] = [
