@@ -48,7 +48,7 @@ export default function LoginPage() {
 		e.preventDefault();
 		setIsLoading(true);
 		try {
-			await APIService.postRequest({ url: "/auth/forgot-password", body: forgotEmail });
+			await APIService.postRequest({ url: "/auth/forgot-password", body: { email: forgotEmail } });
 		} catch {
 			// don't reveal whether the email exists
 		} finally {
