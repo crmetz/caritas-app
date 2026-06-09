@@ -134,6 +134,7 @@ export function vulnerabilidadeToLabels(flags: number): string[] {
 
 export interface FamiliaModalRef {
 	open: (familia?: Familia) => void;
+	openView: (familia: Familia) => void;
 }
 
 export interface FamiliaModalProps {

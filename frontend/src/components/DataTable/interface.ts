@@ -19,5 +19,6 @@ export interface DataTableProps<T> {
 	pagination: PaginationState;
 	isLoading?: boolean;
 	onEdit?: (item: T) => void;
+	onView?: (item: T) => void;
 	onDelete?: (item: T) => void;
 }

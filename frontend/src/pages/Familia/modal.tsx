@@ -227,6 +227,7 @@ function PessoaForm({
 
 export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 	({ onSuccess }, ref) => {
+		const [disabled, setDisabled] = useState<boolean>(false);
 		const [isOpen, setIsOpen] = useState(false);
 		const [editing, setEditing] = useState<Familia | null>(null);
 		const [loading, setLoading] = useState(false);
@@ -323,6 +324,29 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 			}
 		};
 
+		const openView = (familia: Familia) => {
+			setDisabled(true);
+			setEditing(familia);
+			setForm({
+				paroquiaId: familia.paroquiaId,
+				responsavel: { ...PESSOA_INICIAL },
+				membros: [],
+				rendaFamiliar: familia.rendaFamiliar,
+				situacaoMoradia: familia.situacaoMoradia,
+				vulnerabilidade: familia.vulnerabilidade,
+				observacoes: familia.observacoes ?? "",
+				rua: familia.rua,
+				numero: familia.numero,
+				complemento: familia.complemento ?? "",
+				bairro: familia.bairro,
+				cidade: familia.cidade,
+				estado: familia.estado,
+				cep: familia.cep,
+			});
+			setMembroEmEdicao(null);
+			setIsOpen(true);
+		}
+
 		const open = (familia?: Familia) => {
 			if (familia) {
 				setEditing(familia);
@@ -348,366 +372,387 @@ export const FamiliaModal = forwardRef<FamiliaModalRef, FamiliaModalProps>(
 			}
 			setMembroEmEdicao(null);
 			setIsOpen(true);
+			setDisabled(false);
 		};
 
-		useImperativeHandle(ref, () => ({ open }));
+		useImperativeHandle(ref, () => ({ open, openView }));
 
 		return (
-			<Dialog open={isOpen} onOpenChange={setIsOpen}>
-				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>
-							{editing ? "Editar Família" : "Nova Família"}
-						</DialogTitle>
-					</DialogHeader>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+                <DialogTitle>
+                    {editing ? "Editar Família" : "Nova Família"}
+                </DialogTitle>
+            </DialogHeader>
 
-					<form onSubmit={handleSubmit} className="space-y-6">
-						{/* Paróquia */}
-						<section className="space-y-3">
-							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-								Paróquia
-							</h3>
-							<div className="space-y-1">
-								<Label>Paróquia *</Label>
-								<Select
-									required
-									value={form.paroquiaId ? String(form.paroquiaId) : ""}
-									onValueChange={(v) => setField("paroquiaId", Number(v))}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="Selecione a paróquia" />
-									</SelectTrigger>
-									<SelectContent>
-										{paroquias.map((p) => (
-											<SelectItem key={p.value} value={String(p.value)}>
-												{p.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-						</section>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Paróquia */}
+                <section className="space-y-3">
+                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        Paróquia
+                    </h3>
+                    <div className="space-y-1">
+                        <Label>Paróquia *</Label>
+                        <Select
+                            required
+                            disabled={disabled}
+                            value={form.paroquiaId ? String(form.paroquiaId) : ""}
+                            onValueChange={(v) => setField("paroquiaId", Number(v))}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione a paróquia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {paroquias.map((p) => (
+                                    <SelectItem key={p.value} value={String(p.value)}>
+                                        {p.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </section>
 
-						{/* Responsável */}
-						{!editing && (
-							<section className="space-y-3">
-								<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-									Responsável
-								</h3>
-								<PessoaForm
-									titulo="Dados do Responsável"
-									value={form.responsavel}
-									onChange={(p) => setField("responsavel", p)}
-									showExtra
-								/>
-							</section>
-						)}
+                {/* Responsável */}
+                {!editing && (
+                    <section className="space-y-3">
+                        <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                            Responsável
+                        </h3>
+                        <PessoaForm
+                            titulo="Dados do Responsável"
+                            value={form.responsavel}
+                            onChange={(p) => setField("responsavel", p)}
+                            showExtra
+                        />
+                    </section>
+                )}
 
-						{/* Membros */}
-						<section className="space-y-3">
-							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-								Membros
-							</h3>
+                {/* Membros */}
+                <section className="space-y-3">
+                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        Membros
+                    </h3>
 
-							{editing ? (
-								<div className="space-y-2">
-									{editing.membros.map((m) => (
-										<div
-											key={m.id}
-											className="flex items-center justify-between rounded-md border px-3 py-2"
-										>
-											<div>
-												<p className="text-sm font-medium">{m.nome}</p>
-												<p className="text-xs text-muted-foreground">
-													Nasc. {m.dataNascimento.slice(0, 10)}
-												</p>
-											</div>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												className="h-7 w-7 text-destructive hover:text-destructive"
-												onClick={() => handleRemoverMembro(m.id)}
-											>
-												<Trash2 className="h-4 w-4" />
-											</Button>
-										</div>
-									))}
+                    {editing ? (
+                        <div className="space-y-2">
+                            {editing.membros.map((m) => (
+                                <div
+                                    key={m.id}
+                                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium">{m.nome}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Nasc. {m.dataNascimento.slice(0, 10)}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={disabled}
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() => handleRemoverMembro(m.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
 
-									{membroEmEdicao ? (
-										<div className="space-y-2">
-											<PessoaForm
-												titulo="Novo Membro"
-												value={membroEmEdicao}
-												onChange={setMembroEmEdicao}
-											/>
-											<div className="flex gap-2">
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() => setMembroEmEdicao(null)}
-												>
-													Cancelar
-												</Button>
-												<Button
-													type="button"
-													size="sm"
-													disabled={adicionandoMembro}
-													onClick={handleAdicionarMembro}
-												>
-													{adicionandoMembro ? "Salvando..." : "Confirmar"}
-												</Button>
-											</div>
-										</div>
-									) : (
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
-										>
-											<UserPlus className="h-4 w-4" />
-											Adicionar Membro
-										</Button>
-									)}
-								</div>
-							) : (
-								<div className="space-y-2">
-									{form.membros.map((m, i) => (
-										<div
-											key={i}
-											className="flex items-center justify-between rounded-md border px-3 py-2"
-										>
-											<div>
-												<p className="text-sm font-medium">
-													{m.nome || "Sem nome"}
-												</p>
-												<p className="text-xs text-muted-foreground">
-													Nasc. {m.dataNascimento || "—"}
-												</p>
-											</div>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												className="h-7 w-7 text-destructive hover:text-destructive"
-												onClick={() =>
-													setField(
-														"membros",
-														form.membros.filter((_, idx) => idx !== i),
-													)
-												}
-											>
-												<Trash2 className="h-4 w-4" />
-											</Button>
-										</div>
-									))}
+                            {membroEmEdicao ? (
+                                <div className="space-y-2">
+                                    <PessoaForm
+                                        titulo="Novo Membro"
+                                        value={membroEmEdicao}
+                                        onChange={setMembroEmEdicao}
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={disabled}
+                                            onClick={() => setMembroEmEdicao(null)}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            disabled={adicionandoMembro || disabled}
+                                            onClick={handleAdicionarMembro}
+                                        >
+                                            {adicionandoMembro ? "Salvando..." : "Confirmar"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
+                                >
+                                    <UserPlus className="h-4 w-4" />
+                                    Adicionar Membro
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {form.membros.map((m, i) => (
+                                <div
+                                    key={m.cpf}
+                                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            {m.nome || "Sem nome"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Nasc. {m.dataNascimento || "—"}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={disabled}
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() =>
+                                            setField(
+                                                "membros",
+                                                form.membros.filter((_, idx) => idx !== i),
+                                            )
+                                        }
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
 
-									{membroEmEdicao ? (
-										<div className="space-y-2">
-											<PessoaForm
-												titulo="Novo Membro"
-												value={membroEmEdicao}
-												onChange={setMembroEmEdicao}
-											/>
-											<div className="flex gap-2">
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() => setMembroEmEdicao(null)}
-												>
-													Cancelar
-												</Button>
-												<Button
-													type="button"
-													size="sm"
-													onClick={() => {
-														setField("membros", [
-															...form.membros,
-															membroEmEdicao,
-														]);
-														setMembroEmEdicao(null);
-													}}
-												>
-													Confirmar
-												</Button>
-											</div>
-										</div>
-									) : (
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
-										>
-											<UserPlus className="h-4 w-4" />
-											Adicionar Membro
-										</Button>
-									)}
-								</div>
-							)}
-						</section>
+                            {membroEmEdicao ? (
+                                <div className="space-y-2">
+                                    <PessoaForm
+                                        titulo="Novo Membro"
+                                        value={membroEmEdicao}
+                                        onChange={setMembroEmEdicao}
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={disabled}
+                                            onClick={() => setMembroEmEdicao(null)}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            disabled={disabled}
+                                            onClick={() => {
+                                                setField("membros", [
+                                                    ...form.membros,
+                                                    membroEmEdicao,
+                                                ]);
+                                                setMembroEmEdicao(null);
+                                            }}
+                                        >
+                                            Confirmar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => setMembroEmEdicao({ ...PESSOA_INICIAL })}
+                                >
+                                    <UserPlus className="h-4 w-4" />
+                                    Adicionar Membro
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </section>
 
-						{/* Dados Socioeconômicos */}
-						<section className="space-y-4">
-							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-								Dados Socioeconômicos
-							</h3>
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-1">
-									<Label>Renda Familiar (R$) *</Label>
-									<Input
-										type="number"
-										min="0"
-										step="0.01"
-										required
-										value={form.rendaFamiliar}
-										onChange={(e) =>
-											setField("rendaFamiliar", parseFloat(e.target.value) || 0)
-										}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>Situação de Moradia *</Label>
-									<Select
-										value={form.situacaoMoradia}
-										onValueChange={(v) =>
-											setField("situacaoMoradia", v as SituacaoMoradia)
-										}
-									>
-										<SelectTrigger>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{Object.entries(SITUACAO_MORADIA_LABELS).map(([k, v]) => (
-												<SelectItem key={k} value={k}>
-													{v}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
+                {/* Dados Socioeconômicos */}
+                <section className="space-y-4">
+                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        Dados Socioeconômicos
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <Label>Renda Familiar (R$) *</Label>
+                            <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                required
+                                disabled={disabled}
+                                value={form.rendaFamiliar}
+                                onChange={(e) =>
+                                    setField("rendaFamiliar", parseFloat(e.target.value) || 0)
+                                }
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Situação de Moradia *</Label>
+                            <Select
+                                disabled={disabled}
+                                value={form.situacaoMoradia}
+                                onValueChange={(v) =>
+                                    setField("situacaoMoradia", v as SituacaoMoradia)
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(SITUACAO_MORADIA_LABELS).map(([k, v]) => (
+                                        <SelectItem key={k} value={k}>
+                                            {v}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
-							<div className="space-y-2">
-								<Label>Vulnerabilidades</Label>
-								<div className="flex flex-wrap gap-2">
-									{VULNERABILIDADE_FLAGS.map((v) => {
-										const active = (form.vulnerabilidade & v.value) !== 0;
-										return (
-											<button
-												key={v.value}
-												type="button"
-												onClick={() => toggleVulnerabilidade(v.value)}
-												className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-													active
-														? "bg-primary text-primary-foreground border-primary"
-														: "border-input hover:bg-accent"
-												}`}
-											>
-												{v.label}
-											</button>
-										);
-									})}
-								</div>
-							</div>
+                    <div className="space-y-2">
+                        <Label>Vulnerabilidades</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {VULNERABILIDADE_FLAGS.map((v) => {
+                                const active = (form.vulnerabilidade & v.value) !== 0;
+                                return (
+                                    <button
+                                        key={v.value}
+                                        type="button"
+                                        disabled={disabled}
+                                        onClick={() => toggleVulnerabilidade(v.value)}
+                                        className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                                            active
+                                                ? "bg-primary text-primary-foreground border-primary"
+                                                : "border-input hover:bg-accent"
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        {v.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-							<div className="space-y-1">
-								<Label>Observações</Label>
-								<Textarea
-									rows={3}
-									value={form.observacoes ?? ""}
-									onChange={(e) => setField("observacoes", e.target.value)}
-								/>
-							</div>
-						</section>
+                    <div className="space-y-1">
+                        <Label>Observações</Label>
+                        <Textarea
+                            rows={3}
+                            disabled={disabled}
+                            value={form.observacoes ?? ""}
+                            onChange={(e) => setField("observacoes", e.target.value)}
+                        />
+                    </div>
+                </section>
 
-						{/* Endereço */}
-						<section className="space-y-4">
-							<h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-								Endereço
-							</h3>
-							<div className="grid grid-cols-3 gap-4">
-								<div className="col-span-2 space-y-1">
-									<Label>Rua *</Label>
-									<Input
-										required
-										value={form.rua}
-										onChange={(e) => setField("rua", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>Número *</Label>
-									<Input
-										required
-										value={form.numero}
-										onChange={(e) => setField("numero", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>Complemento</Label>
-									<Input
-										value={form.complemento ?? ""}
-										onChange={(e) => setField("complemento", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>Bairro *</Label>
-									<Input
-										required
-										value={form.bairro}
-										onChange={(e) => setField("bairro", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>CEP *</Label>
-									<Input
-										required
-										placeholder="00000-000"
-										value={form.cep}
-										onChange={(e) => setField("cep", e.target.value)}
-									/>
-								</div>
-								<div className="col-span-2 space-y-1">
-									<Label>Cidade *</Label>
-									<Input
-										required
-										value={form.cidade}
-										onChange={(e) => setField("cidade", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-1">
-									<Label>Estado *</Label>
-									<Input
-										required
-										maxLength={2}
-										placeholder="UF"
-										value={form.estado}
-										onChange={(e) =>
-											setField("estado", e.target.value.toUpperCase())
-										}
-									/>
-								</div>
-							</div>
-						</section>
+                {/* Endereço */}
+                <section className="space-y-4">
+                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        Endereço
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2 space-y-1">
+                            <Label>Rua *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                value={form.rua}
+                                onChange={(e) => setField("rua", e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Número *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                value={form.numero}
+                                onChange={(e) => setField("numero", e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Complemento</Label>
+                            <Input
+                                disabled={disabled}
+                                value={form.complemento ?? ""}
+                                onChange={(e) => setField("complemento", e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Bairro *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                value={form.bairro}
+                                onChange={(e) => setField("bairro", e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>CEP *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                placeholder="00000-000"
+                                value={form.cep}
+                                onChange={(e) => setField("cep", e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                            <Label>Cidade *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                value={form.cidade}
+                                onChange={(e) => setField("cidade", e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Estado *</Label>
+                            <Input
+                                required
+                                disabled={disabled}
+                                maxLength={2}
+                                placeholder="UF"
+                                value={form.estado}
+                                onChange={(e) =>
+                                    setField("estado", e.target.value.toUpperCase())
+                                }
+                            />
+                        </div>
+                    </div>
+                </section>
 
-						<div className="flex justify-end gap-3 pt-2">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setIsOpen(false)}
-							>
-								Cancelar
-							</Button>
-							<Button type="submit" disabled={loading}>
-								{loading ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
-							</Button>
-						</div>
-					</form>
-				</DialogContent>
-			</Dialog>
-		);
+                <div className="flex justify-end gap-3 pt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={disabled}
+                        onClick={() => setIsOpen(false)}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button type="submit" disabled={loading || disabled}>
+                        {loading ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
+                    </Button>
+                </div>
+            </form>
+        </DialogContent>
+    </Dialog>
+);
 	},
 );

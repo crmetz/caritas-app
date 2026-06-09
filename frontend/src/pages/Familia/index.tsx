@@ -200,6 +200,7 @@ export default function FamiliaPage() {
 				}}
 				isLoading={loading}
 				onEdit={(f) => modalRef.current?.open(f)}
+				onView={(f) => modalRef.current?.openView(f)}
 				onDelete={handleDelete}
 			/>
 

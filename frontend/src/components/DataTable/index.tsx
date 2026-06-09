@@ -1,6 +1,7 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DataTableProps } from "./interface";
+import { randomUUID } from "node:crypto";
 
 export function DataTable<T extends { id: number }>({
 	columns,
@@ -8,6 +9,7 @@ export function DataTable<T extends { id: number }>({
 	pagination,
 	isLoading,
 	onEdit,
+	onView,
 	onDelete,
 }: DataTableProps<T>) {
 	const { page, pageSize, totalCount, onPageChange } = pagination;
@@ -45,8 +47,8 @@ export function DataTable<T extends { id: number }>({
 					</thead>
 					<tbody>
 						{isLoading ? (
-							Array.from({ length: pageSize }).map((_, i) => (
-								<tr key={i} className="border-t">
+							Array.from({ length: pageSize }).map((_) => (
+								<tr key={randomUUID()} className="border-t">
 									{columns.map((col) => (
 										<td key={String(col.key)} className="px-5 py-4">
 											<div className="h-4 bg-muted animate-pulse rounded" />
@@ -88,6 +90,17 @@ export function DataTable<T extends { id: number }>({
 									{hasActions && (
 										<td className="px-5 py-4">
 											<div className="flex justify-end gap-2">
+												{onView && (
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() => onView(row)}
+														title="Visualizar"
+														className="h-9 w-9 text-foreground hover:bg-muted"
+													>
+														<Eye className="h-4 w-4" />
+													</Button>
+												)}
 												{onEdit && (
 													<Button
 														variant="ghost"
