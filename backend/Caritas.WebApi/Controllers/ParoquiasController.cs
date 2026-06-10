@@ -1,17 +1,23 @@
-﻿using Caritas.Models.DTOs.Paroquia;
+using Caritas.Models.DTOs.Paroquia;
+using Caritas.Models.Entities;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
 using Caritas.Service.services;
+using Caritas.Service.Session;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Controllers
 {
-    public class ParoquiasController : BaseApiController
+    [Authorize]
+    public class ParoquiasController(
+        CaritasDbContext context,
+        UserManager<Usuario> userManager,
+        ICurrentSession currentSession) : BaseApiController
     {
-        private readonly ParoquiaService _paroquiaService;
-        public ParoquiasController(CaritasDbContext context) { 
-            _paroquiaService = new ParoquiaService(new ParoquiaRepository(context));
-        }
+        private readonly ParoquiaService _paroquiaService =
+            new(new ParoquiaRepository(context), userManager, currentSession, new UsuarioRepository(context));
 
         [HttpGet]
         public async Task<IActionResult> GetPaged(
@@ -42,16 +48,8 @@ namespace Caritas.WebApi.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            try
-            {
-                var result = await _paroquiaService.CreateAsync(paroquiaCreateDTO);
-
-                return CreatedAtAction(nameof(Create), new { id = result.Id }, result);
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new { mensagem = ex.Message });
-            }
+            var result = await _paroquiaService.CreateAsync(paroquiaCreateDTO);
+            return CreatedAtAction(nameof(Create), new { id = result.Id }, result);
         }
 
         [HttpPut("{id}")]
@@ -62,12 +60,11 @@ namespace Caritas.WebApi.Controllers
 
             var result = await _paroquiaService.UpdateAsync(id, updateParoquiaDto);
             return Ok(result);
-
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(long id) {
-
+        public async Task<IActionResult> Delete(long id)
+        {
             await _paroquiaService.DeleteAsync(id);
             return NoContent();
         }
