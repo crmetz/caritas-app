@@ -1,6 +1,7 @@
 export interface SelectObject {
 	value: number;
 	label: string;
+	raiz?: boolean;
 }
 
 export interface Session {
