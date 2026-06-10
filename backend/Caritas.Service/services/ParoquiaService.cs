@@ -27,7 +27,7 @@ namespace Caritas.Service.services
             };
         }
 
-        public async Task<List<SelectObjectDto>> GetAllSelectObject()
+        public async Task<List<ParoquiaSelectObjectDto>> GetAllSelectObject()
         {
             var paroquiaIds = await GetParoquiasFilterAsync();
             var allParoquias = await paroquiaRepository.GetAllAsync();
@@ -36,7 +36,11 @@ namespace Caritas.Service.services
                 ? allParoquias
                 : allParoquias.Where(p => paroquiaIds.Contains(p.Id)).ToList();
 
-            return filtered.Select(p => p.ToSelectObjectDto()).ToList();
+            return filtered
+                .OrderByDescending(p => p.Raiz)
+                .ThenBy(p => p.Nome)
+                .Select(p => p.ToSelectObjectDto())
+                .ToList();
         }
 
         public async Task<ParoquiaDto> GetByIdAsync(int id)
@@ -57,6 +61,9 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            if (paroquia.Raiz)
+                throw new InvalidOperationException("A diocese não pode ser editada.");
 
             paroquia.Nome = dto.Nome;
             paroquia.Endereco.Rua = dto.Endereco.Rua;

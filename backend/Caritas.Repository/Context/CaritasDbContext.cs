@@ -42,6 +42,10 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
             .WithMany(u => u.UsuariosCriados)
             .HasForeignKey(u => u.UsuarioCriadorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Paroquia>()
+            .Property(p => p.Ativa)
+            .HasDefaultValue(true);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

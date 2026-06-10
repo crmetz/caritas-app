@@ -101,6 +101,21 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CaritasDbContext>();
     await db.Database.MigrateAsync();
+
+    // Seed diocese
+    if (!db.Paroquias.Any(p => p.Raiz))
+    {
+        db.Paroquias.Add(new Paroquia
+        {
+            Nome = "Diocese de Caxias do Sul",
+            Raiz = true,
+            Ativa = true,
+            CriadoEm = DateTime.UtcNow,
+            AtualizadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
     // Seed dev user
     if (app.Environment.IsDevelopment())
     {

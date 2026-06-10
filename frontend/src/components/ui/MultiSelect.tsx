@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,10 @@ interface MultiSelectProps<T = number> {
 	fetchOptions?: () => Promise<SelectOption<T>[]>;
 	placeholder?: string;
 	disabled?: boolean;
+	/** Renderização customizada de cada opção na lista dropdown. Padrão: `option.label`. */
+	renderOption?: (option: SelectOption<T>) => React.ReactNode;
+	/** Renderização customizada do conteúdo interno do badge de item selecionado. Padrão: `option.label`. */
+	renderBadge?: (option: SelectOption<T>) => React.ReactNode;
 }
 
 export function MultiSelect<T extends SelectValue = string>({
@@ -27,6 +31,8 @@ export function MultiSelect<T extends SelectValue = string>({
 	fetchOptions,
 	placeholder = "Selecione...",
 	disabled,
+	renderOption,
+	renderBadge,
 }: MultiSelectProps<T>) {
 	const [open, setOpen] = useState(false);
 	const [options, setOptions] = useState<SelectOption<T>[]>(optionsProp ?? []);
@@ -95,7 +101,7 @@ export function MultiSelect<T extends SelectValue = string>({
 							variant="secondary"
 							className="flex items-center gap-1 pr-1 text-xs"
 						>
-							{o.label}
+							{renderBadge ? renderBadge(o) : o.label}
 
 							<button
 								type="button"
@@ -156,7 +162,7 @@ export function MultiSelect<T extends SelectValue = string>({
 											{selected && <Check className="h-3 w-3" />}
 										</span>
 
-										{o.label}
+										{renderOption ? renderOption(o) : o.label}
 									</button>
 								);
 							})}

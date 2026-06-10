@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect, type SelectOption } from "@/components/ui/MultiSelect";
+import { ParoquiaSelect, type ParoquiaSelectOption } from "@/components/ParoquiaSelect";
 import APIService from "@/services/api";
 import type {
 	CreateUsuarioDto,
@@ -35,15 +35,15 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
 		const [fetchingUser, setFetchingUser] = useState(false);
-		const [paroquiasOptions, setParoquiasOptions] = useState<SelectOption<number>[]>([]);
+		const [paroquiasOptions, setParoquiasOptions] = useState<ParoquiaSelectOption[]>([]);
 
 		const { register, handleSubmit, reset, control, setValue } =
 			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
 
 		const open = async (id?: number) => {
-			const opcoesParoquia = await APIService.getRequest<SelectOption<number>[]>({
+			const opcoesParoquia = await APIService.getRequest<ParoquiaSelectOption[]>({
 					url: "/paroquias/select",
-			}).catch(() => [] as SelectOption<number>[]);
+			}).catch(() => [] as ParoquiaSelectOption[]);
 			
 			if (id !== undefined) {
 				setEditingId(id);
@@ -54,7 +54,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 					// Mescla as opções do editor com as paróquias já atribuídas ao usuário editado,
 					// para que paróquias fora do escopo do editor não desapareçam do dropdown.
-					const merged = new Map<number, SelectOption<number>>(
+					const merged = new Map<number, ParoquiaSelectOption>(
 						opcoesParoquia.map((op) => [op.value, op]),
 					);
 					for (const p of usuario.paroquiasPermitidas ?? []) {
@@ -188,9 +188,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										name="paroquiasPermitidas"
 										control={control}
 										render={({ field }) => (
-											<MultiSelect<number>
+											<ParoquiaSelect
 												value={field.value ?? []}
-												onChange={(vals) => 
+												onChange={(vals) =>
 													setValue("paroquiasPermitidas", vals, {
 														shouldDirty: true,
 													})}
