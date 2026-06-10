@@ -96,6 +96,7 @@ public class AuthService(
 
         return new SessionDto
         {
+            Id = usuario.Id,
             Nome = usuario.Nome,
             Sobrenome = usuario.Sobrenome,
             Email = usuario.Email,

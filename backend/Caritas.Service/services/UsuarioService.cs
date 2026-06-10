@@ -61,6 +61,9 @@ public class UsuariosService(
 
     public async Task DeactivateAsync(int id)
     {
+        if (currentSession.UsuarioId == id)
+            throw new InvalidOperationException("Não é possível inativar o próprio usuário.");
+
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 

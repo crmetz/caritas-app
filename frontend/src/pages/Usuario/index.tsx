@@ -6,6 +6,7 @@ import type { Column } from "@/components/DataTable/interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/SessionProvider";
 import APIService, { type PagedResponse } from "@/services/api";
 import {
 	type UsuarioModalRef,
@@ -63,6 +64,7 @@ const columns: Column<UsuarioResponseDto>[] = [
 ];
 
 export default function UsuarioPage() {
+	const { session } = useSession();
 	const modalRef = useRef<UsuarioModalRef>(null);
 	const [data, setData] = useState<UsuarioResponseDto[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -100,6 +102,11 @@ export default function UsuarioPage() {
 	}, [load]);
 
 	const handleDelete = async (usuario: UsuarioResponseDto) => {
+		if (usuario.id === session?.id) {
+			alert("Não é possível inativar o próprio usuário.");
+			return;
+		}
+
 		if (!confirm(`Inativar o usuário ${usuarioNomeCompleto(usuario)}?`)) return;
 
 		try {
