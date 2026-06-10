@@ -20,11 +20,9 @@ public class UsuariosController(
         new(new UsuarioRepository(context), userManager, currentSession);
 
     [HttpGet]
-    public async Task<IActionResult> GetPaged(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetPaged([FromQuery] UsuarioPagedRequestDto request)
     {
-        var result = await _usuarioService.GetPagedAsync(page, pageSize);
+        var result = await _usuarioService.GetPagedAsync(request);
         return Ok(result);
     }
 

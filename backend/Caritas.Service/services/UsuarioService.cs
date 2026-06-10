@@ -14,10 +14,10 @@ public class UsuariosService(
     UserManager<Usuario> userManager,
     ICurrentSession currentSession)
 {
-    public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(int page, int pageSize)
+    public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(UsuarioPagedRequestDto request)
     {
         var paroquiaIds = await GetParoquiasFilterAsync();
-        var paged = await usuarioRepository.GetPagedAsync(page, pageSize, paroquiaIds);
+        var paged = await usuarioRepository.GetPagedAsync(request, paroquiaIds);
 
         return new PagedResponseDto<UsuarioResponseDto>
         {

@@ -25,6 +25,10 @@ public class AuthService(
 {
     public async Task<UsuarioDto> RegisterAsync(CadastroDto dto)
     {
+        var existente = await userManager.FindByEmailAsync(dto.Email);
+        if (existente is not null)
+            throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
+
         var usuario = new Usuario
         {
             UserName = dto.Email,
