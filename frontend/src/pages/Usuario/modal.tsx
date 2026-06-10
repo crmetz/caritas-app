@@ -42,18 +42,28 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 		const open = async (id?: number) => {
 			const opcoesParoquia = await APIService.getRequest<SelectOption<number>[]>({
-				url: "/paroquias/select",
+					url: "/paroquias/select",
 			}).catch(() => [] as SelectOption<number>[]);
-			setParoquiasOptions(opcoesParoquia);
-
+			
 			if (id !== undefined) {
 				setEditingId(id);
 				setIsOpen(true);
 				setFetchingUser(true);
 				try {
-					const usuario = await APIService.getRequest<Usuario>({
-						url: `/usuarios/${id}`,
-					});
+					const usuario = await APIService.getRequest<Usuario>({ url: `/usuarios/${id}` });
+
+					// Mescla as opções do editor com as paróquias já atribuídas ao usuário editado,
+					// para que paróquias fora do escopo do editor não desapareçam do dropdown.
+					const merged = new Map<number, SelectOption<number>>(
+						opcoesParoquia.map((op) => [op.value, op]),
+					);
+					for (const p of usuario.paroquiasPermitidas ?? []) {
+						if (!merged.has(p.value)) {
+							merged.set(p.value, { value: p.value, label: p.label ?? `Paróquia ${p.value}` });
+						}
+					}
+					setParoquiasOptions([...merged.values()]);
+
 					reset({
 						nome: usuario.nome,
 						sobrenome: usuario.sobrenome,
@@ -61,7 +71,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 						cpf: usuario.cpf ?? "",
 						telefone: usuario.telefone ?? "",
 						dataNasc: usuario.dataNasc?.slice(0, 10),
-						paroquiasPermitidas: usuario.paroquiasPermitidas ?? [],
+						paroquiasPermitidas: (usuario.paroquiasPermitidas ?? []).map((p) => p.value),
 						perfilId: usuario.perfilId,
 					});
 				} catch {
@@ -71,6 +81,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					setFetchingUser(false);
 				}
 			} else {
+				setParoquiasOptions(opcoesParoquia);
 				setEditingId(null);
 				reset(EMPTY_FORM);
 				setIsOpen(true);

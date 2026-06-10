@@ -16,7 +16,7 @@ export interface Usuario {
 	perfilId: number | null;
 	perfil?: Perfil | null;
 	ativo: boolean;
-	paroquiasPermitidas: number[];
+	paroquiasPermitidas: Array<{ value: number; label: string }>;
 	criadoEm: string;
 	autalizadoEm: string | null;
 }

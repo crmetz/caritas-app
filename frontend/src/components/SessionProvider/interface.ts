@@ -4,6 +4,7 @@ export interface SelectObject {
 }
 
 export interface Session {
+	id: number;
 	nome: string;
 	sobrenome: string;
 	email: string;

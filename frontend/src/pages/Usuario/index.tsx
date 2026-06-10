@@ -6,6 +6,7 @@ import type { Column } from "@/components/DataTable/interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/SessionProvider";
 import APIService, { type PagedResponse } from "@/services/api";
 import {
 	type UsuarioModalRef,
@@ -63,9 +64,11 @@ const columns: Column<UsuarioResponseDto>[] = [
 ];
 
 export default function UsuarioPage() {
+	const { session } = useSession();
 	const modalRef = useRef<UsuarioModalRef>(null);
 	const [data, setData] = useState<UsuarioResponseDto[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [termo, setTermo] = useState("");
 	const [pagination, setPagination] = useState({
 		page: 1,
 		pageSize: 10,
@@ -73,12 +76,12 @@ export default function UsuarioPage() {
 	});
 
 	const load = useCallback(
-		async (page: number) => {
+		async (page: number, term: string = "") => {
 			setLoading(true);
 			try {
 				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
 					url: "/usuarios",
-					params: { page, pageSize: pagination.pageSize },
+					params: { page, pageSize: pagination.pageSize, searchTerm: term },
 				});
 				setData(result.items);
 				setPagination((prev) => ({
@@ -95,11 +98,24 @@ export default function UsuarioPage() {
 		[pagination.pageSize],
 	);
 
+	const handleSearch = useCallback(
+		(newTerm: string) => {
+			setTermo(newTerm);
+			load(1, newTerm);
+		},
+		[load],
+	);
+
 	useEffect(() => {
 		load(1);
 	}, [load]);
 
 	const handleDelete = async (usuario: UsuarioResponseDto) => {
+		if (usuario.id === session?.id) {
+			alert("Não é possível inativar o próprio usuário.");
+			return;
+		}
+
 		if (!confirm(`Inativar o usuário ${usuarioNomeCompleto(usuario)}?`)) return;
 
 		try {
@@ -131,10 +147,22 @@ export default function UsuarioPage() {
 			</div>
 
 			<div className="rounded-2xl border bg-card p-5 shadow-sm">
-				<div className="grid gap-4 md:grid-cols-[1.2fr_1fr_1fr]">
+				<div className="w-full">
 					<div className="relative">
-						<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 text-muted-foreground" />
-						<Input className="pl-12" placeholder="Buscar usuário..." />
+						<button
+							type="button"
+							onClick={() => handleSearch(termo)}
+							className="-translate-y-1/2 absolute top-1/2 left-4 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							<Search className="h-5 w-5" />
+						</button>
+						<Input
+							className="pl-12"
+							placeholder="Pressione enter para buscar usuário..."
+							value={termo}
+							onChange={(e) => setTermo(e.target.value)}
+							onKeyDown={(e) => e.key === "Enter" && handleSearch(termo)}
+						/>
 					</div>
 				</div>
 			</div>
