@@ -1,15 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-	BrowserRouter,
-	BrowserRouter,
-	Navigate,
-	Navigate,
-	Route,
-	Route,
-	Routes,
-	Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./style.css";
