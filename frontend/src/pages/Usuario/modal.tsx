@@ -1,6 +1,10 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import {
+	ParoquiaSelect,
+	type ParoquiaSelectOption,
+} from "@/components/ParoquiaSelect";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -10,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect, type SelectOption } from "@/components/ui/MultiSelect";
 import APIService from "@/services/api";
 import type {
 	CreateUsuarioDto,
@@ -36,7 +39,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [editingId, setEditingId] = useState<number | null>(null);
 		const [fetchingUser, setFetchingUser] = useState(false);
 		const [paroquiasOptions, setParoquiasOptions] = useState<
-			SelectOption<number>[]
+			ParoquiaSelectOption[]
 		>([]);
 
 		const { register, handleSubmit, reset, control, setValue } =
@@ -44,11 +47,10 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 		const open = async (id?: number) => {
 			const opcoesParoquia = await APIService.getRequest<
-				SelectOption<number>[]
+				ParoquiaSelectOption[]
 			>({
 				url: "/paroquias/select",
-			}).catch(() => [] as SelectOption<number>[]);
-			setParoquiasOptions(opcoesParoquia);
+			}).catch(() => [] as ParoquiaSelectOption[]);
 
 			if (id !== undefined) {
 				setEditingId(id);
@@ -58,6 +60,22 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					const usuario = await APIService.getRequest<Usuario>({
 						url: `/usuarios/${id}`,
 					});
+
+					// Mescla as opções do editor com as paróquias já atribuídas ao usuário editado,
+					// para que paróquias fora do escopo do editor não desapareçam do dropdown.
+					const merged = new Map<number, ParoquiaSelectOption>(
+						opcoesParoquia.map((op) => [op.value, op]),
+					);
+					for (const p of usuario.paroquiasPermitidas ?? []) {
+						if (!merged.has(p.value)) {
+							merged.set(p.value, {
+								value: p.value,
+								label: p.label ?? `Paróquia ${p.value}`,
+							});
+						}
+					}
+					setParoquiasOptions([...merged.values()]);
+
 					reset({
 						nome: usuario.nome,
 						sobrenome: usuario.sobrenome,
@@ -65,7 +83,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 						cpf: usuario.cpf ?? "",
 						telefone: usuario.telefone ?? "",
 						dataNasc: usuario.dataNasc?.slice(0, 10),
-						paroquiasPermitidas: usuario.paroquiasPermitidas ?? [],
+						paroquiasPermitidas: (usuario.paroquiasPermitidas ?? []).map(
+							(p) => p.value,
+						),
 						perfilId: usuario.perfilId,
 					});
 				} catch {
@@ -75,6 +95,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					setFetchingUser(false);
 				}
 			} else {
+				setParoquiasOptions(opcoesParoquia);
 				setEditingId(null);
 				reset(EMPTY_FORM);
 				setIsOpen(true);
@@ -179,7 +200,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										name="paroquiasPermitidas"
 										control={control}
 										render={({ field }) => (
-											<MultiSelect<number>
+											<ParoquiaSelect
 												value={field.value ?? []}
 												onChange={(vals) =>
 													setValue("paroquiasPermitidas", vals, {

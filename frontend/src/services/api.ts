@@ -31,6 +31,18 @@ export function getErrorMessage(error: unknown, fallback: string): string {
 	return fallback;
 }
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  const paroquiaId = localStorage.getItem("paroquiaAtualId");
+  if (paroquiaId) {
+    config.headers["X-Paroquia-Id"] = paroquiaId;
+  }
+  return config;
+});
+
 const APIService = {
 	getRequest: <T>({ url, params }: { url: string; params?: object }) =>
 		api.get<T>(url, { params }).then((r) => r.data),

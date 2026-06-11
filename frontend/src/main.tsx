@@ -1,6 +1,15 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+	BrowserRouter,
+	BrowserRouter,
+	Navigate,
+	Navigate,
+	Route,
+	Route,
+	Routes,
+	Routes,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./style.css";
@@ -20,18 +29,21 @@ createRoot(rootElement).render(
 	<StrictMode>
 		<BrowserRouter>
 			<SessionProvider>
-				<Routes>
-					<Route path="/login" element={<LoginPage />} />
-					<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
-					<Route element={<PrivateRoute />}>
-						<Route element={<AppLayout />}>
-							<Route path="/familias" element={<FamiliaPage />} />
-							<Route path="/paroquias" element={<ParoquiaPage />} />
-							<Route path="/usuarios" element={<UsuarioPage />} />
+				<SessionProvider>
+					<Routes>
+						<Route path="/login" element={<LoginPage />} />
+						<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
+						<Route element={<PrivateRoute />}>
+							<Route element={<AppLayout />}>
+								<Route path="/familias" element={<FamiliaPage />} />
+								<Route path="/paroquias" element={<ParoquiaPage />} />
+								<Route path="/usuarios" element={<UsuarioPage />} />
+							</Route>
 						</Route>
-					</Route>
-					<Route path="*" element={<Navigate to="/" replace />} />
-				</Routes>
+						<Route path="*" element={<Navigate to="/" replace />} />
+					</Routes>
+					<ToastContainer position="top-right" />
+				</SessionProvider>
 				<ToastContainer position="top-right" />
 			</SessionProvider>
 		</BrowserRouter>

@@ -14,6 +14,7 @@ using Caritas.Models.DTOs.Usuario;
 using Caritas.Service.Mappers;
 using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Common;
+using Caritas.Models.DTOs.Paroquia;
 using Microsoft.EntityFrameworkCore;
 namespace Caritas.Service.Services;
 
@@ -25,6 +26,10 @@ public class AuthService(
 {
     public async Task<UsuarioDto> RegisterAsync(CadastroDto dto)
     {
+        var existente = await userManager.FindByEmailAsync(dto.Email);
+        if (existente is not null)
+            throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
+
         var usuario = new Usuario
         {
             UserName = dto.Email,
@@ -87,15 +92,20 @@ public class AuthService(
 
         var paroquias = isAdmin
             ? await context.Paroquias
-                .Select(p => new SelectObjectDto { Value = p.Id, Label = p.Nome })
+                .OrderByDescending(p => p.Raiz)
+                .ThenBy(p => p.Nome)
+                .Select(p => new ParoquiaSelectObjectDto { Value = p.Id, Label = p.Nome, Raiz = p.Raiz })
                 .ToListAsync()
             : await context.UsuarioParoquias
                 .Where(up => up.UsuarioId == usuario.Id)
-                .Select(up => new SelectObjectDto { Value = up.ParoquiaId, Label = up.Paroquia!.Nome })
+                .OrderByDescending(up => up.Paroquia!.Raiz)
+                .ThenBy(up => up.Paroquia!.Nome)
+                .Select(up => new ParoquiaSelectObjectDto { Value = up.ParoquiaId, Label = up.Paroquia!.Nome, Raiz = up.Paroquia!.Raiz })
                 .ToListAsync();
 
         return new SessionDto
         {
+            Id = usuario.Id,
             Nome = usuario.Nome,
             Sobrenome = usuario.Sobrenome,
             Email = usuario.Email,

@@ -42,10 +42,7 @@ export default function ResetPasswordPage() {
 
 	async function onSubmit(values: FormValues) {
 		try {
-			await APIService.postRequest({
-				url: "/auth/reset-password",
-				body: { email, token, password: values.password },
-			});
+			await APIService.postRequest({ url: "/auth/reset-password", body: { email, token, password: values.password } });
 			toast.success("Senha definida com sucesso!");
 			navigate("/login");
 		} catch {
@@ -69,20 +66,13 @@ export default function ResetPasswordPage() {
 				</div>
 
 				<div className="mb-8 text-center">
-					<h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-						Definir nova senha
-					</h1>
-					<p className="mt-1 text-sm text-gray-500">
-						Escolha uma senha segura para sua conta
-					</p>
+					<h1 className="text-2xl font-bold text-gray-900 tracking-tight">Definir nova senha</h1>
+					<p className="mt-1 text-sm text-gray-500">Escolha uma senha segura para sua conta</p>
 				</div>
 
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 					<div className="space-y-1.5">
-						<label
-							htmlFor="password"
-							className="block text-sm font-medium text-gray-700"
-						>
+						<label htmlFor="password" className="block text-sm font-medium text-gray-700">
 							Nova senha
 						</label>
 						<div className="relative">
@@ -102,16 +92,11 @@ export default function ResetPasswordPage() {
 								{showPassword ? <EyeOff /> : <Eye />}
 							</button>
 						</div>
-						{errors.password && (
-							<p className="text-xs text-red-500">{errors.password.message}</p>
-						)}
+						{errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
 					</div>
 
 					<div className="space-y-1.5">
-						<label
-							htmlFor="confirmPassword"
-							className="block text-sm font-medium text-gray-700"
-						>
+						<label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
 							Confirmar senha
 						</label>
 						<div className="relative">
@@ -131,19 +116,10 @@ export default function ResetPasswordPage() {
 								{showConfirm ? <EyeOff /> : <Eye />}
 							</button>
 						</div>
-						{errors.confirmPassword && (
-							<p className="text-xs text-red-500">
-								{errors.confirmPassword.message}
-							</p>
-						)}
+						{errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
 					</div>
 
-					<Button
-						type="submit"
-						className="w-full mt-2"
-						disabled={isSubmitting}
-						style={{ backgroundColor: "#e32427" }}
-					>
+					<Button type="submit" className="w-full mt-2" disabled={isSubmitting} style={{ backgroundColor: "#e32427" }}>
 						{isSubmitting ? "Salvando…" : "Definir senha"}
 					</Button>
 				</form>

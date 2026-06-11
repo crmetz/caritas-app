@@ -1,9 +1,11 @@
 export interface SelectObject {
 	value: number;
 	label: string;
+	raiz?: boolean;
 }
 
 export interface Session {
+	id: number;
 	nome: string;
 	sobrenome: string;
 	email: string;

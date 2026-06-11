@@ -16,7 +16,7 @@ export interface Usuario {
 	perfilId: number | null;
 	perfil?: Perfil | null;
 	ativo: boolean;
-	paroquiasPermitidas: number[];
+	paroquiasPermitidas: Array<{ value: number; label: string }>;
 	criadoEm: string;
 	autalizadoEm: string | null;
 }
@@ -42,7 +42,7 @@ export interface CreateUsuarioDto {
 	perfilId?: number | null;
 }
 
-export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {}
+export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {};
 
 export interface UsuarioModalRef {
 	open: (id?: number) => void;

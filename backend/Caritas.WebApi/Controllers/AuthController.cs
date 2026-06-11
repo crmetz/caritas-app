@@ -45,15 +45,15 @@ public class AuthController(
 
     [AllowAnonymous]
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] string userEmail)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
-        var token = await _authService.GeneratePasswordResetTokenAsync(userEmail);
+        var token = await _authService.GeneratePasswordResetTokenAsync(dto.Email);
 
         if (!string.IsNullOrEmpty(token))
         {
             var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
-            var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(userEmail)}&token={Uri.EscapeDataString(token)}";
-            await emailService.SendAsync(userEmail, PasswordRecoverEmail.Subject, PasswordRecoverEmail.Build(link));
+            var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(dto.Email)}&token={Uri.EscapeDataString(token)}";
+            await emailService.SendAsync(dto.Email, PasswordRecoverEmail.Subject, PasswordRecoverEmail.Build(link));
         }
 
         return NoContent();
