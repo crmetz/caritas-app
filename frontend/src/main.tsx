@@ -20,7 +20,6 @@ createRoot(rootElement).render(
 	<StrictMode>
 		<BrowserRouter>
 			<SessionProvider>
-				<SessionProvider>
 					<Routes>
 						<Route path="/login" element={<LoginPage />} />
 						<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
@@ -31,11 +30,9 @@ createRoot(rootElement).render(
 								<Route path="/usuarios" element={<UsuarioPage />} />
 							</Route>
 						</Route>
-						<Route path="*" element={<Navigate to="/" replace />} />
+						<Route path="*" element={<Navigate to="/familias" replace />} />
 					</Routes>
 					<ToastContainer position="top-right" />
-				</SessionProvider>
-				<ToastContainer position="top-right" />
 			</SessionProvider>
 		</BrowserRouter>
 	</StrictMode>,
