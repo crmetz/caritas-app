@@ -10,6 +10,7 @@ namespace Caritas.Repository.Context;
 public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : IdentityDbContext<Usuario, Perfil, int>(options)
 {
     public DbSet<Familia> Familias => Set<Familia>();
+    public DbSet<FamiliaCidade> FamiliaCidades => Set<FamiliaCidade>();
     public DbSet<Pessoa> Pessoas => Set<Pessoa>();
     public DbSet<Paroquia> Paroquias { get; set; }
     public DbSet<Endereco> Enderecos { get; set; }
@@ -42,6 +43,43 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
             .WithMany(u => u.UsuariosCriados)
             .HasForeignKey(u => u.UsuarioCriadorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Paroquia>()
+            .Property(p => p.Ativa)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<Pessoa>()
+            .HasIndex(p => p.Cpf)
+            .IsUnique()
+            .HasFilter("\"Cpf\" IS NOT NULL");
+
+        modelBuilder.Entity<Familia>()
+            .HasOne(f => f.Responsavel)
+            .WithMany()
+            .HasForeignKey(f => f.ResponsavelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Familia>()
+            .HasMany(f => f.Membros)
+            .WithOne(p => p.Familia)
+            .HasForeignKey(p => p.FamiliaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Familia>()
+            .HasOne(f => f.Paroquia)
+            .WithMany()
+            .HasForeignKey(f => f.ParoquiaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Familia>()
+            .HasOne(f => f.Cidade)
+            .WithMany(c => c.Familias)
+            .HasForeignKey(f => f.CidadeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FamiliaCidade>()
+            .HasIndex(c => c.Nome)
+            .IsUnique();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

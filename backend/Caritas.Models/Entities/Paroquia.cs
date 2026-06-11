@@ -10,6 +10,10 @@ public class Paroquia : AuditableEntity
     [Required]
     public string Nome { get; set; } = string.Empty;
 
+    public bool Raiz { get; set; }
+
+    public bool Ativa { get; set; } = true;
+
     public int? EnderecoId { get; set; }
 
     [ForeignKey(nameof(EnderecoId))]

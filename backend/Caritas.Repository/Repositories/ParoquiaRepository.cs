@@ -21,6 +21,7 @@ namespace Caritas.Repository.Repositories
         public async Task<PagedResponseDto<Paroquia>> GetPagedWithEnderecoAsync(int page, int pageSize)
         {
             return await DbSet.Include(p => p.Endereco)
+                .Where(p => !p.Raiz)
                 .OrderBy(p => p.CriadoEm)
                 .ToPagedAsync(page, pageSize);
         }

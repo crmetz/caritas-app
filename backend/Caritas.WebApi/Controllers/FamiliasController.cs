@@ -1,4 +1,5 @@
 using Caritas.Models.DTOs.Familia;
+using Caritas.Models.DTOs.Pessoa;
 using Caritas.Repository.Context;
 using Caritas.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +13,10 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     [HttpGet]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] FamiliaFilterDto? filter = null)
     {
-        var result = await _familiaService.GetPagedAsync(page, pageSize);
+        var result = await _familiaService.GetPagedAsync(page, pageSize, filter ?? new FamiliaFilterDto());
         return Ok(result);
     }
 
@@ -28,6 +30,8 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] FamiliaCreateDto dto)
     {
+        dto.ParoquiaId = ParoquiaAtualId
+            ?? throw new InvalidOperationException("Nenhuma paróquia selecionada.");
         var result = await _familiaService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
@@ -44,5 +48,33 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     {
         await _familiaService.DeleteAsync(id);
         return NoContent();
+    }
+
+    [HttpPost("{id:int}/membros")]
+    public async Task<IActionResult> AdicionarMembro(int id, [FromBody] PessoaCreateDto dto)
+    {
+        var result = await _familiaService.AdicionarMembroAsync(id, dto);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:int}/membros/{pessoaId:int}")]
+    public async Task<IActionResult> AtualizarMembro(int id, int pessoaId, [FromBody] PessoaCreateDto dto)
+    {
+        var result = await _familiaService.AtualizarMembroAsync(id, pessoaId, dto);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id:int}/membros/{pessoaId:int}")]
+    public async Task<IActionResult> RemoverMembro(int id, int pessoaId)
+    {
+        await _familiaService.RemoverMembroAsync(id, pessoaId);
+        return NoContent();
+    }
+
+    [HttpPut("{id:int}/responsavel/{pessoaId:int}")]
+    public async Task<IActionResult> TrocarResponsavel(int id, int pessoaId)
+    {
+        var result = await _familiaService.TrocarResponsavelAsync(id, pessoaId);
+        return Ok(result);
     }
 }

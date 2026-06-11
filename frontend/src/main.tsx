@@ -7,10 +7,10 @@ import "./style.css";
 import { AppLayout } from "./components/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { SessionProvider } from "./components/SessionProvider";
-import LoginPage from "./pages/Login";
-import ResetPassowrdPage from "./pages/ResetPassword";
 import FamiliaPage from "./pages/Familia";
+import LoginPage from "./pages/Login";
 import ParoquiaPage from "./pages/Paroquia";
+import ResetPassowrdPage from "./pages/ResetPassword";
 import UsuarioPage from "./pages/Usuario";
 
 const rootElement = document.getElementById("root");
@@ -20,18 +20,21 @@ createRoot(rootElement).render(
 	<StrictMode>
 		<BrowserRouter>
 			<SessionProvider>
-				<Routes>
-				<Route path="/login" element={<LoginPage />} />
-				<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
-				<Route element={<PrivateRoute />}>
-					<Route element={<AppLayout />}>
-						<Route path="/" element={<FamiliaPage />} />
-						<Route path="/paroquias" element={<ParoquiaPage />} />
-						<Route path="/usuarios" element={<UsuarioPage />} />
-					</Route>
-				</Route>
-					<Route path="*" element={<Navigate to="/" replace />} />
-				</Routes>
+				<SessionProvider>
+					<Routes>
+						<Route path="/login" element={<LoginPage />} />
+						<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
+						<Route element={<PrivateRoute />}>
+							<Route element={<AppLayout />}>
+								<Route path="/familias" element={<FamiliaPage />} />
+								<Route path="/paroquias" element={<ParoquiaPage />} />
+								<Route path="/usuarios" element={<UsuarioPage />} />
+							</Route>
+						</Route>
+						<Route path="*" element={<Navigate to="/" replace />} />
+					</Routes>
+					<ToastContainer position="top-right" />
+				</SessionProvider>
 				<ToastContainer position="top-right" />
 			</SessionProvider>
 		</BrowserRouter>

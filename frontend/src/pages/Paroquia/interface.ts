@@ -10,6 +10,8 @@ export interface Endereco {
 export interface Paroquia {
 	id: number;
 	nome: string;
+	raiz: boolean;
+	ativa: boolean;
 	enderecoId: number | null;
 	endereco: Endereco | null;
 }

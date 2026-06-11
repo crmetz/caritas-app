@@ -14,6 +14,8 @@ namespace Caritas.Service.Mappers
             {
                 Id = entity.Id,
                 Nome = entity.Nome,
+                Raiz = entity.Raiz,
+                Ativa = entity.Ativa,
 
                 Endereco = entity.Endereco == null
                     ? null
@@ -49,12 +51,13 @@ namespace Caritas.Service.Mappers
             };
         }
 
-        public static SelectObjectDto ToSelectObjectDto(this Paroquia entity)
+        public static ParoquiaSelectObjectDto ToSelectObjectDto(this Paroquia entity)
         {
-            return new SelectObjectDto
+            return new ParoquiaSelectObjectDto
             {
                 Value = entity.Id,
-                Label = entity.Nome
+                Label = entity.Nome,
+                Raiz = entity.Raiz
             };
         }
     }
