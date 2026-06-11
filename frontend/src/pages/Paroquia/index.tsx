@@ -1,4 +1,4 @@
-import { ArrowLeft, Church, Plus, Search } from "lucide-react";
+import { Church, Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
@@ -108,16 +108,12 @@ export default function ParoquiaPage() {
 		<div className="space-y-7">
 			<div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 				<div>
-					<button
-						type="button"
-						className="mb-4 inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
-					>
-						<ArrowLeft className="h-4 w-4" />
-						Voltar
-					</button>
 					<h1 className="font-semibold text-4xl tracking-tight">Paróquias</h1>
 					<p className="mt-2 text-muted-foreground">
 						Cadastro e manutenção das paróquias atendidas
+					</p>
+					<p className="mt-2 inline-flex rounded-md bg-red-100 px-2.5 py-1 text-red-900 text-xs font-medium">
+						Você está visualizando os dados das paróquias às quais possui acesso.
 					</p>
 				</div>
 				<Button onClick={() => modalRef.current?.open()}>
