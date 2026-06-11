@@ -35,13 +35,17 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
 		const [fetchingUser, setFetchingUser] = useState(false);
-		const [paroquiasOptions, setParoquiasOptions] = useState<SelectOption<number>[]>([]);
+		const [paroquiasOptions, setParoquiasOptions] = useState<
+			SelectOption<number>[]
+		>([]);
 
 		const { register, handleSubmit, reset, control, setValue } =
 			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
 
 		const open = async (id?: number) => {
-			const opcoesParoquia = await APIService.getRequest<SelectOption<number>[]>({
+			const opcoesParoquia = await APIService.getRequest<
+				SelectOption<number>[]
+			>({
 				url: "/paroquias/select",
 			}).catch(() => [] as SelectOption<number>[]);
 			setParoquiasOptions(opcoesParoquia);
@@ -124,11 +128,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div className="space-y-1">
 										<Label htmlFor="usuario-nome">Nome *</Label>
-										<Input
-											id="usuario-nome"
-											required
-											{...register("nome")}
-										/>
+										<Input id="usuario-nome" required {...register("nome")} />
 									</div>
 									<div className="space-y-1">
 										<Label htmlFor="usuario-sobrenome">Sobrenome *</Label>
@@ -147,7 +147,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										/>
 									</div>
 									<div className="space-y-1">
-										<Label htmlFor="usuario-data-nasc">Data de nascimento</Label>
+										<Label htmlFor="usuario-data-nasc">
+											Data de nascimento
+										</Label>
 										<Input
 											id="usuario-data-nasc"
 											type="date"
@@ -179,10 +181,11 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										render={({ field }) => (
 											<MultiSelect<number>
 												value={field.value ?? []}
-												onChange={(vals) => 
+												onChange={(vals) =>
 													setValue("paroquiasPermitidas", vals, {
 														shouldDirty: true,
-													})}
+													})
+												}
 												options={paroquiasOptions}
 												placeholder="Selecione as paróquias..."
 											/>

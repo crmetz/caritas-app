@@ -75,7 +75,9 @@ export default function UsuarioPage() {
 		async (page: number) => {
 			setLoading(true);
 			try {
-				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
+				const result = await APIService.getRequest<
+					PagedResponse<UsuarioResponseDto>
+				>({
 					url: "/usuarios",
 					params: { page, pageSize: pagination.pageSize },
 				});

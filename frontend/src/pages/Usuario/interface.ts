@@ -42,7 +42,7 @@ export interface CreateUsuarioDto {
 	perfilId?: number | null;
 }
 
-export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {};
+export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {}
 
 export interface UsuarioModalRef {
 	open: (id?: number) => void;

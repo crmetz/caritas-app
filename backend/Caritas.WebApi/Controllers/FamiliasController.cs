@@ -14,9 +14,9 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] int? paroquiaId = null)
+        [FromQuery] FamiliaFilterDto? filter = null)
     {
-        var result = await _familiaService.GetPagedAsync(page, pageSize, paroquiaId);
+        var result = await _familiaService.GetPagedAsync(page, pageSize, filter ?? new FamiliaFilterDto());
         return Ok(result);
     }
 
@@ -30,6 +30,8 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] FamiliaCreateDto dto)
     {
+        dto.ParoquiaId = ParoquiaAtualId
+            ?? throw new InvalidOperationException("Nenhuma paróquia selecionada.");
         var result = await _familiaService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }

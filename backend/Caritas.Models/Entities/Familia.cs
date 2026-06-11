@@ -41,11 +41,10 @@ public class Familia : AuditableEntity
     [Required, MaxLength(100)]
     public string Bairro { get; set; } = string.Empty;
 
-    [Required, MaxLength(100)]
-    public string Cidade { get; set; } = string.Empty;
+    public int CidadeId { get; set; }
 
-    [Required, MaxLength(2)]
-    public string Estado { get; set; } = string.Empty;
+    [ForeignKey(nameof(CidadeId))]
+    public FamiliaCidade Cidade { get; set; } = null!;
 
     [Required, MaxLength(9)]
     public string Cep { get; set; } = string.Empty;

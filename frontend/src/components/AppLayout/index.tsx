@@ -42,7 +42,9 @@ export function AppLayout() {
 								className="rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground"
 								value={paroquiaAtual?.value ?? ""}
 								onChange={(e) => {
-									const selecionada = session.paroquiasPermitidas.find((p) => String(p.value) === e.target.value);
+									const selecionada = session.paroquiasPermitidas.find(
+										(p) => String(p.value) === e.target.value,
+									);
 									if (selecionada) setParoquiaAtual(selecionada);
 								}}
 							>

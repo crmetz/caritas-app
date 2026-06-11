@@ -55,8 +55,8 @@ export interface Familia {
 	numero: string;
 	complemento: string | null;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
+	cidadeNome: string;
 	cep: string;
 	criadoEm: string;
 	atualizadoEm: string;
@@ -88,8 +88,7 @@ export interface FamiliaCreateDto {
 	numero: string;
 	complemento?: string;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
 	cep: string;
 }
 
@@ -104,8 +103,7 @@ export interface FamiliaUpdateDto {
 	numero: string;
 	complemento?: string;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
 	cep: string;
 }
 

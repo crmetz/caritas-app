@@ -9,6 +9,7 @@ import {
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable/interface";
+import { useSession } from "@/components/SessionProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import APIService, { type PagedResponse } from "@/services/api";
+import { formatCpf } from "@/lib/utils";
+import APIService, {
+	getErrorMessage,
+	type PagedResponse,
+} from "@/services/api";
 import {
 	ESCOLARIDADE_LABELS,
 	type Escolaridade,
@@ -192,8 +197,9 @@ function MembroForm({
 					<div className="col-span-2 space-y-1">
 						<Label>CPF</Label>
 						<Input
+							placeholder="000.000.000-00"
 							value={value.cpf ?? ""}
-							onChange={(event) => set("cpf", event.target.value)}
+							onChange={(event) => set("cpf", formatCpf(event.target.value))}
 						/>
 					</div>
 				)}
@@ -329,10 +335,16 @@ function MembroForm({
 
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
+	const { paroquiaAtual } = useSession();
 	const [data, setData] = useState<Familia[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [paroquias, setParoquias] = useState<SelectOption[]>([]);
+	const [cidades, setCidades] = useState<SelectOption[]>([]);
 	const [paroquiaFiltro, setParoquiaFiltro] = useState<string>("all");
+	const [responsavelFiltro, setResponsavelFiltro] = useState("");
+	const [situacaoFiltro, setSituacaoFiltro] = useState<string>("all");
+	const [cidadeFiltro, setCidadeFiltro] = useState<string>("all");
+	const [bairroFiltro, setBairroFiltro] = useState("");
 	const [familiaMembros, setFamiliaMembros] = useState<Familia | null>(null);
 	const [loadingMembros, setLoadingMembros] = useState(false);
 	const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null);
@@ -387,8 +399,8 @@ export default function FamiliaPage() {
 			setEditingPessoaId(null);
 			setEditingPessoa(null);
 			toast.success("Membro atualizado.");
-		} catch {
-			toast.error("Erro ao atualizar membro.");
+		} catch (e) {
+			toast.error(getErrorMessage(e, "Erro ao atualizar membro."));
 		} finally {
 			setSavingPessoa(false);
 		}
@@ -468,8 +480,8 @@ export default function FamiliaPage() {
 		},
 		{
 			key: "cidade",
-			header: "Cidade/UF",
-			render: (f) => `${f.cidade} / ${f.estado}`,
+			header: "Cidade",
+			render: (f) => f.cidadeNome,
 		},
 	];
 
@@ -477,7 +489,23 @@ export default function FamiliaPage() {
 		APIService.getRequest<SelectOption[]>({ url: "/paroquias/select" })
 			.then(setParoquias)
 			.catch(() => {});
+		APIService.getRequest<SelectOption[]>({ url: "/familiacidades/select" })
+			.then(setCidades)
+			.catch(() => {});
 	}, []);
+
+	// Por padrão, aplica o filtro da paróquia logada (mas o usuário pode trocar).
+	useEffect(() => {
+		if (paroquiaAtual) setParoquiaFiltro(String(paroquiaAtual.value));
+	}, [paroquiaAtual]);
+
+	const limparFiltros = () => {
+		setResponsavelFiltro("");
+		setSituacaoFiltro("all");
+		setCidadeFiltro("all");
+		setBairroFiltro("");
+		setParoquiaFiltro(paroquiaAtual ? String(paroquiaAtual.value) : "all");
+	};
 
 	const load = useCallback(
 		async (page: number) => {
@@ -489,6 +517,11 @@ export default function FamiliaPage() {
 				};
 				if (paroquiaFiltro !== "all")
 					params.paroquiaId = Number(paroquiaFiltro);
+				if (situacaoFiltro !== "all") params.situacaoMoradia = situacaoFiltro;
+				if (cidadeFiltro !== "all") params.cidadeId = Number(cidadeFiltro);
+				if (responsavelFiltro.trim())
+					params.responsavelNome = responsavelFiltro.trim();
+				if (bairroFiltro.trim()) params.bairro = bairroFiltro.trim();
 
 				const result = await APIService.getRequest<PagedResponse<Familia>>({
 					url: "/familias",
@@ -506,11 +539,19 @@ export default function FamiliaPage() {
 				setLoading(false);
 			}
 		},
-		[pagination.pageSize, paroquiaFiltro],
+		[
+			pagination.pageSize,
+			paroquiaFiltro,
+			situacaoFiltro,
+			cidadeFiltro,
+			responsavelFiltro,
+			bairroFiltro,
+		],
 	);
 
 	useEffect(() => {
-		load(1);
+		const timer = setTimeout(() => load(1), 400);
+		return () => clearTimeout(timer);
 	}, [load]);
 
 	const handleDelete = async (familia: Familia) => {
@@ -540,7 +581,14 @@ export default function FamiliaPage() {
 				</Button>
 			</div>
 
-			<div className="flex items-center gap-3">
+			<div className="flex flex-wrap items-center gap-3">
+				<Input
+					className="w-56"
+					placeholder="Buscar por responsável"
+					value={responsavelFiltro}
+					onChange={(e) => setResponsavelFiltro(e.target.value)}
+				/>
+
 				<Select value={paroquiaFiltro} onValueChange={setParoquiaFiltro}>
 					<SelectTrigger className="w-56">
 						<SelectValue placeholder="Filtrar por paróquia" />
@@ -554,6 +602,46 @@ export default function FamiliaPage() {
 						))}
 					</SelectContent>
 				</Select>
+
+				<Select value={situacaoFiltro} onValueChange={setSituacaoFiltro}>
+					<SelectTrigger className="w-48">
+						<SelectValue placeholder="Situação de moradia" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Todas as moradias</SelectItem>
+						{Object.entries(SITUACAO_MORADIA_LABELS).map(([k, v]) => (
+							<SelectItem key={k} value={k}>
+								{v}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
+				<Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
+					<SelectTrigger className="w-48">
+						<SelectValue placeholder="Cidade" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Todas as cidades</SelectItem>
+						{cidades.map((c) => (
+							<SelectItem key={c.value} value={String(c.value)}>
+								{c.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
+				<Input
+					className="w-48"
+					placeholder="Bairro"
+					value={bairroFiltro}
+					onChange={(e) => setBairroFiltro(e.target.value)}
+				/>
+
+				<Button variant="outline" onClick={limparFiltros}>
+					<X className="h-4 w-4" />
+					Limpar filtros
+				</Button>
 			</div>
 
 			<DataTable

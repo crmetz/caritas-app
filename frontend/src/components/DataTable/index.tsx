@@ -13,7 +13,7 @@ export function DataTable<T extends { id: number }>({
 }: DataTableProps<T>) {
 	const { page, pageSize, totalCount, onPageChange } = pagination;
 	const totalPages = Math.ceil(totalCount / pageSize);
-		const hasActions = Boolean(onEdit || onDelete);
+	const hasActions = Boolean(onEdit || onDelete);
 
 	return (
 		<div className="space-y-3">

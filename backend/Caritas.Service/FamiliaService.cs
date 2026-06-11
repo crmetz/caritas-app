@@ -13,9 +13,9 @@ public class FamiliaService(CaritasDbContext context)
 {
     private readonly FamiliaRepository _familiaRepository = new(context);
 
-    public async Task<PagedResponseDto<FamiliaResponseDto>> GetPagedAsync(int page, int pageSize, int? paroquiaId = null)
+    public async Task<PagedResponseDto<FamiliaResponseDto>> GetPagedAsync(int page, int pageSize, FamiliaFilterDto filter)
     {
-        var paged = await _familiaRepository.GetPagedByParoquiaAsync(page, pageSize, paroquiaId);
+        var paged = await _familiaRepository.GetPagedAsync(page, pageSize, filter);
         return new PagedResponseDto<FamiliaResponseDto>
         {
             Items = paged.Items.Select(f => f.ToResponseDto()),
@@ -33,6 +33,7 @@ public class FamiliaService(CaritasDbContext context)
     public async Task<FamiliaResponseDto> CreateAsync(FamiliaCreateDto dto)
     {
         ValidarIdentificacao(dto.Responsavel);
+        await ValidarIdentificacaoUnicaAsync(dto.Responsavel);
 
         await using var transaction = await context.Database.BeginTransactionAsync();
 
@@ -52,8 +53,7 @@ public class FamiliaService(CaritasDbContext context)
             Numero = dto.Numero,
             Complemento = dto.Complemento,
             Bairro = dto.Bairro,
-            Cidade = dto.Cidade,
-            Estado = dto.Estado,
+            CidadeId = dto.CidadeId,
             Cep = dto.Cep,
         };
 
@@ -65,6 +65,7 @@ public class FamiliaService(CaritasDbContext context)
         foreach (var membroDto in dto.Membros)
         {
             ValidarIdentificacao(membroDto);
+            await ValidarIdentificacaoUnicaAsync(membroDto);
             var membro = membroDto.ToEntity();
             membro.FamiliaId = familia.Id;
             await context.Pessoas.AddAsync(membro);
@@ -91,8 +92,7 @@ public class FamiliaService(CaritasDbContext context)
         familia.Numero = dto.Numero;
         familia.Complemento = dto.Complemento;
         familia.Bairro = dto.Bairro;
-        familia.Cidade = dto.Cidade;
-        familia.Estado = dto.Estado;
+        familia.CidadeId = dto.CidadeId;
         familia.Cep = dto.Cep;
 
         await _familiaRepository.UpdateAsync(familia);
@@ -108,6 +108,7 @@ public class FamiliaService(CaritasDbContext context)
             ?? throw new KeyNotFoundException($"Família com id {familiaId} não encontrada.");
 
         ValidarIdentificacao(dto);
+        await ValidarIdentificacaoUnicaAsync(dto);
 
         var pessoa = dto.ToEntity();
         pessoa.FamiliaId = familia.Id;
@@ -130,6 +131,7 @@ public class FamiliaService(CaritasDbContext context)
             throw new KeyNotFoundException($"Pessoa com id {pessoaId} não encontrada nesta família.");
 
         ValidarIdentificacao(dto);
+        await ValidarIdentificacaoUnicaAsync(dto, pessoaId);
 
         pessoa.UpdateFromDto(dto);
         await context.SaveChangesAsync();
@@ -176,5 +178,41 @@ public class FamiliaService(CaritasDbContext context)
         if (!temCpf && !temNomeMae && !temDocAlternativo)
             throw new ArgumentException(
                 "É necessário informar ao menos uma forma de identificação: CPF, nome da mãe + data de nascimento, ou tipo e número de documento alternativo.");
+    }
+
+    private async Task ValidarIdentificacaoUnicaAsync(PessoaCreateDto dto, int? pessoaIdAtual = null)
+    {
+        var idAtual = pessoaIdAtual ?? 0;
+
+        if (!string.IsNullOrWhiteSpace(dto.Cpf))
+        {
+            var cpfDuplicado = await context.Pessoas
+                .AnyAsync(p => p.Id != idAtual && p.Cpf == dto.Cpf);
+            if (cpfDuplicado)
+                throw new ArgumentException($"Já existe uma pessoa cadastrada com o CPF {dto.Cpf}.");
+        }
+        else if (!string.IsNullOrWhiteSpace(dto.NomeMae))
+        {
+            var maeDuplicada = await context.Pessoas.AnyAsync(p =>
+                p.Id != idAtual
+                && p.NomeMae != null
+                && p.NomeMae.ToLower() == dto.NomeMae.ToLower()
+                && p.DataNascimento == dto.DataNascimento);
+            if (maeDuplicada)
+                throw new ArgumentException(
+                    "Já existe uma pessoa cadastrada com esse nome da mãe e data de nascimento.");
+        }
+        else if (dto.TipoDocumentoAlternativo.HasValue
+            && !string.IsNullOrWhiteSpace(dto.IdentificacaoAlternativa))
+        {
+            var docDuplicado = await context.Pessoas.AnyAsync(p =>
+                p.Id != idAtual
+                && p.TipoDocumentoAlternativo == dto.TipoDocumentoAlternativo
+                && p.IdentificacaoAlternativa != null
+                && p.IdentificacaoAlternativa.ToLower() == dto.IdentificacaoAlternativa.ToLower());
+            if (docDuplicado)
+                throw new ArgumentException(
+                    $"Já existe uma pessoa cadastrada com esse documento ({dto.IdentificacaoAlternativa}).");
+        }
     }
 }

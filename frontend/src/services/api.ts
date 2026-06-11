@@ -10,16 +10,26 @@ export interface PagedResponse<T> {
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  const paroquiaId = localStorage.getItem("paroquiaAtualId");
-  if (paroquiaId) {
-    config.headers["X-Paroquia-Id"] = paroquiaId;
-  }
-  return config;
+	const token = localStorage.getItem("token");
+	if (token) {
+		config.headers.Authorization = `Bearer ${token}`;
+	}
+	const paroquiaId = localStorage.getItem("paroquiaAtualId");
+	if (paroquiaId) {
+		config.headers["X-Paroquia-Id"] = paroquiaId;
+	}
+	return config;
 });
+
+export function getErrorMessage(error: unknown, fallback: string): string {
+	if (axios.isAxiosError(error)) {
+		const data = error.response?.data as
+			| { detail?: string; title?: string }
+			| undefined;
+		return data?.detail || data?.title || fallback;
+	}
+	return fallback;
+}
 
 const APIService = {
 	getRequest: <T>({ url, params }: { url: string; params?: object }) =>
