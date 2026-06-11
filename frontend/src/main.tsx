@@ -10,6 +10,7 @@ import { SessionProvider } from "./components/SessionProvider";
 import FamiliaPage from "./pages/Familia";
 import LoginPage from "./pages/Login";
 import ParoquiaPage from "./pages/Paroquia";
+import PerfilPage from "./pages/Perfil";
 import ResetPassowrdPage from "./pages/ResetPassword";
 import UsuarioPage from "./pages/Usuario";
 
@@ -28,6 +29,7 @@ createRoot(rootElement).render(
 								<Route path="/familias" element={<FamiliaPage />} />
 								<Route path="/paroquias" element={<ParoquiaPage />} />
 								<Route path="/usuarios" element={<UsuarioPage />} />
+								<Route path="/perfis" element={<PerfilPage />} />
 							</Route>
 						</Route>
 						<Route path="*" element={<Navigate to="/familias" replace />} />
