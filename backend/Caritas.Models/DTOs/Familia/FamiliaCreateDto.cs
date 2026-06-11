@@ -5,7 +5,9 @@ namespace Caritas.Models.DTOs.Familia;
 
 public class FamiliaCreateDto
 {
+    public int ParoquiaId { get; set; }
     public PessoaCreateDto Responsavel { get; set; } = null!;
+    public List<PessoaCreateDto> Membros { get; set; } = [];
     public decimal RendaFamiliar { get; set; }
     public SituacaoMoradia SituacaoMoradia { get; set; }
     public Vulnerabilidade Vulnerabilidade { get; set; }
@@ -15,7 +17,6 @@ public class FamiliaCreateDto
     public string Numero { get; set; } = string.Empty;
     public string? Complemento { get; set; }
     public string Bairro { get; set; } = string.Empty;
-    public string Cidade { get; set; } = string.Empty;
-    public string Estado { get; set; } = string.Empty;
+    public int CidadeId { get; set; }
     public string Cep { get; set; } = string.Empty;
 }

@@ -108,7 +108,10 @@ export default function ParoquiaPage() {
 		<div className="space-y-7">
 			<div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 				<div>
-					<button type="button" className="mb-4 inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+					<button
+						type="button"
+						className="mb-4 inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+					>
 						<ArrowLeft className="h-4 w-4" />
 						Voltar
 					</button>

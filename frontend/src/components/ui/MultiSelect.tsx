@@ -45,7 +45,10 @@ export function MultiSelect<T extends SelectValue = string>({
 
 	useEffect(() => {
 		const handler = (e: MouseEvent) => {
-			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(e.target as Node)
+			) {
 				setOpen(false);
 			}
 		};
@@ -68,9 +71,7 @@ export function MultiSelect<T extends SelectValue = string>({
 
 	const toggle = (val: T) => {
 		onChange(
-			value.includes(val)
-				? value.filter((v) => v !== val)
-				: [...value, val],
+			value.includes(val) ? value.filter((v) => v !== val) : [...value, val],
 		);
 	};
 

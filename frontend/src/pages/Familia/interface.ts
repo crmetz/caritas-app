@@ -5,34 +5,47 @@ export type SituacaoMoradia =
 	| "Irregular"
 	| "Abrigo";
 
-export type Vulnerabilidade =
-	| "Desemprego"
-	| "InsegurancaAlimentar"
-	| "ViolenciaDomestica"
-	| "MoradiaPrecaria"
-	| "Deficiencia"
-	| "DependenciaQuimica";
+export type TipoDocumentoAlternativo =
+	| "Rg"
+	| "Passaporte"
+	| "Cnh"
+	| "Ctps"
+	| "DocumentoEstrangeiro"
+	| "Outros";
+
+export type Escolaridade =
+	| "SemEscolaridade"
+	| "FundamentalIncompleto"
+	| "FundamentalCompleto"
+	| "MedioIncompleto"
+	| "MedioCompleto"
+	| "SuperiorIncompleto"
+	| "SuperiorCompleto";
 
 export interface Pessoa {
 	id: number;
 	nome: string;
 	cpf: string | null;
+	nomeMae: string | null;
+	tipoDocumentoAlternativo: TipoDocumentoAlternativo | null;
 	identificacaoAlternativa: string | null;
 	dataNascimento: string;
 	telefone: string | null;
-	escolaridade: string | null;
+	escolaridade: Escolaridade | null;
 	profissao: string | null;
 	possuiDeficiencia: boolean;
 	observacoes: string | null;
 	familiaId: number | null;
-	createdAt: string;
-	updatedAt: string;
+	criadoEm: string;
+	atualizadoEm: string;
 }
 
 export interface Familia {
 	id: number;
+	paroquiaId: number;
+	paroquiaNome: string;
 	responsavelId: number;
-	responsavel: Pessoa | null;
+	responsavel: Pessoa;
 	membros: Pessoa[];
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
@@ -42,27 +55,31 @@ export interface Familia {
 	numero: string;
 	complemento: string | null;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
+	cidadeNome: string;
 	cep: string;
-	createdAt: string;
-	updatedAt: string;
+	criadoEm: string;
+	atualizadoEm: string;
 }
 
 export interface PessoaCreateDto {
 	nome: string;
 	cpf?: string;
+	nomeMae?: string;
+	tipoDocumentoAlternativo?: TipoDocumentoAlternativo;
 	identificacaoAlternativa?: string;
 	dataNascimento: string;
 	telefone?: string;
-	escolaridade?: string;
+	escolaridade?: Escolaridade;
 	profissao?: string;
 	possuiDeficiencia: boolean;
 	observacoes?: string;
 }
 
 export interface FamiliaCreateDto {
+	paroquiaId: number;
 	responsavel: PessoaCreateDto;
+	membros: PessoaCreateDto[];
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
 	vulnerabilidade: number;
@@ -71,12 +88,12 @@ export interface FamiliaCreateDto {
 	numero: string;
 	complemento?: string;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
 	cep: string;
 }
 
 export interface FamiliaUpdateDto {
+	paroquiaId: number;
 	responsavelId: number;
 	rendaFamiliar: number;
 	situacaoMoradia: SituacaoMoradia;
@@ -86,8 +103,7 @@ export interface FamiliaUpdateDto {
 	numero: string;
 	complemento?: string;
 	bairro: string;
-	cidade: string;
-	estado: string;
+	cidadeId: number;
 	cep: string;
 }
 
@@ -97,6 +113,25 @@ export const SITUACAO_MORADIA_LABELS: Record<SituacaoMoradia, string> = {
 	Cedida: "Cedida",
 	Irregular: "Irregular",
 	Abrigo: "Abrigo",
+};
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumentoAlternativo, string> = {
+	Rg: "RG",
+	Passaporte: "Passaporte",
+	Cnh: "CNH",
+	Ctps: "CTPS",
+	DocumentoEstrangeiro: "Documento Estrangeiro",
+	Outros: "Outros",
+};
+
+export const ESCOLARIDADE_LABELS: Record<Escolaridade, string> = {
+	SemEscolaridade: "Sem Escolaridade",
+	FundamentalIncompleto: "Fundamental Incompleto",
+	FundamentalCompleto: "Fundamental Completo",
+	MedioIncompleto: "Médio Incompleto",
+	MedioCompleto: "Médio Completo",
+	SuperiorIncompleto: "Superior Incompleto",
+	SuperiorCompleto: "Superior Completo",
 };
 
 export const VULNERABILIDADE_FLAGS: { value: number; label: string }[] = [
@@ -116,6 +151,7 @@ export function vulnerabilidadeToLabels(flags: number): string[] {
 
 export interface FamiliaModalRef {
 	open: (familia?: Familia) => void;
+	openView: (familia: Familia) => void;
 }
 
 export interface FamiliaModalProps {

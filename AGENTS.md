@@ -1,10 +1,10 @@
-# Caritas — Guia para Claude Code
+# Caritas — Guia para Codex
 
 ## Visão Geral
 
 Sistema de gestão de doações e famílias para uma diocese. Backend em ASP.NET Core (net10) com PostgreSQL via Entity Framework Core (code-first). Frontend em React + TypeScript + Vite com Tailwind CSS e shadcn/ui.
 
-Contexto detalhado do sistema e módulos em `.claude/context/`.
+Contexto detalhado do sistema e módulos em `.Codex/context/`.
 
 ## Como Rodar
 
