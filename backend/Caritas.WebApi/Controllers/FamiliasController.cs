@@ -20,6 +20,13 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    [HttpGet("select")]
+    public async Task<IActionResult> GetSelect([FromQuery] int? paroquiaId)
+    {
+        var result = await _familiaService.GetSelectAsync(paroquiaId ?? ParoquiaAtualId);
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {

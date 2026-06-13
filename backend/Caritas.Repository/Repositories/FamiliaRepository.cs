@@ -20,6 +20,13 @@ public class FamiliaRepository(CaritasDbContext context)
             .AsSplitQuery()
             .FirstOrDefaultAsync(f => f.Id == id);
 
+    public async Task<List<Familia>> GetSelectAsync(int? paroquiaId)
+        => await Context.Familias
+            .Include(f => f.Responsavel)
+            .Where(f => paroquiaId == null || f.ParoquiaId == paroquiaId)
+            .OrderBy(f => f.Responsavel.Nome)
+            .ToListAsync();
+
     public async Task<PagedResponseDto<Familia>> GetPagedAsync(int page, int pageSize, FamiliaFilterDto filter)
         => await Context.Familias
             .Include(f => f.Paroquia)

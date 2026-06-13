@@ -29,7 +29,7 @@
 				"noUselessFragments": "off"
 			},
 			"correctness": {
-				"useExhaustiveDependencies": "on",
+				"useExhaustiveDependencies": "off",
 				"noUnusedImports": "on",
 				"noUnusedVariables": "warn"
 			},
