@@ -28,6 +28,9 @@ export function AppLayout() {
 						<NavLink to="/familias" className={linkClassName}>
 							Famílias
 						</NavLink>
+						<NavLink to="/atendimentos" className={linkClassName}>
+							Atendimentos
+						</NavLink>
 						<NavLink to="/paroquias" className={linkClassName}>
 							Paróquias
 						</NavLink>

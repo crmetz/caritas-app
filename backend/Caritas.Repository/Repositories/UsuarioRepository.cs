@@ -48,6 +48,12 @@ public class UsuarioRepository(CaritasDbContext context) : IUsuarioRepository
             .Select(up => up.ParoquiaId)
             .ToListAsync();
 
+    public async Task<List<Usuario>> GetByParoquiaAsync(int paroquiaId)
+        => await _dbSet
+            .Where(u => u.Ativo && u.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
+            .OrderBy(u => u.Nome)
+            .ToListAsync();
+
     public async Task UpdateAsync(Usuario usuario)
     {
         _dbSet.Update(usuario);

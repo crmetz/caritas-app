@@ -1,4 +1,5 @@
 using Caritas.Models.Constants;
+using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
@@ -24,6 +25,18 @@ public class UsuariosService(
             Items = paged.Items.Select(p => p.ToResponseDto()),
             TotalCount = paged.TotalCount
         };
+    }
+
+    public async Task<List<SelectObjectDto>> GetSelectByParoquiaAsync(int paroquiaId)
+    {
+        var usuarios = await usuarioRepository.GetByParoquiaAsync(paroquiaId);
+        return usuarios
+            .Select(u => new SelectObjectDto
+            {
+                Value = u.Id,
+                Label = $"{u.Nome} {u.Sobrenome}".Trim(),
+            })
+            .ToList();
     }
 
     public async Task<UsuarioDto> GetByIdAsync(int id)

@@ -1,4 +1,4 @@
-import { Pencil, Plus, Save, Users, X } from "lucide-react";
+import { LineChart, Pencil, Plus, Save, Users, X } from "lucide-react";
 import {
 	type FormEvent,
 	useCallback,
@@ -6,6 +6,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable/interface";
@@ -335,6 +336,7 @@ function MembroForm({
 
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
+	const navigate = useNavigate();
 	const { paroquiaAtual } = useSession();
 	const [data, setData] = useState<Familia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -482,6 +484,22 @@ export default function FamiliaPage() {
 			key: "cidade",
 			header: "Cidade",
 			render: (f) => f.cidadeNome,
+		},
+		{
+			key: "evolucao",
+			header: "Evolução",
+			render: (f) => (
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					className="h-8 gap-2 px-2 text-muted-foreground hover:text-foreground"
+					onClick={() => navigate(`/familias/${f.id}/evolucao`)}
+					title="Ver evolução"
+				>
+					<LineChart className="h-4 w-4" />
+				</Button>
+			),
 		},
 	];
 

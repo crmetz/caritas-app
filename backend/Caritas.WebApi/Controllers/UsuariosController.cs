@@ -26,6 +26,15 @@ public class UsuariosController(
         return Ok(result);
     }
 
+    [HttpGet("select")]
+    public async Task<IActionResult> GetSelect()
+    {
+        var paroquiaId = ParoquiaAtualId
+            ?? throw new InvalidOperationException("Nenhuma paróquia selecionada.");
+        var result = await _usuarioService.GetSelectByParoquiaAsync(paroquiaId);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
