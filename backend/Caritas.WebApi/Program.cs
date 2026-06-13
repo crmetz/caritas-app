@@ -1,8 +1,10 @@
 using Caritas.Models.Constants;
 using Caritas.Models.Entities;
 using Caritas.Repository.Context;
+using Caritas.WebApi.Authorization;
 using Caritas.WebApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +12,7 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using Caritas.Models.Settings;
 using Caritas.Models.Interfaces.Services;
+using Caritas.Service.Services;
 using Caritas.Service.Services.Email;
 using Caritas.Service.Session;
 
@@ -82,7 +85,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-builder.Services.AddAuthorization();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionService.AllValues)
+        options.AddPolicy(permission, p => p.AddRequirements(new PermissionRequirement(permission)));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentSession, CurrentSession>();
@@ -132,6 +140,7 @@ using (var scope = app.Services.CreateScope())
                 Nome = "Dev",
                 Sobrenome = "User",
                 Ativo = true,
+                UsuarioAdmin = true,
                 CriadoEm = DateTime.UtcNow
             };
             await userManager.CreateAsync(devUser, "Dev@12345");
@@ -153,6 +162,24 @@ using (var scope = app.Services.CreateScope())
         if (createdUser != null && !await userManager.IsInRoleAsync(createdUser, PerfisPadrao.Admin))
         {
             await userManager.AddToRoleAsync(createdUser, PerfisPadrao.Admin);
+        }
+
+        // Give all permissions to admin user.
+        var adminRole = await roleManager.FindByNameAsync(PerfisPadrao.Admin);
+        if (adminRole != null)
+        {
+            var existingPermissions = (await roleManager.GetClaimsAsync(adminRole))
+                .Where(c => c.Type == Permissions.ClaimType)
+                .Select(c => c.Value)
+                .ToHashSet();
+
+            foreach (var value in PermissionService.AllValues)
+            {
+                if (!existingPermissions.Contains(value))
+                    await roleManager.AddClaimAsync(
+                        adminRole,
+                        new System.Security.Claims.Claim(Permissions.ClaimType, value));
+            }
         }
     }
 }

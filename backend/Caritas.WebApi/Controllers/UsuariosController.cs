@@ -1,5 +1,7 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
 using Caritas.Service.Services;
@@ -14,12 +16,16 @@ namespace Caritas.WebApi.Controllers;
 public class UsuariosController(
     CaritasDbContext context,
     UserManager<Usuario> userManager,
-    ICurrentSession currentSession) : BaseApiController
+    RoleManager<Perfil> roleManager,
+    ICurrentSession currentSession,
+    IConfiguration configuration,
+    IEmailService emailService) : BaseApiController
 {
     private readonly UsuariosService _usuarioService =
-        new(new UsuarioRepository(context), userManager, currentSession);
+        new(new UsuarioRepository(context), userManager, roleManager, currentSession, configuration, emailService);
 
     [HttpGet]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetPaged([FromQuery] UsuarioPagedRequestDto request)
     {
         var result = await _usuarioService.GetPagedAsync(request);
@@ -27,6 +33,7 @@ public class UsuariosController(
     }
 
     [HttpGet("select")]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetSelect()
     {
         var paroquiaId = ParoquiaAtualId
@@ -36,13 +43,26 @@ public class UsuariosController(
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _usuarioService.GetByIdAsync(id);
         return Ok(result);
     }
 
+    [HttpPost]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
+    public async Task<IActionResult> Create([FromBody] CreateUsuarioDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _usuarioService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
     [HttpPut("{id}")]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioDto dto)
     {
         if (!ModelState.IsValid)
@@ -53,6 +73,7 @@ public class UsuariosController(
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
     public async Task<IActionResult> Deactivate(int id)
     {
         await _usuarioService.DeactivateAsync(id);

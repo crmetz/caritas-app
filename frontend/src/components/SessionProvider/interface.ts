@@ -10,6 +10,7 @@ export interface Session {
 	sobrenome: string;
 	email: string;
 	isAdmin: boolean;
+	permissions: string[];
 	paroquiasPermitidas: SelectObject[];
 }
 
@@ -20,4 +21,5 @@ export interface SessionContextValue {
 	setParoquiaAtual: (paroquia: SelectObject) => void;
 	refreshSession: () => Promise<void>;
 	logout: () => void;
+	hasPermission: (permission: string) => boolean;
 }

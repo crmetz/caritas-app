@@ -4,17 +4,79 @@ using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Mappers;
+using Caritas.Service.Services.Email.Templates;
 using Caritas.Service.Session;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace Caritas.Service.Services;
 
 public class UsuariosService(
     IUsuarioRepository usuarioRepository,
     UserManager<Usuario> userManager,
-    ICurrentSession currentSession)
+    RoleManager<Perfil> roleManager,
+    ICurrentSession currentSession,
+    IConfiguration configuration,
+    IEmailService emailService)
 {
+    private readonly PerfilService _perfilService = new(roleManager, userManager);
+
+    public async Task<UsuarioDto> CreateAsync(CreateUsuarioDto dto)
+    {
+        var currentUserId = currentSession.UsuarioId
+            ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
+        var existente = await userManager.FindByEmailAsync(dto.Email);
+        if (existente is not null)
+            throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
+
+        // Valida a atribuição do perfil antes de criar o usuário (evita usuário órfão).
+        if (dto.PerfilId is not null)
+            await _perfilService.EnsureCanAssignAsync(currentUserId, dto.PerfilId.Value);
+
+        var usuario = new Usuario
+        {
+            UserName = dto.Email,
+            Email = dto.Email,
+            Nome = dto.Nome,
+            Sobrenome = dto.Sobrenome,
+            Cpf = dto.Cpf,
+            Telefone = dto.Telefone,
+            DataNasc = dto.DataNasc,
+            Ativo = true,
+            UsuarioAdmin = false,
+            UsuarioCriadorId = currentUserId,
+            CriadoEm = DateTime.UtcNow,
+            UsuarioParoquias = dto.ParoquiasPermitidas
+                .Select(paroquiaId => new UsuarioParoquia { ParoquiaId = paroquiaId })
+                .ToList()
+        };
+
+        var tempPassword = "SenhaTemp@123";
+        var resultado = await userManager.CreateAsync(usuario, tempPassword);
+        if (!resultado.Succeeded)
+            throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
+
+        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
+
+        var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
+        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(usuario.Email!)}&token={Uri.EscapeDataString(resetToken)}";
+
+        try
+        {
+            await emailService.SendAsync(usuario.Email!, FirstAccessEmail.Subject, FirstAccessEmail.Build(usuario.Nome!, link));
+        }
+        catch
+        {
+            throw new Exception("Usuário criado, mas falha ao enviar e-mail de boas-vindas");
+        }
+
+        return usuario.ToDto();
+    }
+
     public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(UsuarioPagedRequestDto request)
     {
         var paroquiaIds = await GetParoquiasFilterAsync();
@@ -43,7 +105,21 @@ public class UsuariosService(
     {
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
-        return usuario.ToDto();
+
+        var dto = usuario.ToDto();
+
+        var roleName = (await userManager.GetRolesAsync(usuario)).FirstOrDefault();
+        if (roleName != null)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role != null)
+            {
+                dto.PerfilId = role.Id;
+                dto.Perfil = new SelectObjectDto { Value = role.Id, Label = role.Name };
+            }
+        }
+
+        return dto;
     }
 
     public async Task<UsuarioDto> UpdateAsync(int id, UpdateUsuarioDto dto)
@@ -67,6 +143,9 @@ public class UsuariosService(
         foreach (var paroquiaId in dto.ParoquiasPermitidas)
             if (!usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
                 usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+
+        var currentUserId = currentSession.UsuarioId;
+        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, (int)currentUserId!);
 
         await usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();

@@ -9,6 +9,7 @@ namespace Caritas.Models.DTOs.Authentication
         public string? Sobrenome { get; set; }
         public string? Email { get; set; }
         public bool IsAdmin { get; set; }
+        public List<string> Permissions { get; set; } = [];
         public List<ParoquiaSelectObjectDto> ParoquiasPermitidas { get; set; } = [];
     }
 }
