@@ -140,7 +140,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					toast.success("Usuário atualizado.");
 				} else {
 					await APIService.postRequest<Usuario>({
-						url: "/auth/register",
+						url: "/usuarios",
 						body: values,
 					});
 					toast.success("Usuário cadastrado.");
