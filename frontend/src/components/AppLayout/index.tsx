@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/SessionProvider";
+import { Permissions } from "@/constants/permissions";
 
 export function AppLayout() {
-	const { session, paroquiaAtual, setParoquiaAtual, logout } = useSession();
+	const { session, paroquiaAtual, setParoquiaAtual, logout, hasPermission } = useSession();
 	const navigate = useNavigate();
 
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
@@ -31,12 +32,16 @@ export function AppLayout() {
 						<NavLink to="/atendimentos" className={linkClassName}>
 							Atendimentos
 						</NavLink>
-						<NavLink to="/paroquias" className={linkClassName}>
-							Paróquias
-						</NavLink>
-						<NavLink to="/usuarios" className={linkClassName}>
-							Usuários
-						</NavLink>
+						{hasPermission(Permissions.Paroquia.Visualizar) && (
+							<NavLink to="/paroquias" className={linkClassName}>
+								Paróquias
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Usuario.Visualizar) && (
+							<NavLink to="/usuarios" className={linkClassName}>
+								Usuários
+							</NavLink>
+						)}
 						<NavLink to="/perfis" className={linkClassName}>
 							Perfis
 						</NavLink>

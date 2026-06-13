@@ -5,8 +5,10 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./style.css";
 import { AppLayout } from "./components/AppLayout";
+import { PermissionRoute } from "./components/PermissionRoute";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { SessionProvider } from "./components/SessionProvider";
+import { Permissions } from "./constants/permissions";
 import AtendimentoPage from "./pages/Atendimento";
 import EvolucaoFamiliaPage from "./pages/EvolucaoFamilia";
 import FamiliaPage from "./pages/Familia";
@@ -34,8 +36,16 @@ createRoot(rootElement).render(
 									element={<EvolucaoFamiliaPage />}
 								/>
 								<Route path="/atendimentos" element={<AtendimentoPage />} />
-								<Route path="/paroquias" element={<ParoquiaPage />} />
-								<Route path="/usuarios" element={<UsuarioPage />} />
+								<Route
+									element={<PermissionRoute permission={Permissions.Paroquia.Visualizar} />}
+								>
+									<Route path="/paroquias" element={<ParoquiaPage />} />
+								</Route>
+								<Route
+									element={<PermissionRoute permission={Permissions.Usuario.Visualizar} />}
+								>
+									<Route path="/usuarios" element={<UsuarioPage />} />
+								</Route>
 								<Route path="/perfis" element={<PerfilPage />} />
 							</Route>
 						</Route>

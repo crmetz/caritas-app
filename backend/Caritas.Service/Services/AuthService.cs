@@ -16,6 +16,7 @@ namespace Caritas.Service.Services;
 
 public class AuthService(
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     CaritasDbContext context,
     IConfiguration configuration,
     IEmailService emailService)
@@ -44,6 +45,9 @@ public class AuthService(
 
         var isAdmin = usuario.UsuarioAdmin;
 
+        var permissions = await new PerfilService(roleManager, userManager)
+            .GetUserPermissionsAsync(usuario);
+
         var paroquias = isAdmin
             ? await context.Paroquias
                 .OrderByDescending(p => p.Raiz)
@@ -64,6 +68,7 @@ public class AuthService(
             Sobrenome = usuario.Sobrenome,
             Email = usuario.Email,
             IsAdmin = isAdmin,
+            Permissions = permissions.ToList(),
             ParoquiasPermitidas = paroquias,
         };
     }
