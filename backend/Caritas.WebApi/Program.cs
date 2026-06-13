@@ -133,6 +133,7 @@ using (var scope = app.Services.CreateScope())
                 Nome = "Dev",
                 Sobrenome = "User",
                 Ativo = true,
+                UsuarioAdmin = true,
                 CriadoEm = DateTime.UtcNow
             };
             await userManager.CreateAsync(devUser, "Dev@12345");

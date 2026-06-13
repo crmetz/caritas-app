@@ -15,6 +15,7 @@ public class Usuario : IdentityUser<int>
     public DateOnly? DataNasc { get; set; }
     //public int? PerfilId { get; set; }
     public bool Ativo { get; set; } = true;
+    public bool UsuarioAdmin { get; set; } = false;
     public int? UsuarioCriadorId { get; set; }
     public DateTime? DataInativacao { get; set; }
 
@@ -25,8 +26,6 @@ public class Usuario : IdentityUser<int>
     public ICollection<Usuario> UsuariosCriados { get; set; } = new List<Usuario>();
     public List<int>? ParoquiasPermitidas {get;set;}
 
-    //[ForeignKey(nameof(PerfilId))]
-    //public Perfil? Perfil { get; set; }
     public ICollection<UsuarioParoquia> UsuarioParoquias { get; set; } = new List<UsuarioParoquia>();
 
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
