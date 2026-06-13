@@ -10,6 +10,7 @@ using Caritas.Service.Services.Email.Templates;
 using Caritas.Service.Session;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Caritas.Service.Validators;
 
 namespace Caritas.Service.Services;
 
@@ -31,6 +32,15 @@ public class UsuariosService(
         var existente = await userManager.FindByEmailAsync(dto.Email);
         if (existente is not null)
             throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
+
+        //validação telefone, cep, cpf
+
+        if(!string.IsNullOrWhiteSpace(dto.Telefone) && !PhoneValidator.Validate(dto.Telefone))
+            throw new InvalidOperationException("Telefone inválido.");
+
+        if(!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
+            throw new InvalidOperationException("Cpf Inválido");
+            
 
         // Valida a atribuição do perfil antes de criar o usuário (evita usuário órfão).
         if (dto.PerfilId is not null)
@@ -133,6 +143,12 @@ public class UsuariosService(
         usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
+         if(dto.Telefone is not null && !PhoneValidator.Validate(dto.Telefone))
+            throw new InvalidOperationException("Telefone inválido.");
+
+        if(dto.Cpf is not null && !CpfValidator.Validate(dto.Cpf))
+            throw new InvalidOperationException("Cpf Inválido");
+
         var paroquiasToRemove = usuario.UsuarioParoquias
             .Where(up => !dto.ParoquiasPermitidas.Contains(up.ParoquiaId))
             .ToList();
@@ -178,4 +194,5 @@ public class UsuariosService(
 
         return await usuarioRepository.GetParoquiaIdsByUserIdAsync(usuarioId);
     }
+
 }

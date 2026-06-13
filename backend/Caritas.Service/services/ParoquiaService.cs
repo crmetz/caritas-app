@@ -7,6 +7,7 @@ using Caritas.Models.Interfaces;
 using Caritas.Service.Mappers;
 using Caritas.Service.Session;
 using Microsoft.AspNetCore.Identity;
+using Caritas.Service.Validators;
 
 namespace Caritas.Service.services
 {
@@ -52,6 +53,9 @@ namespace Caritas.Service.services
 
         public async Task<ParoquiaDto> CreateAsync(CreateParoquiaDTO dto)
         {
+            if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
+                throw new InvalidOperationException("Cep Inválido");
+
             var paroquia = dto.ToEntity();
             var createdParoquia = await paroquiaRepository.AddAsync(paroquia);
             return createdParoquia.ToDto();
