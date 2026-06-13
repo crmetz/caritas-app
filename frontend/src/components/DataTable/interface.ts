@@ -4,6 +4,7 @@ export interface Column<T> {
 	key: keyof T | string;
 	header: string;
 	render?: (row: T) => ReactNode;
+	align?: "left" | "right" | "center";
 }
 
 export interface PaginationState {

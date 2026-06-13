@@ -9,4 +9,8 @@ export const Permissions = {
 		Visualizar: "paroquia.visualizar",
 		CriarEditar: "paroquia.criarEditar",
 	},
+	Perfil: {
+		Visualizar: "perfil.visualizar",
+		CriarEditar: "perfil.criarEditar",
+	},
 } as const;

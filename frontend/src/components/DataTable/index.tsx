@@ -1,6 +1,13 @@
 import { Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { DataTableProps } from "./interface";
+
+const alignClass = {
+	left: "text-left",
+	right: "text-right",
+	center: "text-center",
+} as const;
 
 export function DataTable<T extends { id: number }>({
 	columns,
@@ -32,7 +39,10 @@ export function DataTable<T extends { id: number }>({
 							{columns.map((col) => (
 								<th
 									key={String(col.key)}
-									className="px-5 py-4 text-left font-semibold text-muted-foreground"
+									className={cn(
+										"px-5 py-4 font-semibold text-muted-foreground",
+										alignClass[col.align ?? "left"],
+									)}
 								>
 									{col.header}
 								</th>
@@ -76,7 +86,10 @@ export function DataTable<T extends { id: number }>({
 									className="border-t hover:bg-muted/30 transition-colors"
 								>
 									{columns.map((col) => (
-										<td key={String(col.key)} className="px-5 py-4">
+										<td
+											key={String(col.key)}
+											className={cn("px-5 py-4", alignClass[col.align ?? "left"])}
+										>
 											{col.render
 												? col.render(row)
 												: String(

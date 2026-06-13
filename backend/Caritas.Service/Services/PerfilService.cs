@@ -35,8 +35,10 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         return dto;
     }
 
-    public async Task<PerfilDto> CreateAsync(CreatePerfilDto dto)
+    public async Task<PerfilDto> CreateAsync(CreatePerfilDto dto, int currentUserId)
     {
+        await EnsurePermissionsWithinScopeAsync(currentUserId, dto.Permissions);
+
         var existing = await roleManager.FindByNameAsync(dto.Nome);
         if (existing != null)
             throw new ArgumentException($"Já existe um perfil com o nome '{dto.Nome}'.");
@@ -58,13 +60,15 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         return mapped;
     }
 
-    public async Task<PerfilDto> UpdateAsync(int id, UpdatePerfilDto dto)
+    public async Task<PerfilDto> UpdateAsync(int id, UpdatePerfilDto dto, int currentUserId)
     {
         var perfil = await roleManager.FindByIdAsync(id.ToString())
             ?? throw new KeyNotFoundException($"Perfil com id {id} não encontrado.");
 
         if (perfil.Estatico)
             throw new InvalidOperationException("Perfis estáticos não podem ser editados.");
+
+        await EnsurePermissionsWithinScopeAsync(currentUserId, dto.Permissions);
 
         if (!string.Equals(perfil.Name, dto.Nome, StringComparison.OrdinalIgnoreCase))
         {
@@ -182,6 +186,23 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         var role = await roleManager.FindByIdAsync(perfilId.ToString())
             ?? throw new KeyNotFoundException($"Perfil com id {perfilId} não encontrado.");
         await EnsureCanAssignAsync(currentUserId, role);
+    }
+
+    private async Task EnsurePermissionsWithinScopeAsync(int currentUserId, IEnumerable<string>? desiredPermissions)
+    {
+        var currentUser = await userManager.FindByIdAsync(currentUserId.ToString())
+            ?? throw new KeyNotFoundException("Usuário atual não encontrado.");
+
+        if (currentUser.UsuarioAdmin)
+            return;
+
+        var allowed = await GetUserPermissionsAsync(currentUser);
+        var desired = (desiredPermissions ?? Enumerable.Empty<string>())
+            .Where(p => PermissionService.AllValues.Contains(p));
+
+        if (!desired.All(allowed.Contains))
+            throw new InvalidOperationException(
+                "Você não pode atribuir a um perfil permissões além das suas próprias.");
     }
 
     private async Task<List<string>> GetPermissionsAsync(Perfil perfil)

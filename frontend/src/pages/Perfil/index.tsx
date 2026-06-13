@@ -87,6 +87,7 @@ export default function PerfilPage() {
 		{
 			key: "acoes",
 			header: "Ações",
+			align: "right",
 			render: (perfil) => {
 				if (perfil.estatico) return null;
 				return (

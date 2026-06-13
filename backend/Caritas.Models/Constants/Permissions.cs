@@ -15,4 +15,10 @@ public static class Permissions
         public const string Visualizar = "paroquia.visualizar";
         public const string CriarEditar = "paroquia.criarEditar";
     }
+
+    public static class Perfil
+    {
+        public const string Visualizar = "perfil.visualizar";
+        public const string CriarEditar = "perfil.criarEditar";
+    }
 }

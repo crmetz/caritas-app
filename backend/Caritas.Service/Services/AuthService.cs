@@ -77,7 +77,7 @@ public class AuthService(
     {
         var user = await userManager.FindByEmailAsync(userEmail);
 
-        if(user == null)
+        if (user == null)
         {
             return null;
         }
@@ -88,7 +88,7 @@ public class AuthService(
     {
         var user = await userManager.FindByEmailAsync(dto.Email);
 
-        if(user == null)
+        if (user == null)
         {
             throw new KeyNotFoundException("Usuário não encontrado");
         }
@@ -102,11 +102,11 @@ public class AuthService(
 
     }
 
-    public async Task  ChangePasswordAsync(ChangePasswordDto dto)
+    public async Task ChangePasswordAsync(ChangePasswordDto dto)
     {
         var user = await userManager.FindByEmailAsync(dto.Email);
 
-        if(user == null)
+        if (user == null)
         {
             throw new KeyNotFoundException("Usuário não encontrado");
         }
@@ -144,27 +144,4 @@ public class AuthService(
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-
-    private static string GenerateTemporaryPassword()
-{
-    const string letrasUpper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const string letrasLower = "abcdefghijkmnpqrstuvwxyz";
-    const string numeros     = "23456789";
-    const string especiais   = "!@$?_-";
-    const string todos       = letrasUpper + letrasLower + numeros + especiais;
-
-    var bytes = RandomNumberGenerator.GetBytes(12);
-    var senha = new char[12];
-
-    // garante ao menos um de cada tipo exigido
-    senha[0] = letrasUpper[bytes[0] % letrasUpper.Length];
-    senha[1] = numeros[bytes[1] % numeros.Length];
-    senha[2] = especiais[bytes[2] % especiais.Length];
-
-    for (int i = 3; i < 12; i++)
-        senha[i] = todos[bytes[i] % todos.Length];
-
-    // embaralha pra não ter padrão fixo nos primeiros caracteres
-    return new string(senha.OrderBy(_ => RandomNumberGenerator.GetInt32(100)).ToArray());
-}
 }

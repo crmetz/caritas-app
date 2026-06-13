@@ -10,6 +10,7 @@ public class PermissionService
     {
         ["usuario"] = "Usuários",
         ["paroquia"] = "Paróquias",
+        ["perfil"] = "Perfis",
     };
 
     private static readonly Dictionary<string, string> ActionLabels = new()

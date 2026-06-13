@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
-import axios from "axios";
 
 const columns: Column<Paroquia>[] = [
 	{

@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Check } from "lucide-react";
+import { Check, TriangleAlert } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -118,7 +118,7 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 
 		return (
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
-				<DialogContent className="max-w-lg">
+				<DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>{editing ? "Editar Perfil" : "Novo Perfil"}</DialogTitle>
 					</DialogHeader>
@@ -149,6 +149,14 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 							<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
 								Permissões
 							</h3>
+							<div className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+								<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+								<p>
+									Atenção: permissões de criar/editar (especialmente de usuários e
+									perfis) permitem que o usuário conceda acessos a outros. Atribua com
+									cuidado a quem confia.
+								</p>
+							</div>
 							{modules.length === 0 ? (
 								<p className="text-muted-foreground text-sm">
 									Nenhuma permissão disponível.

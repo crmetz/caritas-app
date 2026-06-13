@@ -46,7 +46,11 @@ createRoot(rootElement).render(
 								>
 									<Route path="/usuarios" element={<UsuarioPage />} />
 								</Route>
-								<Route path="/perfis" element={<PerfilPage />} />
+								<Route
+									element={<PermissionRoute permission={Permissions.Perfil.Visualizar} />}
+								>
+									<Route path="/perfis" element={<PerfilPage />} />
+								</Route>
 							</Route>
 						</Route>
 						<Route path="*" element={<Navigate to="/familias" replace />} />
