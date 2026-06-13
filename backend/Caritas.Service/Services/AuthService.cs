@@ -5,13 +5,10 @@ using Caritas.Models.DTOs.Authentication;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
-using Caritas.Service.Services.Email.Templates;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using Caritas.Models.DTOs.Usuario;
-using Caritas.Service.Mappers;
 using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Paroquia;
@@ -24,48 +21,6 @@ public class AuthService(
     IConfiguration configuration,
     IEmailService emailService)
 {
-    public async Task<UsuarioDto> RegisterAsync(CadastroDto dto)
-    {
-        var existente = await userManager.FindByEmailAsync(dto.Email);
-        if (existente is not null)
-            throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
-
-        var usuario = new Usuario
-        {
-            UserName = dto.Email,
-            Email = dto.Email,
-            Nome = dto.Nome,
-            Sobrenome = dto.Sobrenome,
-            Cpf = dto.Cpf,
-            Telefone = dto.Telefone,
-            Ativo = true,
-            CriadoEm = DateTime.UtcNow,
-            UsuarioParoquias = new List<UsuarioParoquia>()
-        };
-
-        if (dto.ParoquiasPermitidas != null)
-        {
-            foreach (var paroquiaId in dto.ParoquiasPermitidas)
-            {
-                usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
-            }
-        }
-
-        var tempPassword = "SenhaTemp@123"; //GenerateTemporaryPassword();
-
-        var resultado = await userManager.CreateAsync(usuario, tempPassword);
-
-        if (!resultado.Succeeded)
-            throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
-
-        var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
-        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
-        var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(usuario.Email!)}&token={Uri.EscapeDataString(resetToken)}";
-        await emailService.SendAsync(usuario.Email!, FirstAccessEmail.Subject, FirstAccessEmail.Build(usuario.Nome!, link));
-
-        return usuario.ToDto();
-    }
-
     public async Task<LoginResponseDto> LoginAsync(LoginDto dto)
     {
         var usuario = await userManager.FindByEmailAsync(dto.Email);

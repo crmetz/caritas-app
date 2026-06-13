@@ -23,6 +23,13 @@ public class PerfisController(
         return Ok(result);
     }
 
+    [HttpGet("select")]
+    public async Task<IActionResult> GetAssignableSelect()
+    {
+        var result = await _perfilService.GetAssignableSelectAsync(UsuarioId);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

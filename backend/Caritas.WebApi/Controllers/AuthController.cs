@@ -19,13 +19,6 @@ public class AuthController(
 {
     private readonly AuthService _authService = new(userManager, context, configuration, emailService);
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] CadastroDto dto)
-    {
-        var usuario = await _authService.RegisterAsync(dto);
-        return CreatedAtAction(nameof(Register), new { id = usuario.Id }, usuario);
-    }
-
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)

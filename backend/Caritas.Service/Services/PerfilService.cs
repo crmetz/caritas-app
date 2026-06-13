@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Caritas.Models.Constants;
+using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Perfil;
 using Caritas.Models.Entities;
@@ -26,7 +29,10 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
     {
         var perfil = await roleManager.FindByIdAsync(id.ToString())
             ?? throw new KeyNotFoundException($"Perfil com id {id} não encontrado.");
-        return perfil.ToDto();
+
+        var dto = perfil.ToDto();
+        dto.Permissions = await GetPermissionsAsync(perfil);
+        return dto;
     }
 
     public async Task<PerfilDto> CreateAsync(CreatePerfilDto dto)
@@ -45,7 +51,11 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         if (!result.Succeeded)
             throw new ArgumentException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        return perfil.ToDto();
+        await SyncPermissionsAsync(perfil, dto.Permissions);
+
+        var mapped = perfil.ToDto();
+        mapped.Permissions = await GetPermissionsAsync(perfil);
+        return mapped;
     }
 
     public async Task<PerfilDto> UpdateAsync(int id, UpdatePerfilDto dto)
@@ -70,7 +80,11 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         if (!result.Succeeded)
             throw new ArgumentException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        return perfil.ToDto();
+        await SyncPermissionsAsync(perfil, dto.Permissions);
+
+        var mapped = perfil.ToDto();
+        mapped.Permissions = await GetPermissionsAsync(perfil);
+        return mapped;
     }
 
     public async Task DeleteAsync(int id)
@@ -89,5 +103,114 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         var result = await roleManager.DeleteAsync(perfil);
         if (!result.Succeeded)
             throw new ArgumentException(string.Join(", ", result.Errors.Select(e => e.Description)));
+    }
+
+    public async Task<HashSet<string>> GetUserPermissionsAsync(Usuario usuario)
+    {
+        if (await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin))
+            return PermissionService.AllValues.ToHashSet();
+
+        var permissions = new HashSet<string>();
+        foreach (var roleName in await userManager.GetRolesAsync(usuario))
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role != null)
+                permissions.UnionWith(await GetPermissionsAsync(role));
+        }
+
+        return permissions;
+    }
+
+    public async Task<List<SelectObjectDto>> GetAssignableSelectAsync(int currentUserId)
+    {
+        var currentUser = await userManager.FindByIdAsync(currentUserId.ToString());
+
+        var isAdmin = await userManager.IsInRoleAsync(currentUser!, PerfisPadrao.Admin);
+        var allowed = await GetUserPermissionsAsync(currentUser!);
+
+        var result = new List<SelectObjectDto>();
+        foreach (var role in roleManager.Roles.ToList())
+        {
+            var rolePermissions = await GetPermissionsAsync(role);
+            if (isAdmin || rolePermissions.All(allowed.Contains))
+                result.Add(new SelectObjectDto { Value = role.Id, Label = role.Name });
+        }
+
+        return result.OrderBy(r => r.Label).ToList();
+    }
+
+    public async Task AssignRoleAsync(Usuario usuario, int? perfilId, int currentUserId)
+    {
+        var currentRoles = await userManager.GetRolesAsync(usuario);
+
+        if (perfilId is null)
+        {
+            if (currentRoles.Count > 0)
+                await userManager.RemoveFromRolesAsync(usuario, currentRoles);
+            return;
+        }
+
+        var role = await roleManager.FindByIdAsync(perfilId.Value.ToString())
+            ?? throw new KeyNotFoundException($"Perfil com id {perfilId} não encontrado.");
+
+        await EnsureCanAssignAsync(currentUserId, role);
+
+        if (currentRoles.Count == 1 && currentRoles[0] == role.Name)
+            return;
+
+        if (currentRoles.Count > 0)
+            await userManager.RemoveFromRolesAsync(usuario, currentRoles);
+
+        await userManager.AddToRoleAsync(usuario, role.Name!);
+    }
+
+    public async Task EnsureCanAssignAsync(int currentUserId, Perfil role)
+    {
+        var currentUser = await userManager.FindByIdAsync(currentUserId.ToString());
+
+        if (await userManager.IsInRoleAsync(currentUser!, PerfisPadrao.Admin))
+            return;
+
+        var allowed = await GetUserPermissionsAsync(currentUser!);
+        var rolePermissions = await GetPermissionsAsync(role);
+
+        if (!rolePermissions.All(allowed.Contains))
+            throw new InvalidOperationException(
+                "Você não pode atribuir um perfil com mais permissões do que as suas.");
+    }
+
+    public async Task EnsureCanAssignAsync(int currentUserId, int perfilId)
+    {
+        var role = await roleManager.FindByIdAsync(perfilId.ToString())
+            ?? throw new KeyNotFoundException($"Perfil com id {perfilId} não encontrado.");
+        await EnsureCanAssignAsync(currentUserId, role);
+    }
+
+    private async Task<List<string>> GetPermissionsAsync(Perfil perfil)
+    {
+        var claims = await roleManager.GetClaimsAsync(perfil);
+        return claims
+            .Where(c => c.Type == Permissions.ClaimType)
+            .Select(c => c.Value)
+            .ToList();
+    }
+
+    private async Task SyncPermissionsAsync(Perfil perfil, IEnumerable<string>? permissions)
+    {
+        var desired = (permissions ?? Enumerable.Empty<string>())
+            .Where(p => PermissionService.AllValues.Contains(p))
+            .Distinct()
+            .ToHashSet();
+
+        var permissionClaims = (await roleManager.GetClaimsAsync(perfil))
+            .Where(c => c.Type == Permissions.ClaimType)
+            .ToList();
+
+        foreach (var claim in permissionClaims.Where(c => !desired.Contains(c.Value)))
+            await roleManager.RemoveClaimAsync(perfil, claim);
+
+        var current = permissionClaims.Select(c => c.Value).ToHashSet();
+        foreach (var value in desired.Where(v => !current.Contains(v)))
+            await roleManager.AddClaimAsync(perfil, new Claim(Permissions.ClaimType, value));
     }
 }

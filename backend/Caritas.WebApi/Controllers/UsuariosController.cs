@@ -1,5 +1,6 @@
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
 using Caritas.Service.Services;
@@ -14,10 +15,13 @@ namespace Caritas.WebApi.Controllers;
 public class UsuariosController(
     CaritasDbContext context,
     UserManager<Usuario> userManager,
-    ICurrentSession currentSession) : BaseApiController
+    RoleManager<Perfil> roleManager,
+    ICurrentSession currentSession,
+    IConfiguration configuration,
+    IEmailService emailService) : BaseApiController
 {
     private readonly UsuariosService _usuarioService =
-        new(new UsuarioRepository(context), userManager, currentSession);
+        new(new UsuarioRepository(context), userManager, roleManager, currentSession, configuration, emailService);
 
     [HttpGet]
     public async Task<IActionResult> GetPaged([FromQuery] UsuarioPagedRequestDto request)
@@ -40,6 +44,16 @@ public class UsuariosController(
     {
         var result = await _usuarioService.GetByIdAsync(id);
         return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateUsuarioDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _usuarioService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id}")]

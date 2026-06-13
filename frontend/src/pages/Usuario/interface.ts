@@ -14,7 +14,7 @@ export interface Usuario {
 	telefone: string | null;
 	dataNasc: string | null;
 	perfilId: number | null;
-	perfil?: Perfil | null;
+	perfil?: { value: number; label: string } | null;
 	ativo: boolean;
 	paroquiasPermitidas: Array<{ value: number; label: string }>;
 	criadoEm: string;
