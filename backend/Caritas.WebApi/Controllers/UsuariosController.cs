@@ -1,3 +1,4 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
 using Caritas.Models.Interfaces.Services;
@@ -24,6 +25,7 @@ public class UsuariosController(
         new(new UsuarioRepository(context), userManager, roleManager, currentSession, configuration, emailService);
 
     [HttpGet]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetPaged([FromQuery] UsuarioPagedRequestDto request)
     {
         var result = await _usuarioService.GetPagedAsync(request);
@@ -31,6 +33,7 @@ public class UsuariosController(
     }
 
     [HttpGet("select")]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetSelect()
     {
         var paroquiaId = ParoquiaAtualId
@@ -40,6 +43,7 @@ public class UsuariosController(
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = Permissions.Usuario.Visualizar)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _usuarioService.GetByIdAsync(id);
@@ -47,6 +51,7 @@ public class UsuariosController(
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioDto dto)
     {
         if (!ModelState.IsValid)
@@ -57,6 +62,7 @@ public class UsuariosController(
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioDto dto)
     {
         if (!ModelState.IsValid)
@@ -67,6 +73,7 @@ public class UsuariosController(
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Permissions.Usuario.CriarEditar)]
     public async Task<IActionResult> Deactivate(int id)
     {
         await _usuarioService.DeactivateAsync(id);

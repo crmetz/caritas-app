@@ -1,8 +1,10 @@
 using Caritas.Models.Constants;
 using Caritas.Models.Entities;
 using Caritas.Repository.Context;
+using Caritas.WebApi.Authorization;
 using Caritas.WebApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -83,7 +85,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionService.AllValues)
+        options.AddPolicy(permission, p => p.AddRequirements(new PermissionRequirement(permission)));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentSession, CurrentSession>();

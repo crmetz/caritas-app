@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Paroquia;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace Caritas.Service.Services;
 
 public class AuthService(
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     CaritasDbContext context,
     IConfiguration configuration,
     IEmailService emailService)
@@ -30,7 +32,7 @@ public class AuthService(
         if (!usuario.Ativo)
             throw new UnauthorizedAccessException("Usuário inativo. Contate o administrador.");
 
-        var token = GenerateToken(usuario);
+        var token = await GenerateTokenAsync(usuario);
         return new LoginResponseDto
         {
             Token = token
@@ -114,7 +116,7 @@ public class AuthService(
         }
     }
 
-    private string GenerateToken(Usuario usuario)
+    private async Task<string> GenerateTokenAsync(Usuario usuario)
     {
         var jwtKey = configuration["Jwt:Key"]!;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
@@ -126,6 +128,22 @@ public class AuthService(
             new(JwtRegisteredClaimNames.Email, usuario.Email!),
             new(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString()),
         };
+
+        if (usuario.UsuarioAdmin)
+        {
+            claims.AddRange(PermissionService.AllValues
+                .Select(p => new Claim(Permissions.ClaimType, p)));
+        }
+        else
+        {
+            var roleName = (await userManager.GetRolesAsync(usuario)).FirstOrDefault();
+            if (roleName != null)
+            {
+                var role = await roleManager.FindByNameAsync(roleName);
+                if (role != null)
+                    claims.AddRange(await roleManager.GetClaimsAsync(role));
+            }
+        }
 
         var token = new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"],
