@@ -85,7 +85,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddAuthorization(options =>
 {
     foreach (var permission in PermissionService.AllValues)
