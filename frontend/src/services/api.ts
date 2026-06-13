@@ -21,6 +21,21 @@ api.interceptors.request.use((config) => {
 	return config;
 });
 
+api.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		if (axios.isAxiosError(error) && error.response?.status === 403) {
+			const method = error.config?.method?.toUpperCase();
+			error.response.data = {
+				detail: method === "GET"
+					? "Você não tem permissão para acessar este recurso."
+					: "Você não tem permissão para realizar esta ação.",
+			};
+		}
+		return Promise.reject(error);
+	}
+);
+
 export function getErrorMessage(error: unknown, fallback: string): string {
 	if (axios.isAxiosError(error)) {
 		const data = error.response?.data as

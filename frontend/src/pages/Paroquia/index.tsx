@@ -5,9 +5,10 @@ import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable/interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import APIService, { type PagedResponse } from "@/services/api";
+import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
+import axios from "axios";
 
 const columns: Column<Paroquia>[] = [
 	{
@@ -79,8 +80,8 @@ export default function ParoquiaPage() {
 					page,
 					totalCount: result.totalCount,
 				}));
-			} catch {
-				toast.error("Erro ao carregar paróquias.");
+			} catch (ex: unknown) {
+				toast.error(getErrorMessage(ex, "Erro ao carregar paróquias"));
 			} finally {
 				setLoading(false);
 			}

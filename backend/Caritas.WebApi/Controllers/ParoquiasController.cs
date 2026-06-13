@@ -1,3 +1,4 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
 using Caritas.Repository.Context;
@@ -20,6 +21,7 @@ namespace Caritas.WebApi.Controllers
             new(new ParoquiaRepository(context), userManager, currentSession, new UsuarioRepository(context));
 
         [HttpGet]
+        [Authorize(Policy = Permissions.Paroquia.Visualizar)]
         public async Task<IActionResult> GetPaged(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
@@ -29,6 +31,7 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpGet("select")]
+        [Authorize(Policy = Permissions.Paroquia.Visualizar)]
         public async Task<IActionResult> GetAllSelectObject()
         {
             var result = await _paroquiaService.GetAllSelectObject();
@@ -36,6 +39,7 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = Permissions.Paroquia.Visualizar)]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _paroquiaService.GetByIdAsync(id);
@@ -43,6 +47,7 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = Permissions.Paroquia.CriarEditar)]
         public async Task<IActionResult> Create([FromBody] CreateParoquiaDTO paroquiaCreateDTO)
         {
             if (!ModelState.IsValid)
@@ -53,6 +58,7 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = Permissions.Paroquia.CriarEditar)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateParoquiaDto updateParoquiaDto)
         {
             if (!ModelState.IsValid)
@@ -63,6 +69,7 @@ namespace Caritas.WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = Permissions.Paroquia.CriarEditar)]
         public async Task<IActionResult> Delete(long id)
         {
             await _paroquiaService.DeleteAsync(id);
