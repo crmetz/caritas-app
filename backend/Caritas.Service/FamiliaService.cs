@@ -1,3 +1,4 @@
+using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Familia;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Pessoa;
@@ -28,6 +29,18 @@ public class FamiliaService(CaritasDbContext context)
         var familia = await _familiaRepository.GetWithMembrosAsync(id)
             ?? throw new KeyNotFoundException($"Família com id {id} não encontrada.");
         return familia.ToResponseDto();
+    }
+
+    public async Task<List<SelectObjectDto>> GetSelectAsync(int? paroquiaId)
+    {
+        var familias = await _familiaRepository.GetSelectAsync(paroquiaId);
+        return familias
+            .Select(f => new SelectObjectDto
+            {
+                Value = f.Id,
+                Label = f.Responsavel?.Nome ?? $"Família #{f.Id}",
+            })
+            .ToList();
     }
 
     public async Task<FamiliaResponseDto> CreateAsync(FamiliaCreateDto dto)

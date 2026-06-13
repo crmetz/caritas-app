@@ -12,6 +12,7 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
     public DbSet<Familia> Familias => Set<Familia>();
     public DbSet<FamiliaCidade> FamiliaCidades => Set<FamiliaCidade>();
     public DbSet<Pessoa> Pessoas => Set<Pessoa>();
+    public DbSet<Atendimento> Atendimentos => Set<Atendimento>();
     public DbSet<Paroquia> Paroquias { get; set; }
     public DbSet<Endereco> Enderecos { get; set; }
     public DbSet<UsuarioParoquia> UsuarioParoquias { get; set; }
@@ -80,6 +81,24 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
         modelBuilder.Entity<FamiliaCidade>()
             .HasIndex(c => c.Nome)
             .IsUnique();
+
+        modelBuilder.Entity<Atendimento>()
+            .HasOne(a => a.Familia)
+            .WithMany()
+            .HasForeignKey(a => a.FamiliaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Atendimento>()
+            .HasOne(a => a.Paroquia)
+            .WithMany()
+            .HasForeignKey(a => a.ParoquiaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Atendimento>()
+            .HasOne(a => a.Voluntario)
+            .WithMany()
+            .HasForeignKey(a => a.VoluntarioId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

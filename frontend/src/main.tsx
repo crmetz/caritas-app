@@ -7,6 +7,8 @@ import "./style.css";
 import { AppLayout } from "./components/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { SessionProvider } from "./components/SessionProvider";
+import AtendimentoPage from "./pages/Atendimento";
+import EvolucaoFamiliaPage from "./pages/EvolucaoFamilia";
 import FamiliaPage from "./pages/Familia";
 import LoginPage from "./pages/Login";
 import ParoquiaPage from "./pages/Paroquia";
@@ -27,6 +29,11 @@ createRoot(rootElement).render(
 						<Route element={<PrivateRoute />}>
 							<Route element={<AppLayout />}>
 								<Route path="/familias" element={<FamiliaPage />} />
+								<Route
+									path="/familias/:familiaId/evolucao"
+									element={<EvolucaoFamiliaPage />}
+								/>
+								<Route path="/atendimentos" element={<AtendimentoPage />} />
 								<Route path="/paroquias" element={<ParoquiaPage />} />
 								<Route path="/usuarios" element={<UsuarioPage />} />
 								<Route path="/perfis" element={<PerfilPage />} />
