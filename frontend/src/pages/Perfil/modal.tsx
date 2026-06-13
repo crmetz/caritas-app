@@ -64,7 +64,7 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 
 			try {
 				const catalog = await APIService.getRequest<PermissionModule[]>({
-					url: "/permissions",
+					url: "/permissoes",
 				});
 				setModules(catalog);
 

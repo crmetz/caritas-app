@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Caritas.WebApi.Controllers;
 
 [Authorize]
-public class PermissionsController : BaseApiController
+public class PermissoesController : BaseApiController
 {
     private readonly PermissionService _permissionService = new();
 
