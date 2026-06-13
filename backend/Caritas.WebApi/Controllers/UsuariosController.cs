@@ -14,10 +14,11 @@ namespace Caritas.WebApi.Controllers;
 public class UsuariosController(
     CaritasDbContext context,
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     ICurrentSession currentSession) : BaseApiController
 {
     private readonly UsuariosService _usuarioService =
-        new(new UsuarioRepository(context), userManager, currentSession);
+        new(new UsuarioRepository(context), userManager, roleManager, currentSession);
 
     [HttpGet]
     public async Task<IActionResult> GetPaged([FromQuery] UsuarioPagedRequestDto request)

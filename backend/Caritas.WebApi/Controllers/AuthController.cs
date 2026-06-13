@@ -13,16 +13,17 @@ namespace Caritas.WebApi.Controllers;
 [Authorize]
 public class AuthController(
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     CaritasDbContext context,
     IEmailService emailService,
     IConfiguration configuration) : BaseApiController
 {
-    private readonly AuthService _authService = new(userManager, context, configuration, emailService);
+    private readonly AuthService _authService = new(userManager, roleManager, context, configuration, emailService);
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CadastroDto dto)
     {
-        var usuario = await _authService.RegisterAsync(dto);
+        var usuario = await _authService.RegisterAsync(dto, UsuarioId);
         return CreatedAtAction(nameof(Register), new { id = usuario.Id }, usuario);
     }
 

@@ -1,4 +1,5 @@
 using Caritas.Models.Constants;
+using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
@@ -12,8 +13,11 @@ namespace Caritas.Service.Services;
 public class UsuariosService(
     IUsuarioRepository usuarioRepository,
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     ICurrentSession currentSession)
 {
+    private readonly PerfilService _perfilService = new(roleManager, userManager);
+
     public async Task<PagedResponseDto<UsuarioResponseDto>> GetPagedAsync(UsuarioPagedRequestDto request)
     {
         var paroquiaIds = await GetParoquiasFilterAsync();
@@ -30,7 +34,21 @@ public class UsuariosService(
     {
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
-        return usuario.ToDto();
+
+        var dto = usuario.ToDto();
+
+        var roleName = (await userManager.GetRolesAsync(usuario)).FirstOrDefault();
+        if (roleName != null)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role != null)
+            {
+                dto.PerfilId = role.Id;
+                dto.Perfil = new SelectObjectDto { Value = role.Id, Label = role.Name };
+            }
+        }
+
+        return dto;
     }
 
     public async Task<UsuarioDto> UpdateAsync(int id, UpdateUsuarioDto dto)
@@ -54,6 +72,10 @@ public class UsuariosService(
         foreach (var paroquiaId in dto.ParoquiasPermitidas)
             if (!usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
                 usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+
+        var currentUserId = currentSession.UsuarioId
+            ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
 
         await usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();

@@ -14,13 +14,24 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import APIService from "@/services/api";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	CreateUsuarioDto,
 	Usuario,
 	UsuarioModalProps,
 	UsuarioModalRef,
 } from "./interface";
+
+type PerfilOption = { value: number; label: string };
+
+const SEM_PERFIL = "__none__";
 
 const EMPTY_FORM: CreateUsuarioDto = {
 	nome: "",
@@ -41,6 +52,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const [paroquiasOptions, setParoquiasOptions] = useState<
 			ParoquiaSelectOption[]
 		>([]);
+		const [perfisOptions, setPerfisOptions] = useState<PerfilOption[]>([]);
 
 		const { register, handleSubmit, reset, control, setValue } =
 			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
@@ -51,6 +63,10 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 			>({
 				url: "/paroquias/select",
 			}).catch(() => [] as ParoquiaSelectOption[]);
+
+			const opcoesPerfil = await APIService.getRequest<PerfilOption[]>({
+				url: "/perfis/select",
+			}).catch(() => [] as PerfilOption[]);
 
 			if (id !== undefined) {
 				setEditingId(id);
@@ -76,6 +92,14 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					}
 					setParoquiasOptions([...merged.values()]);
 
+					// Mantém o perfil atual do usuário visível mesmo que o editor não
+					// possa atribuí-lo (não veio em /perfis/select).
+					const perfis = [...opcoesPerfil];
+					if (usuario.perfil && !perfis.some((p) => p.value === usuario.perfil!.value)) {
+						perfis.push(usuario.perfil);
+					}
+					setPerfisOptions(perfis);
+
 					reset({
 						nome: usuario.nome,
 						sobrenome: usuario.sobrenome,
@@ -96,6 +120,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 				}
 			} else {
 				setParoquiasOptions(opcoesParoquia);
+				setPerfisOptions(opcoesPerfil);
 				setEditingId(null);
 				reset(EMPTY_FORM);
 				setIsOpen(true);
@@ -122,8 +147,8 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 				}
 				setIsOpen(false);
 				onSuccess();
-			} catch {
-				toast.error("Erro ao salvar usuário.");
+			} catch (error) {
+				toast.error(getErrorMessage(error, "Erro ao salvar usuário."));
 			}
 		};
 
@@ -236,20 +261,31 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 											name="perfilId"
 											control={control}
 											render={({ field }) => (
-												<Input
-													id="usuario-perfil"
-													type="number"
-													min="1"
-													placeholder="ID do perfil"
-													value={field.value ?? ""}
-													onChange={(e) =>
-														field.onChange(
-															e.target.value
-																? Number(e.target.value)
-																: undefined,
-														)
+												<Select
+													value={
+														field.value != null
+															? String(field.value)
+															: SEM_PERFIL
 													}
-												/>
+													onValueChange={(v) =>
+														field.onChange(v === SEM_PERFIL ? null : Number(v))
+													}
+												>
+													<SelectTrigger id="usuario-perfil">
+														<SelectValue placeholder="Selecione um perfil" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value={SEM_PERFIL}>Sem perfil</SelectItem>
+														{perfisOptions.map((perfil) => (
+															<SelectItem
+																key={perfil.value}
+																value={String(perfil.value)}
+															>
+																{perfil.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
 											)}
 										/>
 									</div>

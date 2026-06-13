@@ -20,15 +20,22 @@ namespace Caritas.Service.Services;
 
 public class AuthService(
     UserManager<Usuario> userManager,
+    RoleManager<Perfil> roleManager,
     CaritasDbContext context,
     IConfiguration configuration,
     IEmailService emailService)
 {
-    public async Task<UsuarioDto> RegisterAsync(CadastroDto dto)
+    private readonly PerfilService _perfilService = new(roleManager, userManager);
+
+    public async Task<UsuarioDto> RegisterAsync(CadastroDto dto, int currentUserId)
     {
         var existente = await userManager.FindByEmailAsync(dto.Email);
         if (existente is not null)
             throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
+
+        // Valida a atribuição do perfil antes de criar o usuário (evita usuário órfão).
+        if (dto.PerfilId is not null)
+            await _perfilService.EnsureCanAssignAsync(currentUserId, dto.PerfilId.Value);
 
         var usuario = new Usuario
         {
@@ -57,6 +64,8 @@ public class AuthService(
 
         if (!resultado.Succeeded)
             throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
+
+        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
         var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
