@@ -46,6 +46,8 @@ public class UsuariosService(
             Telefone = dto.Telefone,
             DataNasc = dto.DataNasc,
             Ativo = true,
+            UsuarioAdmin = false,
+            UsuarioCriadorId = currentUserId,
             CriadoEm = DateTime.UtcNow,
             UsuarioParoquias = dto.ParoquiasPermitidas
                 .Select(paroquiaId => new UsuarioParoquia { ParoquiaId = paroquiaId })

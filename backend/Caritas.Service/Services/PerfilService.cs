@@ -107,7 +107,7 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
 
     public async Task<HashSet<string>> GetUserPermissionsAsync(Usuario usuario)
     {
-        if (await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin))
+        if (usuario.UsuarioAdmin)
             return PermissionService.AllValues.ToHashSet();
 
         var permissions = new HashSet<string>();
@@ -124,15 +124,13 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
     public async Task<List<SelectObjectDto>> GetAssignableSelectAsync(int currentUserId)
     {
         var currentUser = await userManager.FindByIdAsync(currentUserId.ToString());
-
-        var isAdmin = await userManager.IsInRoleAsync(currentUser!, PerfisPadrao.Admin);
         var allowed = await GetUserPermissionsAsync(currentUser!);
 
         var result = new List<SelectObjectDto>();
         foreach (var role in roleManager.Roles.ToList())
         {
             var rolePermissions = await GetPermissionsAsync(role);
-            if (isAdmin || rolePermissions.All(allowed.Contains))
+            if (rolePermissions.All(allowed.Contains))
                 result.Add(new SelectObjectDto { Value = role.Id, Label = role.Name });
         }
 
@@ -168,7 +166,7 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
     {
         var currentUser = await userManager.FindByIdAsync(currentUserId.ToString());
 
-        if (await userManager.IsInRoleAsync(currentUser!, PerfisPadrao.Admin))
+        if (currentUser!.UsuarioAdmin)
             return;
 
         var allowed = await GetUserPermissionsAsync(currentUser!);

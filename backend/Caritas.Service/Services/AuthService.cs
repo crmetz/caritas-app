@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Paroquia;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +42,7 @@ public class AuthService(
         var usuario = await userManager.FindByIdAsync(usuarioId.ToString())
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
-        var isAdmin = await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin);
+        var isAdmin = usuario.UsuarioAdmin;
 
         var paroquias = isAdmin
             ? await context.Paroquias
