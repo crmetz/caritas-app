@@ -5,6 +5,6 @@ namespace Caritas.Models.Interfaces
 {
     public interface IParoquiaRepository : IBaseRepository<Paroquia>
     {
-        Task<PagedResponseDto<Paroquia>> GetPagedWithEnderecoAsync(int page, int pageSize);
+        Task<PagedResponseDto<Paroquia>> GetPagedWithEnderecoAsync(int page, int pageSize, IList<int> paroquiaIds);
     }
 }

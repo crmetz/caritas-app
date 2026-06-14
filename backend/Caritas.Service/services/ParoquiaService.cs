@@ -19,7 +19,8 @@ namespace Caritas.Service.services
     {
         public async Task<PagedResponseDto<ParoquiaDto>> GetPagedAsync(int page, int pageSize)
         {
-            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize);
+            var paroquiaIds = await GetParoquiasFilterAsync();
+            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize, paroquiaIds);
 
             return new PagedResponseDto<ParoquiaDto>
             {
@@ -65,6 +66,9 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
+                throw new InvalidOperationException("Cep Inválido");
 
             if (paroquia.Raiz)
                 throw new InvalidOperationException("A diocese não pode ser editada.");

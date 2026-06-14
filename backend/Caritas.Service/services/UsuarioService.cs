@@ -33,18 +33,32 @@ public class UsuariosService(
         if (existente is not null)
             throw new ArgumentException($"Já existe um usuário cadastrado com o e-mail '{dto.Email}'.");
 
-        //validação telefone, cep, cpf
-
-        if(!string.IsNullOrWhiteSpace(dto.Telefone) && !PhoneValidator.Validate(dto.Telefone))
+        if (!string.IsNullOrWhiteSpace(dto.Telefone) && !PhoneValidator.Validate(dto.Telefone))
             throw new InvalidOperationException("Telefone inválido.");
 
-        if(!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
+        if (!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
             throw new InvalidOperationException("Cpf Inválido");
-            
 
-        // Valida a atribuição do perfil antes de criar o usuário (evita usuário órfão).
         if (dto.PerfilId is not null)
             await _perfilService.EnsureCanAssignAsync(currentUserId, dto.PerfilId.Value);
+
+        // Escopo de paróquias do editor — null significa admin (sem restrição)
+        var paroquiasEditor = await GetParoquiasFilterAsync();
+
+        if (paroquiasEditor is not null)
+        {
+            var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
+                .Where(id => !paroquiasEditor.Contains(id))
+                .ToList();
+
+            if (paroquiasForaDoEscopo.Count > 0)
+                throw new UnauthorizedAccessException(
+                    $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+        }
+
+        var paroquiasPermitidas = paroquiasEditor is null
+            ? dto.ParoquiasPermitidas
+            : dto.ParoquiasPermitidas.Where(paroquiasEditor.Contains).ToList();
 
         var usuario = new Usuario
         {
@@ -59,7 +73,7 @@ public class UsuariosService(
             UsuarioAdmin = false,
             UsuarioCriadorId = currentUserId,
             CriadoEm = DateTime.UtcNow,
-            UsuarioParoquias = dto.ParoquiasPermitidas
+            UsuarioParoquias = paroquiasPermitidas
                 .Select(paroquiaId => new UsuarioParoquia { ParoquiaId = paroquiaId })
                 .ToList()
         };
@@ -143,22 +157,46 @@ public class UsuariosService(
         usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
         usuario.Cpf = dto.Cpf ?? usuario.Cpf;
 
-         if(dto.Telefone is not null && !PhoneValidator.Validate(dto.Telefone))
+        if (!string.IsNullOrWhiteSpace(dto.Telefone) && !PhoneValidator.Validate(dto.Telefone))
             throw new InvalidOperationException("Telefone inválido.");
 
-        if(dto.Cpf is not null && !CpfValidator.Validate(dto.Cpf))
+        if (!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
             throw new InvalidOperationException("Cpf Inválido");
+
+        // Escopo de paróquias do editor — null significa admin (sem restrição)
+        var paroquiasEditor = await GetParoquiasFilterAsync();
+
+        if (paroquiasEditor is not null)
+        {
+            var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
+                .Where(id => !paroquiasEditor.Contains(id))
+                .Where(id => !usuario.UsuarioParoquias.Any(up => up.ParoquiaId == id)) // já existentes não contam como "nova atribuição"
+                .ToList();
+
+            if (paroquiasForaDoEscopo.Count > 0)
+                throw new UnauthorizedAccessException(
+                    $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+        }
 
         var paroquiasToRemove = usuario.UsuarioParoquias
             .Where(up => !dto.ParoquiasPermitidas.Contains(up.ParoquiaId))
+            .Where(up => paroquiasEditor is null || paroquiasEditor.Contains(up.ParoquiaId))
             .ToList();
 
         foreach (var up in paroquiasToRemove)
             usuario.UsuarioParoquias.Remove(up);
 
         foreach (var paroquiaId in dto.ParoquiasPermitidas)
-            if (!usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
-                usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+        {
+            if (usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
+                continue;
+
+            // editor só pode adicionar paróquias dentro do próprio escopo
+            if (paroquiasEditor is not null && !paroquiasEditor.Contains(paroquiaId))
+                continue;
+
+            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+        }
 
         var currentUserId = currentSession.UsuarioId;
         await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, (int)currentUserId!);

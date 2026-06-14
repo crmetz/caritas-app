@@ -87,6 +87,8 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 							merged.set(p.value, {
 								value: p.value,
 								label: p.label ?? `Paróquia ${p.value}`,
+								disabled: true
+								
 							});
 						}
 					}
