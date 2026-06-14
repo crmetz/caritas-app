@@ -49,9 +49,14 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            var paroquiasEditor = await GetParoquiasFilterAsync();
+
+            if (paroquiasEditor is not null && !paroquiasEditor.Contains(id))
+                throw new UnauthorizedAccessException("Você não tem permissão para visualizar esta paróquia.");
+
             return paroquia.ToDto();
         }
-
         public async Task<ParoquiaDto> CreateAsync(CreateParoquiaDTO dto)
         {
             if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
@@ -66,6 +71,11 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            var paroquiasEditor = await GetParoquiasFilterAsync();
+
+            if (paroquiasEditor is not null && !paroquiasEditor.Contains(id))
+                throw new UnauthorizedAccessException("Você não tem permissão para editar esta paróquia.");
 
             if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
                 throw new InvalidOperationException("Cep Inválido");

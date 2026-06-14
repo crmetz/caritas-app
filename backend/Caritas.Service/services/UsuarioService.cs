@@ -127,10 +127,21 @@ public class UsuariosService(
 
     public async Task<UsuarioDto> GetByIdAsync(int id)
     {
+
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
         var dto = usuario.ToDto();
+
+        var paroquiasEditor = await GetParoquiasFilterAsync();
+
+        // Editor não-admin só pode editar usuários que compartilham ao menos
+        // uma paróquia dentro do seu escopo
+        if (paroquiasEditor is not null &&
+            !usuario.UsuarioParoquias.Any(up => paroquiasEditor.Contains(up.ParoquiaId)))
+        {
+            throw new UnauthorizedAccessException("Você não tem permissão para visualizar este usuário.");
+        }
 
         var roleName = (await userManager.GetRolesAsync(usuario)).FirstOrDefault();
         if (roleName != null)
@@ -151,6 +162,17 @@ public class UsuariosService(
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
+        // Escopo de paróquias do editor — null significa admin (sem restrição)
+        var paroquiasEditor = await GetParoquiasFilterAsync();
+
+        // Editor não-admin só pode editar usuários que compartilham ao menos
+        // uma paróquia dentro do seu escopo
+        if (paroquiasEditor is not null &&
+            !usuario.UsuarioParoquias.Any(up => paroquiasEditor.Contains(up.ParoquiaId)))
+        {
+            throw new UnauthorizedAccessException("Você não tem permissão para editar este usuário.");
+        }
+
         usuario.Nome = dto.Nome ?? usuario.Nome;
         usuario.Sobrenome = dto.Sobrenome ?? usuario.Sobrenome;
         usuario.Telefone = dto.Telefone ?? usuario.Telefone;
@@ -163,14 +185,11 @@ public class UsuariosService(
         if (!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
             throw new InvalidOperationException("Cpf Inválido");
 
-        // Escopo de paróquias do editor — null significa admin (sem restrição)
-        var paroquiasEditor = await GetParoquiasFilterAsync();
-
         if (paroquiasEditor is not null)
         {
             var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
-                .Where(id => !paroquiasEditor.Contains(id))
-                .Where(id => !usuario.UsuarioParoquias.Any(up => up.ParoquiaId == id)) // já existentes não contam como "nova atribuição"
+                .Where(pid => !paroquiasEditor.Contains(pid))
+                .Where(pid => !usuario.UsuarioParoquias.Any(up => up.ParoquiaId == pid))
                 .ToList();
 
             if (paroquiasForaDoEscopo.Count > 0)
@@ -191,7 +210,6 @@ public class UsuariosService(
             if (usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
                 continue;
 
-            // editor só pode adicionar paróquias dentro do próprio escopo
             if (paroquiasEditor is not null && !paroquiasEditor.Contains(paroquiaId))
                 continue;
 
