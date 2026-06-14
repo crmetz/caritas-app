@@ -23,7 +23,10 @@ const columns: Column<UsuarioResponseDto>[] = [
 			<div className="flex items-center gap-2">
 				<UserRound className="h-4 w-4 text-muted-foreground" />
 				<div>
-					<div className="font-medium">{usuarioNomeCompleto(usuario)}</div>
+					<div className="flex items-center gap-2 font-medium">
+						{usuarioNomeCompleto(usuario)}
+						{usuario.usuarioAdmin && <Badge variant="default">Admin</Badge>}
+					</div>
 					<div className="text-muted-foreground text-xs">{usuario.email}</div>
 				</div>
 			</div>

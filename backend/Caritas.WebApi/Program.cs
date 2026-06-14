@@ -124,28 +124,12 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
-    // Seed dev user
-    if (app.Environment.IsDevelopment())
+    // Seed do admin inicial
+    // TODO: credenciais do admin de seed fixas temporariamente — mover para
+    // configuração/secrets (env vars / user-secrets) antes de produção.
     {
         using var seedScope = app.Services.CreateScope();
         var userManager = seedScope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-
-        const string devEmail = "dev@caritas.com";
-        if (await userManager.FindByEmailAsync(devEmail) is null)
-        {
-            var devUser = new Usuario
-            {
-                UserName = devEmail,
-                Email = devEmail,
-                Nome = "Dev",
-                Sobrenome = "User",
-                Ativo = true,
-                UsuarioAdmin = true,
-                CriadoEm = DateTime.UtcNow
-            };
-            await userManager.CreateAsync(devUser, "Dev@12345");
-        }
-
         var roleManager = seedScope.ServiceProvider.GetRequiredService<RoleManager<Perfil>>();
 
         if (await roleManager.FindByNameAsync(PerfisPadrao.Admin) is null)
@@ -158,13 +142,6 @@ using (var scope = app.Services.CreateScope())
             });
         }
 
-        var createdUser = await userManager.FindByEmailAsync(devEmail);
-        if (createdUser != null && !await userManager.IsInRoleAsync(createdUser, PerfisPadrao.Admin))
-        {
-            await userManager.AddToRoleAsync(createdUser, PerfisPadrao.Admin);
-        }
-
-        // Give all permissions to admin user.
         var adminRole = await roleManager.FindByNameAsync(PerfisPadrao.Admin);
         if (adminRole != null)
         {
@@ -180,6 +157,37 @@ using (var scope = app.Services.CreateScope())
                         adminRole,
                         new System.Security.Claims.Claim(Permissions.ClaimType, value));
             }
+        }
+
+        if (!userManager.Users.Any(u => u.UsuarioAdmin && u.Ativo))
+        {
+            const string adminEmail = "dev@caritas.com";
+            const string adminPassword = "Dev@12345";
+
+            var admin = await userManager.FindByEmailAsync(adminEmail);
+            if (admin is null)
+            {
+                admin = new Usuario
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    Nome = "Dev",
+                    Sobrenome = "User",
+                    Ativo = true,
+                    UsuarioAdmin = true,
+                    CriadoEm = DateTime.UtcNow
+                };
+                await userManager.CreateAsync(admin, adminPassword);
+            }
+            else
+            {
+                admin.UsuarioAdmin = true;
+                admin.Ativo = true;
+                await userManager.UpdateAsync(admin);
+            }
+
+            if (!await userManager.IsInRoleAsync(admin, PerfisPadrao.Admin))
+                await userManager.AddToRoleAsync(admin, PerfisPadrao.Admin);
         }
     }
 }
