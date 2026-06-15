@@ -7,6 +7,7 @@ using Caritas.Models.Interfaces;
 using Caritas.Service.Mappers;
 using Caritas.Service.Session;
 using Microsoft.AspNetCore.Identity;
+using Caritas.Service.Validators;
 
 namespace Caritas.Service.services
 {
@@ -18,7 +19,8 @@ namespace Caritas.Service.services
     {
         public async Task<PagedResponseDto<ParoquiaDto>> GetPagedAsync(int page, int pageSize)
         {
-            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize);
+            var paroquiaIds = await GetParoquiasFilterAsync();
+            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize, paroquiaIds);
 
             return new PagedResponseDto<ParoquiaDto>
             {
@@ -47,11 +49,19 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            var paroquiasEditor = await GetParoquiasFilterAsync();
+
+            if (paroquiasEditor is not null && !paroquiasEditor.Contains(id))
+                throw new UnauthorizedAccessException("Você não tem permissão para visualizar esta paróquia.");
+
             return paroquia.ToDto();
         }
-
         public async Task<ParoquiaDto> CreateAsync(CreateParoquiaDTO dto)
         {
+            if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
+                throw new InvalidOperationException("Cep Inválido");
+
             var paroquia = dto.ToEntity();
             var createdParoquia = await paroquiaRepository.AddAsync(paroquia);
             return createdParoquia.ToDto();
@@ -61,6 +71,14 @@ namespace Caritas.Service.services
         {
             var paroquia = await paroquiaRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            var paroquiasEditor = await GetParoquiasFilterAsync();
+
+            if (paroquiasEditor is not null && !paroquiasEditor.Contains(id))
+                throw new UnauthorizedAccessException("Você não tem permissão para editar esta paróquia.");
+
+            if (dto.Endereco is not null && !string.IsNullOrWhiteSpace(dto.Endereco.Cep) && !CepValidator.Validate(dto.Endereco.Cep))
+                throw new InvalidOperationException("Cep Inválido");
 
             if (paroquia.Raiz)
                 throw new InvalidOperationException("A diocese não pode ser editada.");

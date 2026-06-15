@@ -1,4 +1,4 @@
-import { Church, Plus, Search } from "lucide-react";
+import { Ban, Church, Pencil, Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
@@ -8,52 +8,6 @@ import { Input } from "@/components/ui/input";
 import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
-
-const columns: Column<Paroquia>[] = [
-	{
-		key: "nome",
-		header: "Nome",
-		render: (paroquia) => (
-			<div className="flex items-center gap-2 font-medium">
-				<Church className="h-4 w-4 text-muted-foreground" />
-				{paroquia.nome}
-			</div>
-		),
-	},
-	{
-		key: "endereco",
-		header: "Endereço",
-		render: (paroquia) => {
-			const endereco = paroquia.endereco;
-			if (!endereco) return <span className="text-muted-foreground">-</span>;
-
-			const parts = [endereco.rua, endereco.numero, endereco.bairro].filter(
-				Boolean,
-			);
-			return parts.length > 0 ? (
-				parts.join(", ")
-			) : (
-				<span className="text-muted-foreground">-</span>
-			);
-		},
-	},
-	{
-		key: "cidade",
-		header: "Cidade",
-		render: (paroquia) =>
-			paroquia.endereco?.cidade || (
-				<span className="text-muted-foreground">-</span>
-			),
-	},
-	{
-		key: "cep",
-		header: "CEP",
-		render: (paroquia) =>
-			paroquia.endereco?.cep || (
-				<span className="text-muted-foreground">-</span>
-			),
-	},
-];
 
 export default function ParoquiaPage() {
 	const modalRef = useRef<ParoquiaModalRef>(null);
@@ -93,16 +47,92 @@ export default function ParoquiaPage() {
 	}, [load]);
 
 	const handleDelete = async (paroquia: Paroquia) => {
-		if (!confirm(`Remover a paróquia ${paroquia.nome}?`)) return;
+		if (!confirm(`Inativar a paróquia ${paroquia.nome}?`)) return;
 
 		try {
 			await APIService.deleteRequest({ url: `/paroquias/${paroquia.id}` });
-			toast.success("Paróquia removida.");
+			toast.success("Paróquia inativada.");
 			load(pagination.page);
 		} catch {
-			toast.error("Erro ao remover paróquia.");
+			toast.error("Erro ao inativar paróquia.");
 		}
 	};
+
+	const columns: Column<Paroquia>[] = [
+		{
+			key: "nome",
+			header: "Nome",
+			render: (paroquia) => (
+				<div className="flex items-center gap-2 font-medium">
+					<Church className="h-4 w-4 text-muted-foreground" />
+					{paroquia.nome}
+				</div>
+			),
+		},
+		{
+			key: "endereco",
+			header: "Endereço",
+			render: (paroquia) => {
+				const endereco = paroquia.endereco;
+				if (!endereco) return <span className="text-muted-foreground">-</span>;
+
+				const parts = [endereco.rua, endereco.numero, endereco.bairro].filter(
+					Boolean,
+				);
+				return parts.length > 0 ? (
+					parts.join(", ")
+				) : (
+					<span className="text-muted-foreground">-</span>
+				);
+			},
+		},
+		{
+			key: "cidade",
+			header: "Cidade",
+			render: (paroquia) =>
+				paroquia.endereco?.cidade || (
+					<span className="text-muted-foreground">-</span>
+				),
+		},
+		{
+			key: "cep",
+			header: "CEP",
+			render: (paroquia) =>
+				paroquia.endereco?.cep || (
+					<span className="text-muted-foreground">-</span>
+				),
+		},
+		{
+			key: "acoes",
+			header: "Ações",
+			align: "right",
+			render: (paroquia) => {
+				if (!paroquia.ativa) return null;
+				return (
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => modalRef.current?.open(paroquia)}
+							title="Editar"
+							className="h-9 w-9 text-foreground hover:bg-muted"
+						>
+							<Pencil className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => handleDelete(paroquia)}
+							title="Inativar"
+							className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+						>
+							<Ban className="h-4 w-4" />
+						</Button>
+					</div>
+				);
+			},
+		},
+	];
 
 	return (
 		<div className="space-y-7">
@@ -141,8 +171,6 @@ export default function ParoquiaPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={(paroquia) => modalRef.current?.open(paroquia)}
-				onDelete={handleDelete}
 			/>
 
 			<ParoquiaModal ref={modalRef} onSuccess={() => load(pagination.page)} />

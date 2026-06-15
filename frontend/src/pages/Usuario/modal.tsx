@@ -21,6 +21,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useSession } from "@/components/SessionProvider";
 import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	CreateUsuarioDto,
@@ -42,20 +43,33 @@ const EMPTY_FORM: CreateUsuarioDto = {
 	dataNasc: "",
 	paroquiasPermitidas: [],
 	perfilId: null,
+	admin: false,
 };
 
 export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 	({ onSuccess }, ref) => {
+		const { session } = useSession();
+		const canManageAdmin = session?.isAdmin ?? false;
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
+		const isSelf = editingId !== null && editingId === session?.id;
 		const [fetchingUser, setFetchingUser] = useState(false);
 		const [paroquiasOptions, setParoquiasOptions] = useState<
 			ParoquiaSelectOption[]
 		>([]);
 		const [perfisOptions, setPerfisOptions] = useState<PerfilOption[]>([]);
 
-		const { register, handleSubmit, reset, control, setValue } =
-			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
+		const {
+			register,
+			handleSubmit,
+			reset,
+			control,
+			setValue,
+			watch,
+			formState: { isSubmitting },
+		} = useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
+
+		const isAdminChecked = watch("admin");
 
 		const open = async (id?: number) => {
 			const opcoesParoquia = await APIService.getRequest<
@@ -87,6 +101,8 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 							merged.set(p.value, {
 								value: p.value,
 								label: p.label ?? `Paróquia ${p.value}`,
+								disabled: true
+								
 							});
 						}
 					}
@@ -94,8 +110,13 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 					// Mantém o perfil atual do usuário visível mesmo que o editor não
 					// possa atribuí-lo (não veio em /perfis/select).
+					// Admins não expõem o perfil Admin no select — é gerenciado pelo checkbox.
 					const perfis = [...opcoesPerfil];
-					if (usuario.perfil && !perfis.some((p) => p.value === usuario.perfil!.value)) {
+					if (
+						usuario.perfil &&
+						!usuario.usuarioAdmin &&
+						!perfis.some((p) => p.value === usuario.perfil!.value)
+					) {
 						perfis.push(usuario.perfil);
 					}
 					setPerfisOptions(perfis);
@@ -110,7 +131,8 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 						paroquiasPermitidas: (usuario.paroquiasPermitidas ?? []).map(
 							(p) => p.value,
 						),
-						perfilId: usuario.perfilId,
+						perfilId: usuario.usuarioAdmin ? null : usuario.perfilId,
+						admin: usuario.usuarioAdmin,
 					});
 				} catch {
 					toast.error("Erro ao carregar usuário.");
@@ -130,9 +152,23 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		useImperativeHandle(ref, () => ({ open }));
 
 		const onSubmit = async (values: CreateUsuarioDto) => {
+			if (!values.admin) {
+				if (!values.perfilId) {
+					toast.error("Selecione um perfil para o usuário.");
+					return;
+				}
+				if (values.paroquiasPermitidas.length === 0) {
+					toast.error("Vincule pelo menos uma paróquia ao usuário.");
+					return;
+				}
+			}
+
+			const payload: CreateUsuarioDto = values.admin
+				? { ...values, paroquiasPermitidas: [], perfilId: null }
+				: values;
 			try {
 				if (editingId !== null) {
-					const { email: _, ...dto } = values;
+					const { email: _, ...dto } = payload;
 					await APIService.putRequest({
 						url: `/usuarios/${editingId}`,
 						body: dto,
@@ -141,7 +177,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 				} else {
 					await APIService.postRequest<Usuario>({
 						url: "/usuarios",
-						body: values,
+						body: payload,
 					});
 					toast.success("Usuário cadastrado.");
 				}
@@ -215,35 +251,74 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								</div>
 							</section>
 
-							<section className="space-y-4">
-								<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-									Paróquias
-								</h3>
-								<div className="space-y-1">
-									<Label>Paróquias vinculadas</Label>
-									<Controller
-										name="paroquiasPermitidas"
-										control={control}
-										render={({ field }) => (
-											<ParoquiaSelect
-												value={field.value ?? []}
-												onChange={(vals) =>
-													setValue("paroquiasPermitidas", vals, {
-														shouldDirty: true,
-													})
-												}
-												options={paroquiasOptions}
-												placeholder="Selecione as paróquias..."
-											/>
-										)}
-									/>
+							{canManageAdmin && (
+								<div className={`space-y-1 rounded-md border bg-muted/40 p-3${isSelf ? " cursor-not-allowed opacity-50" : ""}`}>
+									<label
+										htmlFor="usuario-admin"
+										className="flex items-center gap-2 font-medium text-sm"
+									>
+										<Controller
+											name="admin"
+											control={control}
+											render={({ field }) => (
+												<input
+													id="usuario-admin"
+													type="checkbox"
+													className="h-4 w-4"
+													disabled={isSelf}
+													checked={field.value}
+													onChange={(e) => {
+														field.onChange(e.target.checked);
+														setValue("perfilId", null);
+														if (e.target.checked) {
+															setValue("paroquiasPermitidas", []);
+														}
+													}}
+												/>
+											)}
+										/>
+										Administrador
+									</label>
+									<p className="text-muted-foreground text-xs">
+										{isSelf
+											? "Você não pode alterar seu próprio acesso de administrador."
+											: "Administradores têm acesso a todas as paróquias e permissões, podendo inclusive criar novos administradores. Tenha cautela ao selecionar esta opção."}
+									</p>
 								</div>
-							</section>
+							)}
+
+							{!isAdminChecked && (
+								<section className="space-y-4">
+									<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+										Paróquias
+									</h3>
+									<div className="space-y-1">
+										<Label>Paróquias vinculadas</Label>
+										<Controller
+											name="paroquiasPermitidas"
+											control={control}
+											render={({ field }) => (
+												<ParoquiaSelect
+													value={field.value ?? []}
+													onChange={(vals) =>
+														setValue("paroquiasPermitidas", vals, {
+															shouldDirty: true,
+														})
+													}
+													options={paroquiasOptions}
+													placeholder="Selecione as paróquias..."
+												/>
+											)}
+										/>
+									</div>
+								</section>
+							)}
 
 							<section className="space-y-4">
 								<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
 									Acesso
 								</h3>
+
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div className="space-y-1">
 										<Label htmlFor="usuario-email">E-mail *</Label>
@@ -255,40 +330,47 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 											{...register("email")}
 										/>
 									</div>
-									<div className="space-y-1">
-										<Label htmlFor="usuario-perfil">Perfil</Label>
-										<Controller
-											name="perfilId"
-											control={control}
-											render={({ field }) => (
-												<Select
-													value={
-														field.value != null
-															? String(field.value)
-															: SEM_PERFIL
-													}
-													onValueChange={(v) =>
-														field.onChange(v === SEM_PERFIL ? null : Number(v))
-													}
-												>
-													<SelectTrigger id="usuario-perfil">
-														<SelectValue placeholder="Selecione um perfil" />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value={SEM_PERFIL}>Sem perfil</SelectItem>
-														{perfisOptions.map((perfil) => (
-															<SelectItem
-																key={perfil.value}
-																value={String(perfil.value)}
-															>
-																{perfil.label}
+									{!isAdminChecked && (
+										<div className="space-y-1">
+											<Label htmlFor="usuario-perfil">Perfil</Label>
+											<Controller
+												name="perfilId"
+												control={control}
+												render={({ field }) => (
+													<Select
+														disabled={isSelf}
+														value={
+															field.value != null
+																? String(field.value)
+																: SEM_PERFIL
+														}
+														onValueChange={(v) =>
+															field.onChange(
+																v === SEM_PERFIL ? null : Number(v),
+															)
+														}
+													>
+														<SelectTrigger id="usuario-perfil">
+															<SelectValue placeholder="Selecione um perfil" />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value={SEM_PERFIL}>
+																Sem perfil
 															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											)}
-										/>
-									</div>
+															{perfisOptions.map((perfil) => (
+																<SelectItem
+																	key={perfil.value}
+																	value={String(perfil.value)}
+																>
+																	{perfil.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												)}
+											/>
+										</div>
+									)}
 								</div>
 							</section>
 
@@ -300,8 +382,14 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								>
 									Cancelar
 								</Button>
-								<Button type="submit">
-									{editingId !== null ? "Salvar" : "Cadastrar"}
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting
+										? editingId !== null
+											? "Salvando..."
+											: "Cadastrando..."
+										: editingId !== null
+											? "Salvar"
+											: "Cadastrar"}
 								</Button>
 							</div>
 						</form>

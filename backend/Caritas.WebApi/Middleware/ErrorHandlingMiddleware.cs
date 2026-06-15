@@ -1,3 +1,4 @@
+using Caritas.Models.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Middleware;
@@ -25,6 +26,7 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
             KeyNotFoundException  => StatusCodes.Status404NotFound,
             ArgumentException     => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status422UnprocessableEntity,
+            ForbiddenException    => StatusCodes.Status403Forbidden,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             _                     => StatusCodes.Status500InternalServerError,
         };
@@ -37,6 +39,7 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
                 KeyNotFoundException      => "Recurso não encontrado",
                 ArgumentException         => "Dados inválidos",
                 InvalidOperationException => "Operação inválida",
+                ForbiddenException        => "Acesso negado",
                 UnauthorizedAccessException => "Acesso não autorizado",
                 _                         => "Erro interno do servidor",
             },

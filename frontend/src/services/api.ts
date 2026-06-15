@@ -24,7 +24,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
 	(response) => response,
 	(error) => {
-		if (axios.isAxiosError(error) && error.response?.status === 403) {
+		if (axios.isAxiosError(error) && error.response?.status === 403 && !error.response?.data?.detail) {
 			const method = error.config?.method?.toUpperCase();
 			error.response.data = {
 				detail: method === "GET"

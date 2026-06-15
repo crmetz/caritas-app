@@ -21,5 +21,6 @@ namespace Caritas.Models.DTOs.Usuario
         public DateOnly? DataNasc { get; set; }
         public int? PerfilId { get; set; }
         public List<int> ParoquiasPermitidas { get; set; } = new List<int>();
+        public bool Admin { get; set; }
     }
 }
