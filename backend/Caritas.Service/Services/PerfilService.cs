@@ -133,6 +133,9 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
         var result = new List<SelectObjectDto>();
         foreach (var role in roleManager.Roles.ToList())
         {
+            if (role.Name == PerfisPadrao.Admin)
+                continue;
+
             var rolePermissions = await GetPermissionsAsync(role);
             if (rolePermissions.All(allowed.Contains))
                 result.Add(new SelectObjectDto { Value = role.Id, Label = role.Name });

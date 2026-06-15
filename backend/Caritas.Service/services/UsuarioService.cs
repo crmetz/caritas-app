@@ -3,6 +3,7 @@ using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.DTOs.Usuario;
 using Caritas.Models.Entities;
+using Caritas.Models.Exceptions;
 using Caritas.Models.Interfaces;
 using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Mappers;
@@ -39,51 +40,89 @@ public class UsuariosService(
         if (!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
             throw new InvalidOperationException("Cpf Inválido");
 
-        if (dto.PerfilId is not null)
+        var paroquiasEditor = await GetParoquiasFilterAsync();
+        var editorIsAdmin = paroquiasEditor is null;
+
+        // Só admin pode criar outro admin.
+        if (dto.Admin && !editorIsAdmin)
+            throw new ForbiddenException("Apenas administradores podem criar outros administradores.");
+
+        Usuario usuario;
+
+        if (dto.Admin)
+        {
+            usuario = new Usuario
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                Nome = dto.Nome,
+                Sobrenome = dto.Sobrenome,
+                Cpf = dto.Cpf,
+                Telefone = dto.Telefone,
+                DataNasc = dto.DataNasc,
+                Ativo = true,
+                UsuarioAdmin = true,
+                UsuarioCriadorId = currentUserId,
+                CriadoEm = DateTime.UtcNow,
+                UsuarioParoquias = new List<UsuarioParoquia>()
+            };
+
+            var resultadoAdmin = await userManager.CreateAsync(usuario, "SenhaTemp@123");
+            if (!resultadoAdmin.Succeeded)
+                throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultadoAdmin.Errors.Select(e => e.Description)));
+
+            var adminRoleCreate = await roleManager.FindByNameAsync(PerfisPadrao.Admin)
+                ?? throw new InvalidOperationException("Perfil Admin não encontrado.");
+            await _perfilService.AssignRoleAsync(usuario, adminRoleCreate.Id, currentUserId);
+        }
+        else
+        {
+            if (dto.PerfilId is null)
+                throw new ArgumentException("Usuários devem ter um perfil.");
+            if (dto.ParoquiasPermitidas.Count == 0)
+                throw new ArgumentException("Usuários devem estar vinculados a pelo menos uma paróquia.");
+
             await _perfilService.EnsureCanAssignAsync(currentUserId, dto.PerfilId.Value);
 
-        // Escopo de paróquias do editor — null significa admin (sem restrição)
-        var paroquiasEditor = await GetParoquiasFilterAsync();
+            if (paroquiasEditor is not null)
+            {
+                var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
+                    .Where(id => !paroquiasEditor.Contains(id))
+                    .ToList();
 
-        if (paroquiasEditor is not null)
-        {
-            var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
-                .Where(id => !paroquiasEditor.Contains(id))
-                .ToList();
+                if (paroquiasForaDoEscopo.Count > 0)
+                    throw new UnauthorizedAccessException(
+                        $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+            }
 
-            if (paroquiasForaDoEscopo.Count > 0)
-                throw new UnauthorizedAccessException(
-                    $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+            var paroquiasPermitidas = paroquiasEditor is null
+                ? dto.ParoquiasPermitidas
+                : dto.ParoquiasPermitidas.Where(paroquiasEditor.Contains).ToList();
+
+            usuario = new Usuario
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                Nome = dto.Nome,
+                Sobrenome = dto.Sobrenome,
+                Cpf = dto.Cpf,
+                Telefone = dto.Telefone,
+                DataNasc = dto.DataNasc,
+                Ativo = true,
+                UsuarioAdmin = false,
+                UsuarioCriadorId = currentUserId,
+                CriadoEm = DateTime.UtcNow,
+                UsuarioParoquias = paroquiasPermitidas
+                    .Select(paroquiaId => new UsuarioParoquia { ParoquiaId = paroquiaId })
+                    .ToList()
+            };
+
+            var resultado = await userManager.CreateAsync(usuario, "SenhaTemp@123");
+            if (!resultado.Succeeded)
+                throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
+
+            await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
         }
-
-        var paroquiasPermitidas = paroquiasEditor is null
-            ? dto.ParoquiasPermitidas
-            : dto.ParoquiasPermitidas.Where(paroquiasEditor.Contains).ToList();
-
-        var usuario = new Usuario
-        {
-            UserName = dto.Email,
-            Email = dto.Email,
-            Nome = dto.Nome,
-            Sobrenome = dto.Sobrenome,
-            Cpf = dto.Cpf,
-            Telefone = dto.Telefone,
-            DataNasc = dto.DataNasc,
-            Ativo = true,
-            UsuarioAdmin = false,
-            UsuarioCriadorId = currentUserId,
-            CriadoEm = DateTime.UtcNow,
-            UsuarioParoquias = paroquiasPermitidas
-                .Select(paroquiaId => new UsuarioParoquia { ParoquiaId = paroquiaId })
-                .ToList()
-        };
-
-        var tempPassword = "SenhaTemp@123";
-        var resultado = await userManager.CreateAsync(usuario, tempPassword);
-        if (!resultado.Succeeded)
-            throw new Exception("Erro ao criar usuário: " + string.Join(", ", resultado.Errors.Select(e => e.Description)));
-
-        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(usuario);
         var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
@@ -159,11 +198,20 @@ public class UsuariosService(
 
     public async Task<UsuarioDto> UpdateAsync(int id, UpdateUsuarioDto dto)
     {
+        var currentUserId = currentSession.UsuarioId
+            ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
 
-        // Escopo de paróquias do editor — null significa admin (sem restrição)
         var paroquiasEditor = await GetParoquiasFilterAsync();
+        var editorIsAdmin = paroquiasEditor is null;
+
+        if (usuario.UsuarioAdmin && !editorIsAdmin)
+            throw new ForbiddenException("Apenas administradores podem editar outros administradores.");
+
+        if (dto.Admin && !editorIsAdmin)
+            throw new ForbiddenException("Apenas administradores podem conceder acesso de administrador.");
 
         // Editor não-admin só pode editar usuários que compartilham ao menos
         // uma paróquia dentro do seu escopo
@@ -173,51 +221,82 @@ public class UsuariosService(
             throw new UnauthorizedAccessException("Você não tem permissão para editar este usuário.");
         }
 
-        usuario.Nome = dto.Nome ?? usuario.Nome;
-        usuario.Sobrenome = dto.Sobrenome ?? usuario.Sobrenome;
-        usuario.Telefone = dto.Telefone ?? usuario.Telefone;
-        usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
-        usuario.Cpf = dto.Cpf ?? usuario.Cpf;
-
         if (!string.IsNullOrWhiteSpace(dto.Telefone) && !PhoneValidator.Validate(dto.Telefone))
             throw new InvalidOperationException("Telefone inválido.");
 
         if (!string.IsNullOrWhiteSpace(dto.Cpf) && !CpfValidator.Validate(dto.Cpf))
             throw new InvalidOperationException("Cpf Inválido");
 
-        if (paroquiasEditor is not null)
+        usuario.Nome = dto.Nome ?? usuario.Nome;
+        usuario.Sobrenome = dto.Sobrenome ?? usuario.Sobrenome;
+        usuario.Telefone = dto.Telefone ?? usuario.Telefone;
+        usuario.DataNasc = dto.DataNasc ?? usuario.DataNasc;
+        usuario.Cpf = dto.Cpf ?? usuario.Cpf;
+
+        var eraAdmin = usuario.UsuarioAdmin;
+
+        if (dto.Admin)
         {
-            var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
-                .Where(pid => !paroquiasEditor.Contains(pid))
-                .Where(pid => !usuario.UsuarioParoquias.Any(up => up.ParoquiaId == pid))
+            var adminRoleUpdate = await roleManager.FindByNameAsync(PerfisPadrao.Admin)
+                ?? throw new InvalidOperationException("Perfil Admin não encontrado.");
+            if (!eraAdmin)
+            {
+                foreach (var up in usuario.UsuarioParoquias.ToList())
+                    usuario.UsuarioParoquias.Remove(up);
+            }
+            await _perfilService.AssignRoleAsync(usuario, adminRoleUpdate.Id, currentUserId);
+            usuario.UsuarioAdmin = true;
+        }
+        else
+        {
+            // Rebaixamento: protege contra lock-out.
+            if (eraAdmin)
+            {
+                if (id == currentUserId)
+                    throw new ForbiddenException("Não é possível remover o próprio acesso de administrador.");
+                if (CountActiveAdmins() <= 1)
+                    throw new ForbiddenException("Não é possível rebaixar o último administrador do sistema.");
+                usuario.UsuarioAdmin = false;
+            }
+
+            if (dto.PerfilId is null)
+                throw new ArgumentException("Usuários devem ter um perfil.");
+            if (dto.ParoquiasPermitidas.Count == 0)
+                throw new ArgumentException("Usuários devem estar vinculados a pelo menos uma paróquia.");
+
+            if (paroquiasEditor is not null)
+            {
+                var paroquiasForaDoEscopo = dto.ParoquiasPermitidas
+                    .Where(pid => !paroquiasEditor.Contains(pid))
+                    .Where(pid => !usuario.UsuarioParoquias.Any(up => up.ParoquiaId == pid))
+                    .ToList();
+
+                if (paroquiasForaDoEscopo.Count > 0)
+                    throw new UnauthorizedAccessException(
+                        $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+            }
+
+            var paroquiasToRemove = usuario.UsuarioParoquias
+                .Where(up => !dto.ParoquiasPermitidas.Contains(up.ParoquiaId))
+                .Where(up => paroquiasEditor is null || paroquiasEditor.Contains(up.ParoquiaId))
                 .ToList();
 
-            if (paroquiasForaDoEscopo.Count > 0)
-                throw new UnauthorizedAccessException(
-                    $"Você não tem permissão para atribuir as paróquias: {string.Join(", ", paroquiasForaDoEscopo)}.");
+            foreach (var up in paroquiasToRemove)
+                usuario.UsuarioParoquias.Remove(up);
+
+            foreach (var paroquiaId in dto.ParoquiasPermitidas)
+            {
+                if (usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
+                    continue;
+
+                if (paroquiasEditor is not null && !paroquiasEditor.Contains(paroquiaId))
+                    continue;
+
+                usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
+            }
+
+            await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, currentUserId);
         }
-
-        var paroquiasToRemove = usuario.UsuarioParoquias
-            .Where(up => !dto.ParoquiasPermitidas.Contains(up.ParoquiaId))
-            .Where(up => paroquiasEditor is null || paroquiasEditor.Contains(up.ParoquiaId))
-            .ToList();
-
-        foreach (var up in paroquiasToRemove)
-            usuario.UsuarioParoquias.Remove(up);
-
-        foreach (var paroquiaId in dto.ParoquiasPermitidas)
-        {
-            if (usuario.UsuarioParoquias.Any(up => up.ParoquiaId == paroquiaId))
-                continue;
-
-            if (paroquiasEditor is not null && !paroquiasEditor.Contains(paroquiaId))
-                continue;
-
-            usuario.UsuarioParoquias.Add(new UsuarioParoquia { ParoquiaId = paroquiaId });
-        }
-
-        var currentUserId = currentSession.UsuarioId;
-        await _perfilService.AssignRoleAsync(usuario, dto.PerfilId, (int)currentUserId!);
 
         await usuarioRepository.UpdateAsync(usuario);
         return usuario.ToDto();
@@ -230,6 +309,14 @@ public class UsuariosService(
 
         var usuario = await usuarioRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Usuário com id {id} não encontrado.");
+
+        if (usuario.UsuarioAdmin)
+        {
+            if (!await IsCurrentUserAdminAsync())
+                throw new ForbiddenException("Apenas administradores podem inativar outros administradores.");
+            if (CountActiveAdmins() <= 1)
+                throw new ForbiddenException("Não é possível inativar o último administrador do sistema.");
+        }
 
         usuario.Ativo = false;
         usuario.DataInativacao = DateTime.UtcNow;
@@ -245,10 +332,22 @@ public class UsuariosService(
         var usuario = await userManager.FindByIdAsync(usuarioId.ToString())
             ?? throw new UnauthorizedAccessException("Usuário não encontrado.");
 
-        if (await userManager.IsInRoleAsync(usuario, PerfisPadrao.Admin))
+        if (usuario.UsuarioAdmin)
             return null;
 
         return await usuarioRepository.GetParoquiaIdsByUserIdAsync(usuarioId);
     }
+
+    private async Task<bool> IsCurrentUserAdminAsync()
+    {
+        var usuarioId = currentSession.UsuarioId
+            ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
+        var usuario = await userManager.FindByIdAsync(usuarioId.ToString());
+        return usuario?.UsuarioAdmin ?? false;
+    }
+
+    private int CountActiveAdmins()
+        => userManager.Users.Count(u => u.UsuarioAdmin && u.Ativo);
 
 }
