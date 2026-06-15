@@ -1,4 +1,4 @@
-import { Plus, Search, UserRound } from "lucide-react";
+import { Ban, Pencil, Plus, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
@@ -15,57 +15,6 @@ import {
 } from "./interface";
 import { UsuarioModal } from "./modal";
 
-const columns: Column<UsuarioResponseDto>[] = [
-	{
-		key: "nome",
-		header: "Usuário",
-		render: (usuario) => (
-			<div className="flex items-center gap-2">
-				<UserRound className="h-4 w-4 text-muted-foreground" />
-				<div>
-					<div className="flex items-center gap-2 font-medium">
-						{usuarioNomeCompleto(usuario)}
-						{usuario.usuarioAdmin && <Badge variant="default">Admin</Badge>}
-					</div>
-					<div className="text-muted-foreground text-xs">{usuario.email}</div>
-				</div>
-			</div>
-		),
-	},
-	{
-		key: "telefone",
-		header: "Telefone",
-		render: (usuario) =>
-			usuario.telefone || <span className="text-muted-foreground">-</span>,
-	},
-	// {
-	// 	key: "perfil",
-	// 	header: "Perfil",
-	// 	render: (usuario) =>
-	// 		usuario.perfil?.nome ??
-	// 		(usuario.perfilId ? (
-	// 			`Perfil #${usuario.perfilId}`
-	// 		) : (
-	// 			<span className="text-muted-foreground">-</span>
-	// 		)),
-	// },
-	{
-		key: "ativo",
-		header: "Status",
-		render: (usuario) => (
-			<Badge variant={usuario.ativo ? "secondary" : "outline"}>
-				{usuario.ativo ? "Ativo" : "Inativo"}
-			</Badge>
-		),
-	},
-	{
-		key: "dataCriacao",
-		header: "Criado em",
-		render: (usuario) =>
-			new Date(usuario.criadoEm).toLocaleDateString("pt-BR"),
-	},
-];
-
 export default function UsuarioPage() {
 	const { session } = useSession();
 	const modalRef = useRef<UsuarioModalRef>(null);
@@ -79,12 +28,12 @@ export default function UsuarioPage() {
 	});
 
 	const load = useCallback(
-		async (page: number, term: string = "") => {
+		async (page: number, search?: string) => {
 			setLoading(true);
 			try {
 				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
 					url: "/usuarios",
-					params: { page, pageSize: pagination.pageSize, searchTerm: term },
+					params: { page, pageSize: pagination.pageSize, termo: search ?? termo },
 				});
 				setData(result.items);
 				setPagination((prev) => ({
@@ -129,6 +78,76 @@ export default function UsuarioPage() {
 			toast.error("Erro ao inativar usuário.");
 		}
 	};
+
+	const columns: Column<UsuarioResponseDto>[] = [
+		{
+			key: "nome",
+			header: "Usuário",
+			render: (usuario) => (
+				<div className="flex items-center gap-2">
+					<UserRound className="h-4 w-4 text-muted-foreground" />
+					<div>
+						<div className="flex items-center gap-2 font-medium">
+							{usuarioNomeCompleto(usuario)}
+							{usuario.usuarioAdmin && <Badge variant="default">Admin</Badge>}
+						</div>
+						<div className="text-muted-foreground text-xs">{usuario.email}</div>
+					</div>
+				</div>
+			),
+		},
+		{
+			key: "telefone",
+			header: "Telefone",
+			render: (usuario) =>
+				usuario.telefone || <span className="text-muted-foreground">-</span>,
+		},
+		{
+			key: "ativo",
+			header: "Status",
+			render: (usuario) => (
+				<Badge variant={usuario.ativo ? "secondary" : "outline"}>
+					{usuario.ativo ? "Ativo" : "Inativo"}
+				</Badge>
+			),
+		},
+		{
+			key: "dataCriacao",
+			header: "Criado em",
+			render: (usuario) =>
+				new Date(usuario.criadoEm).toLocaleDateString("pt-BR"),
+		},
+		{
+			key: "acoes",
+			header: "Ações",
+			align: "right",
+			render: (usuario) => {
+				if (!usuario.ativo) return null;
+				return (
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => modalRef.current?.open(usuario.id)}
+							title="Editar"
+							className="h-9 w-9 text-foreground hover:bg-muted"
+						>
+							<Pencil className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => handleDelete(usuario)}
+							title="Inativar"
+							className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+						>
+							<Ban className="h-4 w-4" />
+						</Button>
+					</div>
+				);
+			},
+		},
+	];
 
 	return (
 		<div className="space-y-7">
@@ -177,8 +196,6 @@ export default function UsuarioPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={(usuario) => modalRef.current?.open(usuario.id)}
-				onDelete={handleDelete}
 			/>
 
 			<UsuarioModal ref={modalRef} onSuccess={() => load(pagination.page)} />
