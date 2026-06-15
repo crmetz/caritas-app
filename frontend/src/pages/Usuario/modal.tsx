@@ -52,14 +52,22 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		const canManageAdmin = session?.isAdmin ?? false;
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
+		const isSelf = editingId !== null && editingId === session?.id;
 		const [fetchingUser, setFetchingUser] = useState(false);
 		const [paroquiasOptions, setParoquiasOptions] = useState<
 			ParoquiaSelectOption[]
 		>([]);
 		const [perfisOptions, setPerfisOptions] = useState<PerfilOption[]>([]);
 
-		const { register, handleSubmit, reset, control, setValue, watch } =
-			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
+		const {
+			register,
+			handleSubmit,
+			reset,
+			control,
+			setValue,
+			watch,
+			formState: { isSubmitting },
+		} = useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
 
 		const isAdminChecked = watch("admin");
 
@@ -102,8 +110,13 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 
 					// Mantém o perfil atual do usuário visível mesmo que o editor não
 					// possa atribuí-lo (não veio em /perfis/select).
+					// Admins não expõem o perfil Admin no select — é gerenciado pelo checkbox.
 					const perfis = [...opcoesPerfil];
-					if (usuario.perfil && !perfis.some((p) => p.value === usuario.perfil!.value)) {
+					if (
+						usuario.perfil &&
+						!usuario.usuarioAdmin &&
+						!perfis.some((p) => p.value === usuario.perfil!.value)
+					) {
 						perfis.push(usuario.perfil);
 					}
 					setPerfisOptions(perfis);
@@ -118,7 +131,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 						paroquiasPermitidas: (usuario.paroquiasPermitidas ?? []).map(
 							(p) => p.value,
 						),
-						perfilId: usuario.perfilId,
+						perfilId: usuario.usuarioAdmin ? null : usuario.perfilId,
 						admin: usuario.usuarioAdmin,
 					});
 				} catch {
@@ -239,7 +252,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 							</section>
 
 							{canManageAdmin && (
-								<div className="space-y-1 rounded-md border bg-muted/40 p-3">
+								<div className={`space-y-1 rounded-md border bg-muted/40 p-3${isSelf ? " cursor-not-allowed opacity-50" : ""}`}>
 									<label
 										htmlFor="usuario-admin"
 										className="flex items-center gap-2 font-medium text-sm"
@@ -252,12 +265,13 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 													id="usuario-admin"
 													type="checkbox"
 													className="h-4 w-4"
+													disabled={isSelf}
 													checked={field.value}
 													onChange={(e) => {
 														field.onChange(e.target.checked);
+														setValue("perfilId", null);
 														if (e.target.checked) {
 															setValue("paroquiasPermitidas", []);
-															setValue("perfilId", null);
 														}
 													}}
 												/>
@@ -266,8 +280,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										Administrador
 									</label>
 									<p className="text-muted-foreground text-xs">
-										Administradores têm acesso a todas as paróquias e
-										permissões, podendo inclusive criar novos administradores. Tenha cautela ao selecionar esta opção.
+										{isSelf
+											? "Você não pode alterar seu próprio acesso de administrador."
+											: "Administradores têm acesso a todas as paróquias e permissões, podendo inclusive criar novos administradores. Tenha cautela ao selecionar esta opção."}
 									</p>
 								</div>
 							)}
@@ -323,6 +338,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 												control={control}
 												render={({ field }) => (
 													<Select
+														disabled={isSelf}
 														value={
 															field.value != null
 																? String(field.value)
@@ -366,8 +382,14 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								>
 									Cancelar
 								</Button>
-								<Button type="submit">
-									{editingId !== null ? "Salvar" : "Cadastrar"}
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting
+										? editingId !== null
+											? "Salvando..."
+											: "Cadastrando..."
+										: editingId !== null
+											? "Salvar"
+											: "Cadastrar"}
 								</Button>
 							</div>
 						</form>
