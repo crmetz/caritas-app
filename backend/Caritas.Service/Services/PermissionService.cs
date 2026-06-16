@@ -19,6 +19,11 @@ public class PermissionService
         ["criarEditar"] = "Criar e Editar",
     };
 
+    private static readonly Dictionary<string, string[]> DependentPermissions = new()
+    {
+        ["criarEditar"] = ["visualizar"],
+    };
+
     public static readonly IReadOnlyList<PermissionModuleDto> Catalog = BuildCatalog();
 
     /// Todos os valores de permissão válidos
@@ -58,4 +63,26 @@ public class PermissionService
 
     private static string LabelFor(IReadOnlyDictionary<string, string> labels, string key) =>
         labels.TryGetValue(key, out var label) ? label : key;
+
+    public static void EnsureDependentPermissions(HashSet<string> permissions)
+    {
+        var requiredPermissions = permissions
+            .SelectMany(p =>
+            {
+                var parts = p.Split('.');
+                if (parts.Length != 2)
+                    return Enumerable.Empty<string>();
+
+                var module = parts[0];
+                var action = parts[1];
+
+                return DependentPermissions.TryGetValue(action, out var dependencies)
+                    ? dependencies.Select(dep => $"{module}.{dep}")
+                    : Enumerable.Empty<string>();
+            })
+            .Distinct()
+            .ToList();
+
+        permissions.UnionWith(requiredPermissions);
+    }
 }
