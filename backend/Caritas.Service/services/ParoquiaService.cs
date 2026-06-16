@@ -94,9 +94,23 @@ namespace Caritas.Service.services
             return paroquia.ToDto();
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(int id)
         {
-            throw new InvalidOperationException("Exclusão de paróquia não é permitida no momento");
+            var paroquia = await paroquiaRepository.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException($"Paróquia com id {id} não encontrada.");
+
+            if (paroquia.Raiz)
+                throw new ArgumentException("A diocese não pode ser inativada.");
+
+            if (currentSession.ParoquiaAtualId == id)
+                throw new InvalidOperationException("Não é possível inativar a paróquia que está selecionada no momento.");
+
+            var usuarios = await usuarioRepository.GetByParoquiaAsync(id);
+            if (usuarios.Count > 0)
+                throw new InvalidOperationException("Não é possível inativar uma paróquia com usuários ativos vinculados.");
+
+            paroquia.Ativa = false;
+            await paroquiaRepository.UpdateAsync(paroquia);
         }
 
         private async Task<IList<int>?> GetParoquiasFilterAsync()

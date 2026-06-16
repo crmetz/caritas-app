@@ -70,7 +70,7 @@ namespace Caritas.WebApi.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Policy = Permissions.Paroquia.CriarEditar)]
-        public async Task<IActionResult> Delete(long id)
+        public async Task<IActionResult> Delete(int id)
         {
             await _paroquiaService.DeleteAsync(id);
             return NoContent();

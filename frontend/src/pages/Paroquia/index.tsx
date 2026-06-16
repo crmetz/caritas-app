@@ -6,10 +6,12 @@ import type { Column } from "@/components/DataTable/interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
+import { useSession } from "@/components/SessionProvider";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
 
 export default function ParoquiaPage() {
+	const { refreshSession } = useSession();
 	const modalRef = useRef<ParoquiaModalRef>(null);
 	const [data, setData] = useState<Paroquia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -52,9 +54,10 @@ export default function ParoquiaPage() {
 		try {
 			await APIService.deleteRequest({ url: `/paroquias/${paroquia.id}` });
 			toast.success("Paróquia inativada.");
+			await refreshSession();
 			load(pagination.page);
-		} catch {
-			toast.error("Erro ao inativar paróquia.");
+		} catch (ex: unknown) {
+			toast.error(getErrorMessage(ex, "Erro ao inativar paróquia."));
 		}
 	};
 
