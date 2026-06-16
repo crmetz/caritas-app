@@ -3,6 +3,7 @@ import {
 	type FormEvent,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -337,7 +338,20 @@ function MembroForm({
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual } = useSession();
+	const { paroquiaAtual, session } = useSession();
+
+	// O usuário só pode editar/excluir famílias das paróquias às quais tem acesso.
+	// Demais famílias ficam apenas para visualização.
+	const paroquiasPermitidasIds = useMemo(
+		() => new Set(session?.paroquiasPermitidas.map((p) => p.value) ?? []),
+		[session],
+	);
+	const podeGerenciarFamilia = useCallback(
+		(familia: Familia) =>
+			(session?.isAdmin ?? false) ||
+			paroquiasPermitidasIds.has(familia.paroquiaId),
+		[session, paroquiasPermitidasIds],
+	);
 	const [data, setData] = useState<Familia[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [paroquias, setParoquias] = useState<SelectOption[]>([]);
@@ -673,6 +687,8 @@ export default function FamiliaPage() {
 				onEdit={(f) => modalRef.current?.open(f)}
 				onView={(f) => modalRef.current?.openView(f)}
 				onDelete={handleDelete}
+				canEdit={podeGerenciarFamilia}
+				canDelete={podeGerenciarFamilia}
 			/>
 
 			<FamiliaModal ref={modalRef} onSuccess={() => load(pagination.page)} />

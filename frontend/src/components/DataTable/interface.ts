@@ -22,4 +22,8 @@ export interface DataTableProps<T> {
 	onEdit?: (item: T) => void;
 	onView?: (item: T) => void;
 	onDelete?: (item: T) => void;
+	/** Mostra o botão de editar apenas quando retorna true (padrão: sempre). */
+	canEdit?: (item: T) => boolean;
+	/** Mostra o botão de excluir apenas quando retorna true (padrão: sempre). */
+	canDelete?: (item: T) => boolean;
 }
