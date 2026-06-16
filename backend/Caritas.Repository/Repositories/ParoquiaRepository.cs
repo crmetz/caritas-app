@@ -18,9 +18,20 @@ namespace Caritas.Repository.Repositories
             return await DbSet.Include(p => p.Endereco).FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<PagedResponseDto<Paroquia>> GetPagedWithEnderecoAsync(int page, int pageSize)
+        public async Task<PagedResponseDto<Paroquia>> GetPagedWithEnderecoAsync(int page, int pageSize, IList<int> paroquiaIds = null)
         {
+
+            if (paroquiaIds != null)
+            {
+                return await DbSet.Include(p => p.Endereco)
+                    .Where(p => !p.Raiz)
+                    .Where(p => paroquiaIds.Contains(p.Id))
+                    .OrderBy(p => p.CriadoEm)
+                    .ToPagedAsync(page, pageSize);
+            }
+
             return await DbSet.Include(p => p.Endereco)
+                .Where(p => !p.Raiz)
                 .OrderBy(p => p.CriadoEm)
                 .ToPagedAsync(page, pageSize);
         }

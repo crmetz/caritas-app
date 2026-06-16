@@ -23,6 +23,65 @@ namespace Caritas.Repository.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Caritas.Models.Entities.Atendimento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("DataAtendimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("EncaminhamentosRealizados")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("FamiliaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NecessidadesIdentificadas")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("ParoquiaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QtdMembrosTrabalhando")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Relato")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<decimal?>("RendaFamiliarMomento")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("SituacaoGeral")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VoluntarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamiliaId");
+
+                    b.HasIndex("ParoquiaId");
+
+                    b.HasIndex("VoluntarioId");
+
+                    b.ToTable("Atendimentos");
+                });
+
             modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
                 {
                     b.Property<int>("Id")
@@ -72,10 +131,8 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(9)
                         .HasColumnType("character varying(9)");
 
-                    b.Property<string>("Cidade")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<int>("CidadeId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Complemento")
                         .HasMaxLength(100)
@@ -83,11 +140,6 @@ namespace Caritas.Repository.Migrations
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("Numero")
                         .IsRequired()
@@ -98,9 +150,11 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("ParoquiaId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("RendaFamiliar")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("ResponsavelId")
                         .HasColumnType("integer");
@@ -118,12 +172,16 @@ namespace Caritas.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CidadeId");
+
+                    b.HasIndex("ParoquiaId");
+
                     b.HasIndex("ResponsavelId");
 
                     b.ToTable("Familias");
                 });
 
-            modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
+            modelBuilder.Entity("Caritas.Models.Entities.FamiliaCidade", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -137,12 +195,47 @@ namespace Caritas.Repository.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nome")
+                        .IsUnique();
+
+                    b.ToTable("FamiliaCidades");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("EnderecoId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("Raiz")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -277,6 +370,10 @@ namespace Caritas.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("NomeMae")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Observacoes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -291,6 +388,9 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("Telefone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("TipoDocumentoAlternativo")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -387,6 +487,9 @@ namespace Caritas.Repository.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("UsuarioAdmin")
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("UsuarioCriadorId")
                         .HasColumnType("integer");
@@ -813,13 +916,56 @@ namespace Caritas.Repository.Migrations
                     b.ToTable("VendasBrecho");
                 });
 
+            modelBuilder.Entity("Caritas.Models.Entities.Atendimento", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Familia", "Familia")
+                        .WithMany()
+                        .HasForeignKey("FamiliaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("ParoquiaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Usuario", "Voluntario")
+                        .WithMany()
+                        .HasForeignKey("VoluntarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Familia");
+
+                    b.Navigation("Paroquia");
+
+                    b.Navigation("Voluntario");
+                });
+
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
                 {
+                    b.HasOne("Caritas.Models.Entities.FamiliaCidade", "Cidade")
+                        .WithMany("Familias")
+                        .HasForeignKey("CidadeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("ParoquiaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Caritas.Models.Entities.Pessoa", "Responsavel")
                         .WithMany()
                         .HasForeignKey("ResponsavelId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Cidade");
+
+                    b.Navigation("Paroquia");
 
                     b.Navigation("Responsavel");
                 });
@@ -1043,6 +1189,11 @@ namespace Caritas.Repository.Migrations
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
                 {
                     b.Navigation("Membros");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.FamiliaCidade", b =>
+                {
+                    b.Navigation("Familias");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>

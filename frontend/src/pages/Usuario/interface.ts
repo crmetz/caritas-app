@@ -14,9 +14,10 @@ export interface Usuario {
 	telefone: string | null;
 	dataNasc: string | null;
 	perfilId: number | null;
-	perfil?: Perfil | null;
+	perfil?: { value: number; label: string } | null;
 	ativo: boolean;
-	paroquiasPermitidas: number[];
+	usuarioAdmin: boolean;
+	paroquiasPermitidas: Array<{ value: number; label: string }>;
 	criadoEm: string;
 	autalizadoEm: string | null;
 }
@@ -28,6 +29,7 @@ export interface UsuarioResponseDto {
 	sobrenome: string;
 	telefone: string | null;
 	ativo: boolean;
+	usuarioAdmin: boolean;
 	criadoEm: string;
 }
 
@@ -40,6 +42,7 @@ export interface CreateUsuarioDto {
 	dataNasc: string | undefined;
 	paroquiasPermitidas: number[];
 	perfilId?: number | null;
+	admin: boolean;
 }
 
 export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {};

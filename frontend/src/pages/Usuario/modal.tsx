@@ -1,6 +1,10 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import {
+	ParoquiaSelect,
+	type ParoquiaSelectOption,
+} from "@/components/ParoquiaSelect";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -10,14 +14,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect, type SelectOption } from "@/components/ui/MultiSelect";
-import APIService from "@/services/api";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useSession } from "@/components/SessionProvider";
+import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	CreateUsuarioDto,
 	Usuario,
 	UsuarioModalProps,
 	UsuarioModalRef,
 } from "./interface";
+
+type PerfilOption = { value: number; label: string };
+
+const SEM_PERFIL = "__none__";
 
 const EMPTY_FORM: CreateUsuarioDto = {
 	nome: "",
@@ -28,23 +43,44 @@ const EMPTY_FORM: CreateUsuarioDto = {
 	dataNasc: "",
 	paroquiasPermitidas: [],
 	perfilId: null,
+	admin: false,
 };
 
 export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 	({ onSuccess }, ref) => {
+		const { session } = useSession();
+		const canManageAdmin = session?.isAdmin ?? false;
 		const [isOpen, setIsOpen] = useState(false);
 		const [editingId, setEditingId] = useState<number | null>(null);
+		const isSelf = editingId !== null && editingId === session?.id;
 		const [fetchingUser, setFetchingUser] = useState(false);
-		const [paroquiasOptions, setParoquiasOptions] = useState<SelectOption<number>[]>([]);
+		const [paroquiasOptions, setParoquiasOptions] = useState<
+			ParoquiaSelectOption[]
+		>([]);
+		const [perfisOptions, setPerfisOptions] = useState<PerfilOption[]>([]);
 
-		const { register, handleSubmit, reset, control, setValue } =
-			useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
+		const {
+			register,
+			handleSubmit,
+			reset,
+			control,
+			setValue,
+			watch,
+			formState: { isSubmitting },
+		} = useForm<CreateUsuarioDto>({ defaultValues: EMPTY_FORM });
+
+		const isAdminChecked = watch("admin");
 
 		const open = async (id?: number) => {
-			const opcoesParoquia = await APIService.getRequest<SelectOption<number>[]>({
+			const opcoesParoquia = await APIService.getRequest<
+				ParoquiaSelectOption[]
+			>({
 				url: "/paroquias/select",
-			}).catch(() => [] as SelectOption<number>[]);
-			setParoquiasOptions(opcoesParoquia);
+			}).catch(() => [] as ParoquiaSelectOption[]);
+
+			const opcoesPerfil = await APIService.getRequest<PerfilOption[]>({
+				url: "/perfis/select",
+			}).catch(() => [] as PerfilOption[]);
 
 			if (id !== undefined) {
 				setEditingId(id);
@@ -54,6 +90,37 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					const usuario = await APIService.getRequest<Usuario>({
 						url: `/usuarios/${id}`,
 					});
+
+					// Mescla as opções do editor com as paróquias já atribuídas ao usuário editado,
+					// para que paróquias fora do escopo do editor não desapareçam do dropdown.
+					const merged = new Map<number, ParoquiaSelectOption>(
+						opcoesParoquia.map((op) => [op.value, op]),
+					);
+					for (const p of usuario.paroquiasPermitidas ?? []) {
+						if (!merged.has(p.value)) {
+							merged.set(p.value, {
+								value: p.value,
+								label: p.label ?? `Paróquia ${p.value}`,
+								disabled: true
+								
+							});
+						}
+					}
+					setParoquiasOptions([...merged.values()]);
+
+					// Mantém o perfil atual do usuário visível mesmo que o editor não
+					// possa atribuí-lo (não veio em /perfis/select).
+					// Admins não expõem o perfil Admin no select — é gerenciado pelo checkbox.
+					const perfis = [...opcoesPerfil];
+					if (
+						usuario.perfil &&
+						!usuario.usuarioAdmin &&
+						!perfis.some((p) => p.value === usuario.perfil!.value)
+					) {
+						perfis.push(usuario.perfil);
+					}
+					setPerfisOptions(perfis);
+
 					reset({
 						nome: usuario.nome,
 						sobrenome: usuario.sobrenome,
@@ -61,8 +128,11 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 						cpf: usuario.cpf ?? "",
 						telefone: usuario.telefone ?? "",
 						dataNasc: usuario.dataNasc?.slice(0, 10),
-						paroquiasPermitidas: usuario.paroquiasPermitidas ?? [],
-						perfilId: usuario.perfilId,
+						paroquiasPermitidas: (usuario.paroquiasPermitidas ?? []).map(
+							(p) => p.value,
+						),
+						perfilId: usuario.usuarioAdmin ? null : usuario.perfilId,
+						admin: usuario.usuarioAdmin,
 					});
 				} catch {
 					toast.error("Erro ao carregar usuário.");
@@ -71,6 +141,8 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					setFetchingUser(false);
 				}
 			} else {
+				setParoquiasOptions(opcoesParoquia);
+				setPerfisOptions(opcoesPerfil);
 				setEditingId(null);
 				reset(EMPTY_FORM);
 				setIsOpen(true);
@@ -80,9 +152,23 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 		useImperativeHandle(ref, () => ({ open }));
 
 		const onSubmit = async (values: CreateUsuarioDto) => {
+			if (!values.admin) {
+				if (!values.perfilId) {
+					toast.error("Selecione um perfil para o usuário.");
+					return;
+				}
+				if (values.paroquiasPermitidas.length === 0) {
+					toast.error("Vincule pelo menos uma paróquia ao usuário.");
+					return;
+				}
+			}
+
+			const payload: CreateUsuarioDto = values.admin
+				? { ...values, paroquiasPermitidas: [], perfilId: null }
+				: values;
 			try {
 				if (editingId !== null) {
-					const { email: _, ...dto } = values;
+					const { email: _, ...dto } = payload;
 					await APIService.putRequest({
 						url: `/usuarios/${editingId}`,
 						body: dto,
@@ -90,15 +176,15 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 					toast.success("Usuário atualizado.");
 				} else {
 					await APIService.postRequest<Usuario>({
-						url: "/auth/register",
-						body: values,
+						url: "/usuarios",
+						body: payload,
 					});
 					toast.success("Usuário cadastrado.");
 				}
 				setIsOpen(false);
 				onSuccess();
-			} catch {
-				toast.error("Erro ao salvar usuário.");
+			} catch (error) {
+				toast.error(getErrorMessage(error, "Erro ao salvar usuário."));
 			}
 		};
 
@@ -124,11 +210,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div className="space-y-1">
 										<Label htmlFor="usuario-nome">Nome *</Label>
-										<Input
-											id="usuario-nome"
-											required
-											{...register("nome")}
-										/>
+										<Input id="usuario-nome" required {...register("nome")} />
 									</div>
 									<div className="space-y-1">
 										<Label htmlFor="usuario-sobrenome">Sobrenome *</Label>
@@ -147,7 +229,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 										/>
 									</div>
 									<div className="space-y-1">
-										<Label htmlFor="usuario-data-nasc">Data de nascimento</Label>
+										<Label htmlFor="usuario-data-nasc">
+											Data de nascimento
+										</Label>
 										<Input
 											id="usuario-data-nasc"
 											type="date"
@@ -167,34 +251,74 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								</div>
 							</section>
 
-							<section className="space-y-4">
-								<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-									Paróquias
-								</h3>
-								<div className="space-y-1">
-									<Label>Paróquias vinculadas</Label>
-									<Controller
-										name="paroquiasPermitidas"
-										control={control}
-										render={({ field }) => (
-											<MultiSelect<number>
-												value={field.value ?? []}
-												onChange={(vals) => 
-													setValue("paroquiasPermitidas", vals, {
-														shouldDirty: true,
-													})}
-												options={paroquiasOptions}
-												placeholder="Selecione as paróquias..."
-											/>
-										)}
-									/>
+							{canManageAdmin && (
+								<div className={`space-y-1 rounded-md border bg-muted/40 p-3${isSelf ? " cursor-not-allowed opacity-50" : ""}`}>
+									<label
+										htmlFor="usuario-admin"
+										className="flex items-center gap-2 font-medium text-sm"
+									>
+										<Controller
+											name="admin"
+											control={control}
+											render={({ field }) => (
+												<input
+													id="usuario-admin"
+													type="checkbox"
+													className="h-4 w-4"
+													disabled={isSelf}
+													checked={field.value}
+													onChange={(e) => {
+														field.onChange(e.target.checked);
+														setValue("perfilId", null);
+														if (e.target.checked) {
+															setValue("paroquiasPermitidas", []);
+														}
+													}}
+												/>
+											)}
+										/>
+										Administrador
+									</label>
+									<p className="text-muted-foreground text-xs">
+										{isSelf
+											? "Você não pode alterar seu próprio acesso de administrador."
+											: "Administradores têm acesso a todas as paróquias e permissões, podendo inclusive criar novos administradores. Tenha cautela ao selecionar esta opção."}
+									</p>
 								</div>
-							</section>
+							)}
+
+							{!isAdminChecked && (
+								<section className="space-y-4">
+									<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+										Paróquias
+									</h3>
+									<div className="space-y-1">
+										<Label>Paróquias vinculadas</Label>
+										<Controller
+											name="paroquiasPermitidas"
+											control={control}
+											render={({ field }) => (
+												<ParoquiaSelect
+													value={field.value ?? []}
+													onChange={(vals) =>
+														setValue("paroquiasPermitidas", vals, {
+															shouldDirty: true,
+														})
+													}
+													options={paroquiasOptions}
+													placeholder="Selecione as paróquias..."
+												/>
+											)}
+										/>
+									</div>
+								</section>
+							)}
 
 							<section className="space-y-4">
 								<h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
 									Acesso
 								</h3>
+
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div className="space-y-1">
 										<Label htmlFor="usuario-email">E-mail *</Label>
@@ -206,29 +330,47 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 											{...register("email")}
 										/>
 									</div>
-									<div className="space-y-1">
-										<Label htmlFor="usuario-perfil">Perfil</Label>
-										<Controller
-											name="perfilId"
-											control={control}
-											render={({ field }) => (
-												<Input
-													id="usuario-perfil"
-													type="number"
-													min="1"
-													placeholder="ID do perfil"
-													value={field.value ?? ""}
-													onChange={(e) =>
-														field.onChange(
-															e.target.value
-																? Number(e.target.value)
-																: undefined,
-														)
-													}
-												/>
-											)}
-										/>
-									</div>
+									{!isAdminChecked && (
+										<div className="space-y-1">
+											<Label htmlFor="usuario-perfil">Perfil</Label>
+											<Controller
+												name="perfilId"
+												control={control}
+												render={({ field }) => (
+													<Select
+														disabled={isSelf}
+														value={
+															field.value != null
+																? String(field.value)
+																: SEM_PERFIL
+														}
+														onValueChange={(v) =>
+															field.onChange(
+																v === SEM_PERFIL ? null : Number(v),
+															)
+														}
+													>
+														<SelectTrigger id="usuario-perfil">
+															<SelectValue placeholder="Selecione um perfil" />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value={SEM_PERFIL}>
+																Sem perfil
+															</SelectItem>
+															{perfisOptions.map((perfil) => (
+																<SelectItem
+																	key={perfil.value}
+																	value={String(perfil.value)}
+																>
+																	{perfil.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												)}
+											/>
+										</div>
+									)}
 								</div>
 							</section>
 
@@ -240,8 +382,14 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 								>
 									Cancelar
 								</Button>
-								<Button type="submit">
-									{editingId !== null ? "Salvar" : "Cadastrar"}
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting
+										? editingId !== null
+											? "Salvando..."
+											: "Cadastrando..."
+										: editingId !== null
+											? "Salvar"
+											: "Cadastrar"}
 								</Button>
 							</div>
 						</form>

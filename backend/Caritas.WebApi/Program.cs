@@ -1,8 +1,10 @@
 using Caritas.Models.Constants;
 using Caritas.Models.Entities;
 using Caritas.Repository.Context;
+using Caritas.WebApi.Authorization;
 using Caritas.WebApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +12,7 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using Caritas.Models.Settings;
 using Caritas.Models.Interfaces.Services;
+using Caritas.Service.Services;
 using Caritas.Service.Services.Email;
 using Caritas.Service.Session;
 
@@ -82,7 +85,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-builder.Services.AddAuthorization();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionService.AllValues)
+        options.AddPolicy(permission, p => p.AddRequirements(new PermissionRequirement(permission)));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentSession, CurrentSession>();
@@ -101,27 +109,27 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CaritasDbContext>();
     await db.Database.MigrateAsync();
-    // Seed dev user
-    if (app.Environment.IsDevelopment())
+
+    // Seed diocese
+    if (!db.Paroquias.Any(p => p.Raiz))
+    {
+        db.Paroquias.Add(new Paroquia
+        {
+            Nome = "Diocese de Caxias do Sul",
+            Raiz = true,
+            Ativa = true,
+            CriadoEm = DateTime.UtcNow,
+            AtualizadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
+    // Seed do admin inicial
+    // TODO: credenciais do admin de seed fixas temporariamente — mover para
+    // configuração/secrets (env vars / user-secrets) antes de produção.
     {
         using var seedScope = app.Services.CreateScope();
         var userManager = seedScope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-
-        const string devEmail = "dev@caritas.com";
-        if (await userManager.FindByEmailAsync(devEmail) is null)
-        {
-            var devUser = new Usuario
-            {
-                UserName = devEmail,
-                Email = devEmail,
-                Nome = "Dev",
-                Sobrenome = "User",
-                Ativo = true,
-                CriadoEm = DateTime.UtcNow
-            };
-            await userManager.CreateAsync(devUser, "Dev@12345");
-        }
-
         var roleManager = seedScope.ServiceProvider.GetRequiredService<RoleManager<Perfil>>();
 
         if (await roleManager.FindByNameAsync(PerfisPadrao.Admin) is null)
@@ -134,10 +142,52 @@ using (var scope = app.Services.CreateScope())
             });
         }
 
-        var createdUser = await userManager.FindByEmailAsync(devEmail);
-        if (createdUser != null && !await userManager.IsInRoleAsync(createdUser, PerfisPadrao.Admin))
+        var adminRole = await roleManager.FindByNameAsync(PerfisPadrao.Admin);
+        if (adminRole != null)
         {
-            await userManager.AddToRoleAsync(createdUser, PerfisPadrao.Admin);
+            var existingPermissions = (await roleManager.GetClaimsAsync(adminRole))
+                .Where(c => c.Type == Permissions.ClaimType)
+                .Select(c => c.Value)
+                .ToHashSet();
+
+            foreach (var value in PermissionService.AllValues)
+            {
+                if (!existingPermissions.Contains(value))
+                    await roleManager.AddClaimAsync(
+                        adminRole,
+                        new System.Security.Claims.Claim(Permissions.ClaimType, value));
+            }
+        }
+
+        if (!userManager.Users.Any(u => u.UsuarioAdmin && u.Ativo))
+        {
+            const string adminEmail = "dev@caritas.com";
+            const string adminPassword = "Dev@12345";
+
+            var admin = await userManager.FindByEmailAsync(adminEmail);
+            if (admin is null)
+            {
+                admin = new Usuario
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    Nome = "Dev",
+                    Sobrenome = "User",
+                    Ativo = true,
+                    UsuarioAdmin = true,
+                    CriadoEm = DateTime.UtcNow
+                };
+                await userManager.CreateAsync(admin, adminPassword);
+            }
+            else
+            {
+                admin.UsuarioAdmin = true;
+                admin.Ativo = true;
+                await userManager.UpdateAsync(admin);
+            }
+
+            if (!await userManager.IsInRoleAsync(admin, PerfisPadrao.Admin))
+                await userManager.AddToRoleAsync(admin, PerfisPadrao.Admin);
         }
     }
 }

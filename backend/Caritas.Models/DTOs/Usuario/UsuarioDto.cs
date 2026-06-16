@@ -11,7 +11,9 @@ namespace Caritas.Models.DTOs.Usuario
         public string? Telefone { get; set; }
         public DateOnly? DataNasc { get; set; }
         public int? PerfilId { get; set; }
+        public SelectObjectDto? Perfil { get; set; }
+        public bool UsuarioAdmin { get; set; }
         public DateTime CriadoEm { get; set; }
-        public List<int>? ParoquiasPermitidas { get; set; }
+        public List<SelectObjectDto>? ParoquiasPermitidas { get; set; }
     };
 }

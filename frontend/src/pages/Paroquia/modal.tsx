@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import APIService from "@/services/api";
+import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	Paroquia,
 	ParoquiaCreateDto,
@@ -103,8 +103,8 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 				}
 				setIsOpen(false);
 				onSuccess();
-			} catch {
-				toast.error("Erro ao salvar paróquia.");
+			} catch (ex: unknown) {
+				toast.error(getErrorMessage(ex, "Erro ao salvar paróquia."));
 			}
 		};
 

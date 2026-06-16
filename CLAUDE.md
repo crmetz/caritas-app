@@ -2,7 +2,9 @@
 
 ## Visão Geral
 
-Sistema de gestão de doações e famílias para paróquias. Backend em ASP.NET Core 8 com PostgreSQL via Entity Framework Core (code-first). Frontend em React + TypeScript + Vite com Tailwind CSS e shadcn/ui.
+Sistema de gestão de doações e famílias para uma diocese. Backend em ASP.NET Core (net10) com PostgreSQL via Entity Framework Core (code-first). Frontend em React + TypeScript + Vite com Tailwind CSS e shadcn/ui.
+
+Contexto detalhado do sistema e módulos em `.claude/context/`.
 
 ## Como Rodar
 
@@ -95,13 +97,46 @@ Retorna `PagedResponseDto<T>` enxuto: apenas `Items` e `TotalCount`. Frontend de
 
 `ErrorHandlingMiddleware` em `Caritas.WebApi/Middleware/` captura todas as exceções e retorna `ProblemDetails`. Lance `KeyNotFoundException` para 404, `ArgumentException` para 400, `InvalidOperationException` para 422.
 
-### BaseEntity
+### BaseEntity / AuditableEntity
 
-Todas as entidades herdam `BaseEntity`:
+Entidades existentes (`Familia`, `Pessoa`) herdam `BaseEntity` (CreatedAt/UpdatedAt). **Novas entidades devem herdar `AuditableEntity`** (CriadoEm/AtualizadoEm — em português, padrão mais recente do projeto):
 - `Id: int` — auto-increment (identity column do Postgres, configurado por convenção do Npgsql)
-- `CreatedAt`, `UpdatedAt` — `DateTime` em UTC
+- `CriadoEm`, `AtualizadoEm` — `DateTime` em UTC
 
-O `DbContext` atualiza `UpdatedAt` automaticamente no `SaveChangesAsync`.
+O `DbContext` atualiza `AtualizadoEm` automaticamente no `SaveChangesAsync`.
+
+### Configuração de Entidades
+
+Use **Data Annotations** diretamente nas entities para configurações básicas (`[Required]`, `[MaxLength]`, `[Precision]`, `[ForeignKey]`). Não crie arquivos `IEntityTypeConfiguration<T>` — eles foram removidos do projeto.
+
+Configurações que não têm annotation equivalente (delete behaviors, índices únicos com filter) ficam no `OnModelCreating` do `CaritasDbContext`.
+
+### Mapeamento (Mapper Estático)
+
+Sempre crie um mapper estático em `Caritas.Service/Mappers/` para mapear entre entidades e DTOs. Use extension methods, mesmo padrão de `ParoquiaMapper` e `UsuarioMapper`:
+
+```csharp
+// Caritas.Service/Mappers/MinhaEntidadeMapper.cs
+public static class MinhaEntidadeMapper
+{
+    public static MinhaEntidadeDto ToDto(this MinhaEntidade entity) => new() { ... };
+    public static MinhaEntidade ToEntity(this MinhaEntidadeCreateDto dto) => new() { ... };
+}
+```
+
+Nunca mapeie propriedade por propriedade diretamente no Service — delegue sempre ao Mapper.
+
+### Filtro por Paróquia
+
+Todo endpoint de listagem de dados vinculados a paróquia deve aceitar `paroquiaId` como query param opcional. O service/repository filtra por paróquia quando fornecido:
+
+```csharp
+// Service
+public async Task<PagedResponseDto<T>> GetPagedAsync(int page, int pageSize, int? paroquiaId = null)
+
+// Repository / query
+.Where(x => paroquiaId == null || x.ParoquiaId == paroquiaId)
+```
 
 ### Cancellation Token
 

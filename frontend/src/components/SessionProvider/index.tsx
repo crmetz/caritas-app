@@ -43,6 +43,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		}
 	}, [setParoquiaAtual]);
 
+	const hasPermission = useCallback(
+		(permission: string) => session?.permissions.includes(permission) ?? false,
+		[session],
+	);
+
 	const logout = useCallback(() => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("nome");
@@ -56,7 +61,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	}, [refreshSession]);
 
 	return (
-		<SessionContext.Provider value={{ session, loading, paroquiaAtual, setParoquiaAtual, refreshSession, logout }}>
+		<SessionContext.Provider value={{ session, loading, paroquiaAtual, setParoquiaAtual, refreshSession, logout, hasPermission }}>
 			{children}
 		</SessionContext.Provider>
 	);
