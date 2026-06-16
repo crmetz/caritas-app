@@ -22,11 +22,9 @@ namespace Caritas.WebApi.Controllers
 
         [HttpGet]
         [Authorize(Policy = Permissions.Paroquia.Visualizar)]
-        public async Task<IActionResult> GetPaged(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetPaged([FromQuery] ParoquiaPagedRequestDto request)
         {
-            var result = await _paroquiaService.GetPagedAsync(page, pageSize);
+            var result = await _paroquiaService.GetPagedAsync(request);
             return Ok(result);
         }
 
@@ -70,7 +68,7 @@ namespace Caritas.WebApi.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Policy = Permissions.Paroquia.CriarEditar)]
-        public async Task<IActionResult> Delete(long id)
+        public async Task<IActionResult> Delete(int id)
         {
             await _paroquiaService.DeleteAsync(id);
             return NoContent();

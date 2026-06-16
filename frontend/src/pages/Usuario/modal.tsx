@@ -307,6 +307,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 													}
 													options={paroquiasOptions}
 													placeholder="Selecione as paróquias..."
+													searchPlaceholder="Buscar paróquias..."
 												/>
 											)}
 										/>
