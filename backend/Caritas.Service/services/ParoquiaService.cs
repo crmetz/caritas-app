@@ -17,10 +17,10 @@ namespace Caritas.Service.services
         ICurrentSession currentSession,
         IUsuarioRepository usuarioRepository)
     {
-        public async Task<PagedResponseDto<ParoquiaDto>> GetPagedAsync(int page, int pageSize)
+        public async Task<PagedResponseDto<ParoquiaDto>> GetPagedAsync(ParoquiaPagedRequestDto request)
         {
             var paroquiaIds = await GetParoquiasFilterAsync();
-            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(page, pageSize, paroquiaIds);
+            var paged = await paroquiaRepository.GetPagedWithEnderecoAsync(request, paroquiaIds);
 
             return new PagedResponseDto<ParoquiaDto>
             {

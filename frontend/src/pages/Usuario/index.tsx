@@ -33,7 +33,7 @@ export default function UsuarioPage() {
 			try {
 				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
 					url: "/usuarios",
-					params: { page, pageSize: pagination.pageSize, termo: search ?? termo },
+					params: { page, pageSize: pagination.pageSize, searchTerm: search ?? termo },
 				});
 				setData(result.items);
 				setPagination((prev) => ({
@@ -179,7 +179,7 @@ export default function UsuarioPage() {
 						</button>
 						<Input
 							className="pl-12"
-							placeholder="Pressione enter para buscar usuário..."
+							placeholder="Digite o nome do usuário e pressione enter"
 							value={termo}
 							onChange={(e) => setTermo(e.target.value)}
 							onKeyDown={(e) => e.key === "Enter" && handleSearch(termo)}
