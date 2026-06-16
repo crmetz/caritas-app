@@ -3,6 +3,7 @@ import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type SelectValue = string | number | boolean;
 
@@ -18,11 +19,13 @@ interface MultiSelectProps<T = number> {
   options?: SelectOption<T>[];
   fetchOptions?: () => Promise<SelectOption<T>[]>;
   placeholder?: string;
+  searchPlaceholder?: string;
   disabled?: boolean;
   /** Renderização customizada de cada opção na lista dropdown. Padrão: `option.label`. */
   renderOption?: (option: SelectOption<T>) => React.ReactNode;
   /** Renderização customizada do conteúdo interno do badge de item selecionado. Padrão: `option.label`. */
   renderBadge?: (option: SelectOption<T>) => React.ReactNode;
+  searchable?: boolean;
 }
 
 export function MultiSelect<T extends SelectValue = string>({
@@ -31,14 +34,20 @@ export function MultiSelect<T extends SelectValue = string>({
   options: optionsProp,
   fetchOptions,
   placeholder = "Selecione...",
+  searchPlaceholder = "Buscar...",
   disabled,
   renderOption,
   renderBadge,
+  searchable = false,
 }: MultiSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<SelectOption<T>[]>(optionsProp ?? []);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.trim().toLowerCase())
+  );
 
   useEffect(() => {
     if (optionsProp) setOptions(optionsProp);
@@ -51,6 +60,7 @@ export function MultiSelect<T extends SelectValue = string>({
         !containerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setSearch("");
       }
     };
 
@@ -131,6 +141,18 @@ export function MultiSelect<T extends SelectValue = string>({
 
       {open && (
         <div className="absolute z-50 mt-1 w-full rounded-xl border bg-popover shadow-lg">
+
+          {searchable && (
+            <div className="p-2 border-b">
+              <Input
+                autoFocus
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="max-h-56 overflow-y-auto p-1">
             {loading && (
               <p className="py-4 text-center text-sm text-muted-foreground">
@@ -144,8 +166,14 @@ export function MultiSelect<T extends SelectValue = string>({
               </p>
             )}
 
+            {!loading && options.length > 0 && filtered.length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Nenhum item encontrado.
+              </p>
+            )}
+
             {!loading &&
-              options.map((o) => {
+              filtered.map((o) => {
                 const selected = value.includes(o.value);
 
                 return (

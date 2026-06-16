@@ -21,6 +21,8 @@ export function ParoquiaSelect(props: ParoquiaSelectProps) {
 	return (
 		<MultiSelect<number>
 			{...props}
+			searchable
+			searchPlaceholder="Buscar paróquia..."
 			renderOption={(option) => {
 				const o = option as ParoquiaSelectOption;
 				return (
