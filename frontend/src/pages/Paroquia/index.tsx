@@ -14,13 +14,15 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
+import { Permissions } from "@/constants/permissions";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
 
 const CIDADES = [{ value: "Caxias do Sul", label: "Caxias do Sul" }];
 
 export default function ParoquiaPage() {
-	const { refreshSession } = useSession();
+	const { refreshSession, hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Paroquia.CriarEditar);
 	const modalRef = useRef<ParoquiaModalRef>(null);
 	const [data, setData] = useState<Paroquia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -138,7 +140,7 @@ export default function ParoquiaPage() {
 			header: "Ações",
 			align: "right",
 			render: (paroquia) => {
-				if (!paroquia.ativa) return null;
+				if (!paroquia.ativa || !canEdit) return null;
 				return (
 					<div className="flex justify-end gap-2">
 						<Button
@@ -177,10 +179,12 @@ export default function ParoquiaPage() {
 						Você está visualizando os dados das paróquias às quais possui acesso.
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-5 w-5" />
-					Nova Paróquia
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-5 w-5" />
+						Nova Paróquia
+					</Button>
+				)}
 			</div>
 
 			<div className="rounded-2xl border bg-card p-5 shadow-sm">

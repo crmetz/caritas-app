@@ -6,10 +6,14 @@ import type { Column } from "@/components/DataTable/interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import APIService, { type PagedResponse } from "@/services/api";
+import { useSession } from "@/components/SessionProvider";
+import { Permissions } from "@/constants/permissions";
 import type { Perfil, PerfilModalRef } from "./interface";
 import { PerfilModal } from "./modal";
 
 export default function PerfilPage() {
+	const { hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Perfil.CriarEditar);
 	const modalRef = useRef<PerfilModalRef>(null);
 	const [data, setData] = useState<Perfil[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -89,7 +93,7 @@ export default function PerfilPage() {
 			header: "Ações",
 			align: "right",
 			render: (perfil) => {
-				if (perfil.estatico) return null;
+				if (perfil.estatico || !canEdit) return null;
 				return (
 					<div className="flex justify-end gap-2">
 						<Button
@@ -125,10 +129,12 @@ export default function PerfilPage() {
 						Cadastro e manutenção dos perfis de acesso
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-5 w-5" />
-					Novo Perfil
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-5 w-5" />
+						Novo Perfil
+					</Button>
+				)}
 			</div>
 
 			<DataTable

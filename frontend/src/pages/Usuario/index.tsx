@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/SessionProvider";
 import APIService, { type PagedResponse } from "@/services/api";
+import { Permissions } from "@/constants/permissions";
 import {
 	type UsuarioModalRef,
 	usuarioNomeCompleto,
@@ -16,7 +17,8 @@ import {
 import { UsuarioModal } from "./modal";
 
 export default function UsuarioPage() {
-	const { session } = useSession();
+	const { session, hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Usuario.CriarEditar);
 	const modalRef = useRef<UsuarioModalRef>(null);
 	const [data, setData] = useState<UsuarioResponseDto[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -122,7 +124,7 @@ export default function UsuarioPage() {
 			header: "Ações",
 			align: "right",
 			render: (usuario) => {
-				if (!usuario.ativo) return null;
+				if (!usuario.ativo || !canEdit) return null;
 				return (
 					<div className="flex justify-end gap-2">
 						<Button
@@ -161,10 +163,12 @@ export default function UsuarioPage() {
 						Você está visualizando usuários das paróquias às quais possui acesso.
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-5 w-5" />
-					Novo Usuário
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-5 w-5" />
+						Novo Usuário
+					</Button>
+				)}
 			</div>
 
 			<div className="rounded-2xl border bg-card p-5 shadow-sm">
