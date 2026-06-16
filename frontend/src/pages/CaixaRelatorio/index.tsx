@@ -1,4 +1,6 @@
-import { ArrowLeft } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { ArrowLeft, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -43,6 +45,42 @@ export default function CaixaRelatorioPage() {
     }
   }
 
+  const baixarPdf = () => {
+    if (!relatorio) return
+
+    const doc = new jsPDF() as jsPDF & { lastAutoTable: { finalY: number } }
+    doc.setFontSize(16)
+    doc.text('Relatório do Caixa Paroquial', 14, 18)
+    doc.setFontSize(10)
+    doc.text(paroquiaAtual?.label ?? '—', 14, 25)
+    doc.text(`Período: ${dataInicio} a ${dataFim}`, 14, 31)
+
+    doc.setFontSize(12)
+    doc.text(`Total Entradas: ${fmtCurrency(relatorio.totalEntradas)}`, 14, 41)
+    doc.text(`Total Saídas: ${fmtCurrency(relatorio.totalSaidas)}`, 14, 48)
+    doc.text(`Saldo do Período: ${fmtCurrency(relatorio.saldo)}`, 14, 55)
+
+    autoTable(doc, {
+      startY: 63,
+      head: [['Origem', 'Total']],
+      body: relatorio.entradasPorOrigem.map((e) => [ORIGEM_LABELS[e.origem], fmtCurrency(e.total)]),
+    })
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [['Destino', 'Total']],
+      body: relatorio.saidasPorDestino.map((s) => [DESTINO_LABELS[s.destino], fmtCurrency(s.total)]),
+    })
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [['Família', 'Total Recebido']],
+      body: relatorio.familiasBeneficiadas.map((f) => [f.familia, fmtCurrency(f.total)]),
+    })
+
+    doc.save(`relatorio-caixa-${dataInicio}-a-${dataFim}.pdf`)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -85,6 +123,13 @@ export default function CaixaRelatorioPage() {
 
       {relatorio && (
         <div className="space-y-6">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={baixarPdf}>
+              <FileDown className="h-4 w-4" />
+              Baixar PDF
+            </Button>
+          </div>
+
           <div className="grid grid-cols-3 gap-4">
             <div className="rounded-xl border bg-card p-4 space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">

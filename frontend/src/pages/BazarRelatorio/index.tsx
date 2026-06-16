@@ -1,4 +1,6 @@
-import { ArrowLeft } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { ArrowLeft, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -44,6 +46,32 @@ export default function BazarRelatorioPage() {
     }
   }
 
+  const baixarPdf = () => {
+    if (!relatorio) return
+
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Relatório do Bazar', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Período: ${dataInicio} a ${dataFim}`, 14, 25)
+
+    doc.setFontSize(12)
+    doc.text(`Peças vendidas: ${relatorio.totalPecasVendidas}`, 14, 35)
+    doc.text(`Total arrecadado: ${fmtCurrency(relatorio.totalArrecadado)}`, 14, 42)
+
+    autoTable(doc, {
+      startY: 50,
+      head: [['Categoria', 'Qtd', 'Total']],
+      body: relatorio.vendasPorCategoria.map((v) => [
+        v.categoria,
+        String(v.quantidade),
+        fmtCurrency(v.total),
+      ]),
+    })
+
+    doc.save(`relatorio-bazar-${dataInicio}-a-${dataFim}.pdf`)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -80,6 +108,13 @@ export default function BazarRelatorioPage() {
 
       {relatorio && (
         <div className="space-y-6">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={baixarPdf}>
+              <FileDown className="h-4 w-4" />
+              Baixar PDF
+            </Button>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl border bg-card p-4 space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">

@@ -1,4 +1,6 @@
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { ArrowLeft, FileDown, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -52,6 +54,38 @@ export default function BrechoHistoricoPage() {
   useEffect(() => {
     load(1)
   }, [load])
+
+  const baixarPdf = async () => {
+    if (!paroquiaAtual || pagination.totalCount === 0) return
+    try {
+      const result = await APIService.getRequest<PagedResponse<VendaBrecho>>({
+        url: '/brecho/vendas',
+        params: { paroquiaId: paroquiaAtual.value, page: 1, pageSize: pagination.totalCount },
+      })
+
+      const doc = new jsPDF()
+      doc.setFontSize(16)
+      doc.text('Brechó — Histórico de Vendas', 14, 18)
+      doc.setFontSize(10)
+      doc.text(paroquiaAtual.label, 14, 25)
+
+      autoTable(doc, {
+        startY: 33,
+        head: [['Data/Hora', 'Comprador', 'Peças', 'Pagamento', 'Total']],
+        body: result.items.map((v) => [
+          fmtDateTime(v.dataVenda),
+          v.compradorNome,
+          v.itens.map((item) => `${item.categoria} x${item.quantidade}`).join(', '),
+          FORMA_PAGAMENTO_LABELS[v.formaPagamento],
+          fmtCurrency(v.valorTotal),
+        ]),
+      })
+
+      doc.save(`historico-brecho-${paroquiaAtual.label}.pdf`)
+    } catch {
+      toast.error('Erro ao gerar PDF.')
+    }
+  }
 
   const handleDelete = async (venda: VendaBrecho) => {
     if (
@@ -147,18 +181,28 @@ export default function BrechoHistoricoPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Link to="/brecho">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-xl font-semibold">Brechó — Histórico de Vendas</h1>
-          <p className="text-sm text-muted-foreground">
-            {paroquiaAtual?.label ?? '—'}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link to="/brecho">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-semibold">Brechó — Histórico de Vendas</h1>
+            <p className="text-sm text-muted-foreground">
+              {paroquiaAtual?.label ?? '—'}
+            </p>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={baixarPdf}
+          disabled={!paroquiaAtual || pagination.totalCount === 0}
+        >
+          <FileDown className="h-4 w-4" />
+          Baixar PDF
+        </Button>
       </div>
 
       <DataTable
