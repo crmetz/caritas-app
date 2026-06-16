@@ -84,36 +84,10 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 
 		const toggle = (value: string) => {
 			setSelected((prev) =>
-			{
-				if(prev.includes(value)){
-					if (value.endsWith(".visualizar")) {
-						const edit = value.replace(
-							".visualizar", 
-							".criarEditar"
-						);
-
-						return prev.filter(
-							(v) => v !== value && v !== edit
-						);
-					} else {
-						return prev.filter(
-							(v) => v !== value
-						);
-					}
-				} else {
-					if (value.endsWith(".criarEditar")) {
-						const view = value.replace(
-							".criarEditar", 
-							".visualizar"
-						);
-
-						if (!prev.includes(view)) {
-							return [...prev, value, view];
-						}
-					}
-					return [...prev, value];
-				}
-			});
+				prev.includes(value)
+					? prev.filter((v) => v !== value)
+					: [...prev, value],
+			);
 		};
 
 		const onSubmit = async (values: PerfilFormValues) => {

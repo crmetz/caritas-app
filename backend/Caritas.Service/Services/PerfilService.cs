@@ -224,7 +224,8 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
             .Distinct()
             .ToHashSet();
 
-        PermissionService.EnsureDependentPermissions(desired);
+        //Comentado por enquanto, depois podemos descomentar quando tivermos o mesmo mecanismo no front
+        // PermissionService.EnsureDependentPermissions(desired);
 
         var permissionClaims = (await roleManager.GetClaimsAsync(perfil))
             .Where(c => c.Type == Permissions.ClaimType)
