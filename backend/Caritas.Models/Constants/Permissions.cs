@@ -21,4 +21,17 @@ public static class Permissions
         public const string Visualizar = "perfil.visualizar";
         public const string CriarEditar = "perfil.criarEditar";
     }
+
+    public static class Atendimento
+    {
+        public const string Visualizar = "atendimento.visualizar";
+        public const string CriarEditar = "atendimento.criarEditar";
+        public const string VisualizarEvolucao = "atendimento.visualizarEvolucao";
+    }
+
+    public static class Familia
+    {
+        public const string Visualizar = "familia.visualizar";
+        public const string CriarEditar = "familia.criarEditar";
+    }
 }
