@@ -22,4 +22,5 @@ export interface SessionContextValue {
 	refreshSession: () => Promise<void>;
 	logout: () => void;
 	hasPermission: (permission: string) => boolean;
+	checkPermission: (permission: string) => boolean;
 }

@@ -11,12 +11,15 @@ public class PermissionService
         ["usuario"] = "Usuários",
         ["paroquia"] = "Paróquias",
         ["perfil"] = "Perfis",
+        ["atendimento"] = "Atendimentos",
+        ["familia"] = "Famílias",
     };
 
     private static readonly Dictionary<string, string> ActionLabels = new()
     {
         ["visualizar"] = "Visualizar",
         ["criarEditar"] = "Criar e Editar",
+        ["visualizarEvolucao"] = "Visualizar Evolução",
     };
 
     private static readonly Dictionary<string, string[]> DependentPermissions = new()

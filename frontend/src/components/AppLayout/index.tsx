@@ -26,12 +26,16 @@ export function AppLayout() {
 				<div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-6">
 					<span className="font-semibold text-lg">Caritas</span>
 					<nav className="flex items-center gap-2">
-						<NavLink to="/familias" className={linkClassName}>
-							Famílias
-						</NavLink>
-						<NavLink to="/atendimentos" className={linkClassName}>
-							Atendimentos
-						</NavLink>
+						{hasPermission(Permissions.Familia.Visualizar) && (
+							<NavLink to="/familias" className={linkClassName}>
+								Famílias
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Atendimento.Visualizar) && (
+							<NavLink to="/atendimentos" className={linkClassName}>
+								Atendimentos
+							</NavLink>
+						)}
 						{hasPermission(Permissions.Paroquia.Visualizar) && (
 							<NavLink to="/paroquias" className={linkClassName}>
 								Paróquias
