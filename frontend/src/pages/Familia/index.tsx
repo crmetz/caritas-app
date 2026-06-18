@@ -3,6 +3,7 @@ import {
 	type FormEvent,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -338,10 +339,24 @@ function MembroForm({
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual, hasPermission } = useSession();
+	const { paroquiaAtual, session, hasPermission } = useSession();
 	const canEdit = hasPermission(Permissions.Familia.CriarEditar);
 	const canViewEvolucao = hasPermission(
 		Permissions.Atendimento.VisualizarEvolucao,
+	);
+
+	// Só pode gerenciar famílias quem tem a permissão E acesso à paróquia da
+	// família (admins acessam todas). Demais famílias ficam só para visualização.
+	const paroquiasPermitidasIds = useMemo(
+		() => new Set(session?.paroquiasPermitidas.map((p) => p.value) ?? []),
+		[session],
+	);
+	const podeGerenciarFamilia = useCallback(
+		(familia: Familia) =>
+			canEdit &&
+			((session?.isAdmin ?? false) ||
+				paroquiasPermitidasIds.has(familia.paroquiaId)),
+		[canEdit, session, paroquiasPermitidasIds],
 	);
 	const [data, setData] = useState<Familia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -685,9 +700,11 @@ export default function FamiliaPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={canEdit ? handleEdit : undefined}
+				onEdit={handleEdit}
 				onView={(f) => modalRef.current?.openView(f)}
-				onDelete={canEdit ? handleDelete : undefined}
+				onDelete={handleDelete}
+				canEdit={podeGerenciarFamilia}
+				canDelete={podeGerenciarFamilia}
 			/>
 
 			<FamiliaModal ref={modalRef} onSuccess={() => load(pagination.page)} />
@@ -753,7 +770,7 @@ export default function FamiliaPage() {
 														"Sem dados complementares"}
 												</p>
 											</div>
-											{canEdit && (
+											{podeGerenciarFamilia(familiaMembros) && (
 												<Button
 													type="button"
 													variant="ghost"

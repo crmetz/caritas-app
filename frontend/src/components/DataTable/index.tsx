@@ -17,10 +17,12 @@ export function DataTable<T extends { id: number }>({
 	onEdit,
 	onView,
 	onDelete,
+	canEdit,
+	canDelete,
 }: DataTableProps<T>) {
 	const { page, pageSize, totalCount, onPageChange } = pagination;
 	const totalPages = Math.ceil(totalCount / pageSize);
-	const hasActions = Boolean(onEdit || onDelete || onView);
+	const hasActions = Boolean(onView || onEdit || onDelete);
 
 	return (
 		<div className="space-y-3">
@@ -113,7 +115,7 @@ export function DataTable<T extends { id: number }>({
 														<Eye className="h-4 w-4" />
 													</Button>
 												)}
-												{onEdit && (
+												{onEdit && (canEdit?.(row) ?? true) && (
 													<Button
 														variant="ghost"
 														size="icon"
@@ -124,7 +126,7 @@ export function DataTable<T extends { id: number }>({
 														<Pencil className="h-4 w-4" />
 													</Button>
 												)}
-												{onDelete && (
+												{onDelete && (canDelete?.(row) ?? true) && (
 													<Button
 														variant="ghost"
 														size="icon"
