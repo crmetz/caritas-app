@@ -83,7 +83,7 @@ const baseColumns: Column<Atendimento>[] = [
 export default function AtendimentoPage() {
 	const modalRef = useRef<AtendimentoModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual, hasPermission, checkPermission } = useSession();
+	const { paroquiaAtual, hasPermission } = useSession();
 	const canEdit = hasPermission(Permissions.Atendimento.CriarEditar);
 	const canViewEvolucao = hasPermission(
 		Permissions.Atendimento.VisualizarEvolucao,
@@ -186,12 +186,10 @@ export default function AtendimentoPage() {
 	}, [load]);
 
 	const handleEdit = (atendimento: Atendimento) => {
-		if (!checkPermission(Permissions.Atendimento.CriarEditar)) return;
 		modalRef.current?.open(atendimento);
 	};
 
 	const handleDelete = async (atendimento: Atendimento) => {
-		if (!checkPermission(Permissions.Atendimento.CriarEditar)) return;
 		if (!confirm("Remover este atendimento?")) return;
 		try {
 			await APIService.deleteRequest({

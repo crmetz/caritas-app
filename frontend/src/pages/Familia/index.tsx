@@ -338,7 +338,7 @@ function MembroForm({
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual, hasPermission, checkPermission } = useSession();
+	const { paroquiaAtual, hasPermission } = useSession();
 	const canEdit = hasPermission(Permissions.Familia.CriarEditar);
 	const canViewEvolucao = hasPermission(
 		Permissions.Atendimento.VisualizarEvolucao,
@@ -387,7 +387,6 @@ export default function FamiliaPage() {
 	};
 
 	const handleStartEditPessoa = (pessoa: Pessoa) => {
-		if (!checkPermission(Permissions.Familia.CriarEditar)) return;
 		setEditingPessoaId(pessoa.id);
 		setEditingPessoa(pessoaToForm(pessoa));
 	};
@@ -583,12 +582,10 @@ export default function FamiliaPage() {
 	}, [load]);
 
 	const handleEdit = (familia: Familia) => {
-		if (!checkPermission(Permissions.Familia.CriarEditar)) return;
 		modalRef.current?.open(familia);
 	};
 
 	const handleDelete = async (familia: Familia) => {
-		if (!checkPermission(Permissions.Familia.CriarEditar)) return;
 		if (!confirm(`Remover a família de ${familia.responsavel?.nome ?? "—"}?`))
 			return;
 		try {
