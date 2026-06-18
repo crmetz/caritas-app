@@ -1,5 +1,6 @@
-import APIService from "@/services/api";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { toast } from "react-toastify";
+import APIService from "@/services/api";
 import type { Session, SelectObject, SessionContextValue } from "./interface";
 
 const PAROQUIA_STORAGE_KEY = "paroquiaAtualId";
@@ -48,6 +49,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		[session],
 	);
 
+	// Verifica a permissão e, se faltar, exibe um toast genérico. Retorna o
+	// resultado para uso direto em handlers (ex: `if (!checkPermission(...)) return;`).
+	const checkPermission = useCallback(
+		(permission: string) => {
+			if (hasPermission(permission)) return true;
+			toast.error("Você não tem permissão para realizar essa ação");
+			return false;
+		},
+		[hasPermission],
+	);
+
 	const logout = useCallback(() => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("nome");
@@ -61,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	}, [refreshSession]);
 
 	return (
-		<SessionContext.Provider value={{ session, loading, paroquiaAtual, setParoquiaAtual, refreshSession, logout, hasPermission }}>
+		<SessionContext.Provider value={{ session, loading, paroquiaAtual, setParoquiaAtual, refreshSession, logout, hasPermission, checkPermission }}>
 			{children}
 		</SessionContext.Provider>
 	);

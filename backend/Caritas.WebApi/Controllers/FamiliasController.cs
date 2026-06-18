@@ -1,16 +1,20 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Familia;
 using Caritas.Models.DTOs.Pessoa;
 using Caritas.Repository.Context;
 using Caritas.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Controllers;
 
+[Authorize]
 public class FamiliasController(CaritasDbContext context) : BaseApiController
 {
     private readonly FamiliaService _familiaService = new(context);
 
     [HttpGet]
+    [Authorize(Policy = Permissions.Familia.Visualizar)]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -28,6 +32,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.Familia.Visualizar)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _familiaService.GetByIdAsync(id);
@@ -35,6 +40,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> Create([FromBody] FamiliaCreateDto dto)
     {
         dto.ParoquiaId = ParoquiaAtualId
@@ -44,6 +50,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> Update(int id, [FromBody] FamiliaUpdateDto dto)
     {
         var result = await _familiaService.UpdateAsync(id, dto);
@@ -51,6 +58,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> Delete(int id)
     {
         await _familiaService.DeleteAsync(id);
@@ -58,6 +66,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("{id:int}/membros")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> AdicionarMembro(int id, [FromBody] PessoaCreateDto dto)
     {
         var result = await _familiaService.AdicionarMembroAsync(id, dto);
@@ -65,6 +74,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPut("{id:int}/membros/{pessoaId:int}")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> AtualizarMembro(int id, int pessoaId, [FromBody] PessoaCreateDto dto)
     {
         var result = await _familiaService.AtualizarMembroAsync(id, pessoaId, dto);
@@ -72,6 +82,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpDelete("{id:int}/membros/{pessoaId:int}")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> RemoverMembro(int id, int pessoaId)
     {
         await _familiaService.RemoverMembroAsync(id, pessoaId);
@@ -79,6 +90,7 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPut("{id:int}/responsavel/{pessoaId:int}")]
+    [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> TrocarResponsavel(int id, int pessoaId)
     {
         var result = await _familiaService.TrocarResponsavelAsync(id, pessoaId);

@@ -20,6 +20,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Permissions } from "@/constants/permissions";
 import APIService, { type PagedResponse } from "@/services/api";
 import {
 	type Atendimento,
@@ -82,7 +83,11 @@ const baseColumns: Column<Atendimento>[] = [
 export default function AtendimentoPage() {
 	const modalRef = useRef<AtendimentoModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual } = useSession();
+	const { paroquiaAtual, hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Atendimento.CriarEditar);
+	const canViewEvolucao = hasPermission(
+		Permissions.Atendimento.VisualizarEvolucao,
+	);
 	const [data, setData] = useState<Atendimento[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [familias, setFamilias] = useState<SelectOption[]>([]);
@@ -98,22 +103,26 @@ export default function AtendimentoPage() {
 
 	const columns: Column<Atendimento>[] = [
 		...baseColumns,
-		{
-			key: "evolucao",
-			header: "Evolução",
-			render: (a) => (
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					className="h-8 gap-2 px-2 text-muted-foreground hover:text-foreground"
-					onClick={() => navigate(`/familias/${a.familiaId}/evolucao`)}
-					title="Ver evolução da família"
-				>
-					<LineChart className="h-4 w-4" />
-				</Button>
-			),
-		},
+		...(canViewEvolucao
+			? [
+					{
+						key: "evolucao",
+						header: "Evolução",
+						render: (a: Atendimento) => (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className="h-8 gap-2 px-2 text-muted-foreground hover:text-foreground"
+								onClick={() => navigate(`/familias/${a.familiaId}/evolucao`)}
+								title="Ver evolução da família"
+							>
+								<LineChart className="h-4 w-4" />
+							</Button>
+						),
+					},
+				]
+			: []),
 	];
 
 	useEffect(() => {
@@ -123,12 +132,13 @@ export default function AtendimentoPage() {
 	}, [paroquiaAtual]);
 
 	const loadEvolucao = useCallback(() => {
+		if (!canViewEvolucao) return;
 		APIService.getRequest<EvolucaoParoquia>({
 			url: "/atendimentos/evolucao-paroquia",
 		})
 			.then(setEvolucao)
 			.catch(() => {});
-	}, []);
+	}, [canViewEvolucao]);
 
 	useEffect(() => {
 		loadEvolucao();
@@ -175,6 +185,10 @@ export default function AtendimentoPage() {
 		return () => clearTimeout(timer);
 	}, [load]);
 
+	const handleEdit = (atendimento: Atendimento) => {
+		modalRef.current?.open(atendimento);
+	};
+
 	const handleDelete = async (atendimento: Atendimento) => {
 		if (!confirm("Remover este atendimento?")) return;
 		try {
@@ -198,10 +212,12 @@ export default function AtendimentoPage() {
 						Registro de visitas e evolução das famílias
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-4 w-4" />
-					Novo Atendimento
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-4 w-4" />
+						Novo Atendimento
+					</Button>
+				)}
 			</div>
 
 			{evolucao && evolucao.totalFamiliasComAtendimento > 0 && (
@@ -307,9 +323,9 @@ export default function AtendimentoPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={(a) => modalRef.current?.open(a)}
+				onEdit={canEdit ? handleEdit : undefined}
 				onView={(a) => modalRef.current?.openView(a)}
-				onDelete={handleDelete}
+				onDelete={canEdit ? handleDelete : undefined}
 			/>
 
 			<AtendimentoModal

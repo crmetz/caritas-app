@@ -30,12 +30,36 @@ createRoot(rootElement).render(
 						<Route path="/redefinir-senha" element={<ResetPassowrdPage />} />
 						<Route element={<PrivateRoute />}>
 							<Route element={<AppLayout />}>
-								<Route path="/familias" element={<FamiliaPage />} />
 								<Route
-									path="/familias/:familiaId/evolucao"
-									element={<EvolucaoFamiliaPage />}
-								/>
-								<Route path="/atendimentos" element={<AtendimentoPage />} />
+									element={
+										<PermissionRoute
+											permission={Permissions.Familia.Visualizar}
+										/>
+									}
+								>
+									<Route path="/familias" element={<FamiliaPage />} />
+								</Route>
+								<Route
+									element={
+										<PermissionRoute
+											permission={Permissions.Atendimento.VisualizarEvolucao}
+										/>
+									}
+								>
+									<Route
+										path="/familias/:familiaId/evolucao"
+										element={<EvolucaoFamiliaPage />}
+									/>
+								</Route>
+								<Route
+									element={
+										<PermissionRoute
+											permission={Permissions.Atendimento.Visualizar}
+										/>
+									}
+								>
+									<Route path="/atendimentos" element={<AtendimentoPage />} />
+								</Route>
 								<Route
 									element={<PermissionRoute permission={Permissions.Paroquia.Visualizar} />}
 								>

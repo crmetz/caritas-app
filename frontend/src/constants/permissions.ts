@@ -13,4 +13,13 @@ export const Permissions = {
 		Visualizar: "perfil.visualizar",
 		CriarEditar: "perfil.criarEditar",
 	},
+	Atendimento: {
+		Visualizar: "atendimento.visualizar",
+		CriarEditar: "atendimento.criarEditar",
+		VisualizarEvolucao: "atendimento.visualizarEvolucao",
+	},
+	Familia: {
+		Visualizar: "familia.visualizar",
+		CriarEditar: "familia.criarEditar",
+	},
 } as const;
