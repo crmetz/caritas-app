@@ -10,6 +10,7 @@ interface ParoquiaSelectProps {
 	options?: ParoquiaSelectOption[];
 	fetchOptions?: () => Promise<ParoquiaSelectOption[]>;
 	placeholder?: string;
+	searchPlaceholder?: string;
 	disabled?: boolean;
 }
 
@@ -21,6 +22,7 @@ export function ParoquiaSelect(props: ParoquiaSelectProps) {
 	return (
 		<MultiSelect<number>
 			{...props}
+			searchable
 			renderOption={(option) => {
 				const o = option as ParoquiaSelectOption;
 				return (

@@ -100,7 +100,8 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
             throw new InvalidOperationException("Perfis estáticos não podem ser excluídos.");
 
         var usersInRole = await userManager.GetUsersInRoleAsync(perfil.Name!);
-        if (usersInRole.Count > 0)
+        var activeUsersInRole = usersInRole.Where(u => u.Ativo).ToList();
+        if (activeUsersInRole.Count > 0)
             throw new InvalidOperationException(
                 "Não é possível excluir um perfil que possui usuários associados.");
 
@@ -223,6 +224,9 @@ public class PerfilService(RoleManager<Perfil> roleManager, UserManager<Usuario>
             .Where(p => PermissionService.AllValues.Contains(p))
             .Distinct()
             .ToHashSet();
+
+        //Comentado por enquanto, depois podemos descomentar quando tivermos o mesmo mecanismo no front
+        // PermissionService.EnsureDependentPermissions(desired);
 
         var permissionClaims = (await roleManager.GetClaimsAsync(perfil))
             .Where(c => c.Type == Permissions.ClaimType)

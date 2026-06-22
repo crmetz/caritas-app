@@ -1,15 +1,28 @@
-import { Ban, Church, Pencil, Plus, Search } from "lucide-react";
+﻿import { Ban, Church, Pencil, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable/interface";
+import { useSession } from "@/components/SessionProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
+import { Permissions } from "@/constants/permissions";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
 
+const CIDADES = [{ value: "Caxias do Sul", label: "Caxias do Sul" }];
+
 export default function ParoquiaPage() {
+	const { refreshSession, hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Paroquia.CriarEditar);
 	const modalRef = useRef<ParoquiaModalRef>(null);
 	const [data, setData] = useState<Paroquia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -19,13 +32,31 @@ export default function ParoquiaPage() {
 		totalCount: 0,
 	});
 
+	const [nomeFiltro, setNomeFiltro] = useState("");
+	const [cidadeFiltro, setCidadeFiltro] = useState("all");
+	const [bairroFiltro, setBairroFiltro] = useState("");
+
+	const limparFiltros = () => {
+		setNomeFiltro("");
+		setCidadeFiltro("all");
+		setBairroFiltro("");
+	};
+
 	const load = useCallback(
 		async (page: number) => {
 			setLoading(true);
 			try {
+				const params: Record<string, unknown> = {
+					page,
+					pageSize: pagination.pageSize,
+				};
+				if (nomeFiltro.trim()) params.nome = nomeFiltro.trim();
+				if (cidadeFiltro !== "all") params.cidade = cidadeFiltro;
+				if (bairroFiltro.trim()) params.bairro = bairroFiltro.trim();
+
 				const result = await APIService.getRequest<PagedResponse<Paroquia>>({
 					url: "/paroquias",
-					params: { page, pageSize: pagination.pageSize },
+					params,
 				});
 				setData(result.items);
 				setPagination((prev) => ({
@@ -39,11 +70,12 @@ export default function ParoquiaPage() {
 				setLoading(false);
 			}
 		},
-		[pagination.pageSize],
+		[pagination.pageSize, nomeFiltro, cidadeFiltro, bairroFiltro],
 	);
 
 	useEffect(() => {
-		load(1);
+		const timer = setTimeout(() => load(1), 400);
+		return () => clearTimeout(timer);
 	}, [load]);
 
 	const handleDelete = async (paroquia: Paroquia) => {
@@ -52,9 +84,10 @@ export default function ParoquiaPage() {
 		try {
 			await APIService.deleteRequest({ url: `/paroquias/${paroquia.id}` });
 			toast.success("Paróquia inativada.");
+			await refreshSession();
 			load(pagination.page);
-		} catch {
-			toast.error("Erro ao inativar paróquia.");
+		} catch (ex: unknown) {
+			toast.error(getErrorMessage(ex, "Erro ao inativar paróquia."));
 		}
 	};
 
@@ -107,7 +140,7 @@ export default function ParoquiaPage() {
 			header: "Ações",
 			align: "right",
 			render: (paroquia) => {
-				if (!paroquia.ativa) return null;
+				if (!paroquia.ativa || !canEdit) return null;
 				return (
 					<div className="flex justify-end gap-2">
 						<Button
@@ -146,20 +179,48 @@ export default function ParoquiaPage() {
 						Você está visualizando os dados das paróquias às quais possui acesso.
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-5 w-5" />
-					Nova Paróquia
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-5 w-5" />
+						Nova Paróquia
+					</Button>
+				)}
 			</div>
 
 			<div className="rounded-2xl border bg-card p-5 shadow-sm">
-				<div className="grid gap-4 md:grid-cols-[1.2fr_1fr_1fr]">
-					<div className="relative">
-						<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 text-muted-foreground" />
-						<Input className="pl-12" placeholder="Buscar paróquia..." />
-					</div>
-					<Input placeholder="Todas as cidades" readOnly />
-					<Input placeholder="Todos os bairros" readOnly />
+				<div className="flex flex-wrap items-center gap-3">
+					<Input
+						className="w-72"
+						placeholder="Buscar por nome"
+						value={nomeFiltro}
+						onChange={(e) => setNomeFiltro(e.target.value)}
+					/>
+
+					<Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
+						<SelectTrigger className="w-48">
+							<SelectValue placeholder="Cidade" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">Todas as cidades</SelectItem>
+							{CIDADES.map((c) => (
+								<SelectItem key={c.value} value={c.value}>
+									{c.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+
+					<Input
+						className="w-48"
+						placeholder="Bairro"
+						value={bairroFiltro}
+						onChange={(e) => setBairroFiltro(e.target.value)}
+					/>
+
+					<Button variant="outline" onClick={limparFiltros}>
+						<X className="h-4 w-4" />
+						Limpar filtros
+					</Button>
 				</div>
 			</div>
 
