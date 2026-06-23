@@ -41,6 +41,12 @@ export interface LancamentoCaixa {
   atualizadoEm: string
 }
 
+export interface SaldoCaixa {
+  totalEntradas: number
+  totalSaidas: number
+  saldo: number
+}
+
 export interface CancelarLancamentoDto {
   motivo: string
 }

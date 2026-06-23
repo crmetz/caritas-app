@@ -110,6 +110,24 @@ public class CaixaService(CaritasDbContext context)
         await context.SaveChangesAsync();
     }
 
+    public async Task<SaldoCaixaDto> GetSaldoAsync(int paroquiaId)
+    {
+        var totalEntradas = await context.LancamentosCaixa
+            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Entrada && !l.Cancelado)
+            .SumAsync(l => (decimal?)l.Valor) ?? 0;
+
+        var totalSaidas = await context.LancamentosCaixa
+            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Saida && !l.Cancelado)
+            .SumAsync(l => (decimal?)l.Valor) ?? 0;
+
+        return new SaldoCaixaDto
+        {
+            TotalEntradas = totalEntradas,
+            TotalSaidas = totalSaidas,
+            Saldo = totalEntradas - totalSaidas,
+        };
+    }
+
     public async Task<RelatorioCaixaDto> GetRelatorioAsync(int paroquiaId, DateTime dataInicio, DateTime dataFim)
     {
         dataInicio = DateTime.SpecifyKind(dataInicio, DateTimeKind.Utc);

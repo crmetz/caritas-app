@@ -41,6 +41,13 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return NoContent();
     }
 
+    [HttpGet("{paroquiaId:int}/saldo")]
+    public async Task<IActionResult> GetSaldo(int paroquiaId)
+    {
+        var result = await _caixaService.GetSaldoAsync(paroquiaId);
+        return Ok(result);
+    }
+
     [HttpGet("{paroquiaId:int}/relatorio")]
     public async Task<IActionResult> GetRelatorio(
         int paroquiaId,

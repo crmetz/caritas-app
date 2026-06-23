@@ -18,6 +18,7 @@ import {
   type LancamentoCaixa,
   ORIGEM_LABELS,
   type SaidaModalRef,
+  type SaldoCaixa,
 } from './interface'
 
 const fmtCurrency = (v: number) =>
@@ -42,6 +43,19 @@ export default function CaixaPage() {
   const [data, setData] = useState<LancamentoCaixa[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 15, totalCount: 0 })
+  const [saldoCaixa, setSaldoCaixa] = useState<SaldoCaixa>({ totalEntradas: 0, totalSaidas: 0, saldo: 0 })
+
+  const loadSaldo = useCallback(async () => {
+    if (!paroquiaAtual) return
+    try {
+      const result = await APIService.getRequest<SaldoCaixa>({
+        url: `/caixa/${paroquiaAtual.value}/saldo`,
+      })
+      setSaldoCaixa(result)
+    } catch {
+      // silencioso — o erro da listagem já notifica o usuário
+    }
+  }, [paroquiaAtual])
 
   const load = useCallback(
     async (page: number) => {
@@ -65,15 +79,8 @@ export default function CaixaPage() {
 
   useEffect(() => {
     load(1)
-  }, [load])
-
-  const totalEntradas = data
-    .filter((l) => l.tipo === 'Entrada' && !l.cancelado)
-    .reduce((s, l) => s + l.valor, 0)
-  const totalSaidas = data
-    .filter((l) => l.tipo === 'Saida' && !l.cancelado)
-    .reduce((s, l) => s + l.valor, 0)
-  const saldo = totalEntradas - totalSaidas
+    loadSaldo()
+  }, [load, loadSaldo])
 
   const columns: Column<LancamentoCaixa>[] = [
     {
@@ -195,16 +202,16 @@ export default function CaixaPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Entradas</p>
-          <p className="text-2xl font-semibold text-green-600">{fmtCurrency(totalEntradas)}</p>
+          <p className="text-2xl font-semibold text-green-600">{fmtCurrency(saldoCaixa.totalEntradas)}</p>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Saídas</p>
-          <p className="text-2xl font-semibold text-red-600">{fmtCurrency(totalSaidas)}</p>
+          <p className="text-2xl font-semibold text-red-600">{fmtCurrency(saldoCaixa.totalSaidas)}</p>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Saldo</p>
-          <p className={`text-2xl font-semibold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {fmtCurrency(saldo)}
+          <p className={`text-2xl font-semibold ${saldoCaixa.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {fmtCurrency(saldoCaixa.saldo)}
           </p>
         </div>
       </div>
@@ -221,17 +228,17 @@ export default function CaixaPage() {
           <EntradaModal
             ref={entradaRef}
             paroquiaId={paroquiaAtual.value}
-            onSuccess={() => load(pagination.page)}
+            onSuccess={() => { load(pagination.page); loadSaldo() }}
           />
           <SaidaModal
             ref={saidaRef}
             paroquiaId={paroquiaAtual.value}
-            onSuccess={() => load(pagination.page)}
+            onSuccess={() => { load(pagination.page); loadSaldo() }}
           />
         </>
       )}
 
-      <CancelarModal ref={cancelarRef} onSuccess={() => load(pagination.page)} />
+      <CancelarModal ref={cancelarRef} onSuccess={() => { load(pagination.page); loadSaldo() }} />
     </div>
   )
 }
