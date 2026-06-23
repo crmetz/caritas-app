@@ -92,6 +92,9 @@ export default function ResetPasswordPage() {
 								{showPassword ? <EyeOff /> : <Eye />}
 							</button>
 						</div>
+						<p className="text-xs text-gray-500">
+							A senha deve ter no mínimo 8 caracteres, incluindo ao menos uma letra maiúscula e um número.
+						</p>
 						{errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
 					</div>
 

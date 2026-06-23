@@ -22,6 +22,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useSession } from "@/components/SessionProvider";
+import { formatCpf, formatTelefone } from "@/lib/utils";
 import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	CreateUsuarioDto,
@@ -222,10 +223,19 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 									</div>
 									<div className="space-y-1">
 										<Label htmlFor="usuario-cpf">CPF</Label>
-										<Input
-											id="usuario-cpf"
-											placeholder="000.000.000-00"
-											{...register("cpf")}
+										<Controller
+											name="cpf"
+											control={control}
+											render={({ field }) => (
+												<Input
+													id="usuario-cpf"
+													placeholder="000.000.000-00"
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(formatCpf(e.target.value))
+													}
+												/>
+											)}
 										/>
 									</div>
 									<div className="space-y-1">
@@ -242,10 +252,19 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 									</div>
 									<div className="space-y-1 md:col-span-2">
 										<Label htmlFor="usuario-telefone">Telefone</Label>
-										<Input
-											id="usuario-telefone"
-											placeholder="(00) 00000-0000"
-											{...register("telefone")}
+										<Controller
+											name="telefone"
+											control={control}
+											render={({ field }) => (
+												<Input
+													id="usuario-telefone"
+													placeholder="(00) 00000-0000"
+													value={field.value ?? ""}
+													onChange={(e) =>
+														field.onChange(formatTelefone(e.target.value))
+													}
+												/>
+											)}
 										/>
 									</div>
 								</div>
