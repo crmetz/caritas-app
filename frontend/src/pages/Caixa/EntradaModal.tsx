@@ -20,7 +20,10 @@ const ORIGENS_MANUAIS = (
   Object.entries(ORIGEM_LABELS) as [OrigemEntrada, string][]
 ).filter(([k]) => k !== 'VendaBrecho')
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 export const EntradaModal = forwardRef<EntradaModalRef, EntradaModalProps>(
   ({ paroquiaId, onSuccess }, ref) => {

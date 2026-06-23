@@ -23,7 +23,10 @@ import {
 const fmtCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-const fmtDate = (s: string) => new Date(s).toLocaleDateString('pt-BR')
+const fmtDate = (s: string) => {
+  const [y, m, d] = s.slice(0, 10).split('-')
+  return `${d}/${m}/${y}`
+}
 
 const valorClassName = (l: LancamentoCaixa) => {
   if (l.cancelado) return 'line-through text-muted-foreground'
