@@ -113,11 +113,11 @@ public class CaixaService(CaritasDbContext context)
     public async Task<SaldoCaixaDto> GetSaldoAsync(int paroquiaId)
     {
         var totalEntradas = await context.LancamentosCaixa
-            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Entrada && !l.Cancelado)
+            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Entrada && !l.Cancelado && l.Origem != null)
             .SumAsync(l => (decimal?)l.Valor) ?? 0;
 
         var totalSaidas = await context.LancamentosCaixa
-            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Saida && !l.Cancelado)
+            .Where(l => l.ParoquiaId == paroquiaId && l.Tipo == TipoLancamento.Saida && !l.Cancelado && l.Destino != null)
             .SumAsync(l => (decimal?)l.Valor) ?? 0;
 
         return new SaldoCaixaDto
@@ -140,16 +140,19 @@ public class CaixaService(CaritasDbContext context)
                      && l.Data < dataFim)
             .ToListAsync();
 
-        var entradas = lancamentos.Where(l => l.Tipo == TipoLancamento.Entrada).ToList();
-        var saidas = lancamentos.Where(l => l.Tipo == TipoLancamento.Saida).ToList();
+        // Apenas lançamentos não cancelados com origem/destino real (exclui estornos automáticos)
+        var entradas = lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Entrada && !l.Cancelado && l.Origem.HasValue)
+            .ToList();
+        var saidas = lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Saida && !l.Cancelado && l.Destino.HasValue)
+            .ToList();
 
         var entradasPorOrigem = entradas
-            .Where(l => l.Origem.HasValue)
             .GroupBy(l => l.Origem!.Value)
             .Select(g => new EntradaPorOrigemDto { Origem = g.Key, Total = g.Sum(l => l.Valor) });
 
         var saidasPorDestino = saidas
-            .Where(l => l.Destino.HasValue)
             .GroupBy(l => l.Destino!.Value)
             .Select(g => new SaidaPorDestinoDto { Destino = g.Key, Total = g.Sum(l => l.Valor) });
 
