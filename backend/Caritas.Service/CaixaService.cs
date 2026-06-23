@@ -16,8 +16,7 @@ public class CaixaService(CaritasDbContext context)
         var paged = await context.LancamentosCaixa
             .Include(l => l.Familia).ThenInclude(f => f!.Responsavel)
             .Where(l => l.ParoquiaId == paroquiaId)
-            .OrderByDescending(l => l.Data)
-            .ThenByDescending(l => l.CriadoEm)
+            .OrderByDescending(l => l.CriadoEm)
             .ToPagedAsync(page, pageSize);
 
         return new PagedResponseDto<LancamentoCaixaResponseDto>
