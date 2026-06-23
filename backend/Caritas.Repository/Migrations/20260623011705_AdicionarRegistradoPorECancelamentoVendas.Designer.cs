@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Caritas.Repository.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Caritas.Repository.Migrations
 {
     [DbContext(typeof(CaritasDbContext))]
-    partial class CaritasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260623011705_AdicionarRegistradoPorECancelamentoVendas")]
+    partial class AdicionarRegistradoPorECancelamentoVendas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -613,65 +616,6 @@ namespace Caritas.Repository.Migrations
                     b.ToTable("Remessas");
                 });
 
-            modelBuilder.Entity("Caritas.Models.Entities.SessaoCaixaBrecho", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Aberto")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("AbertoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("AbertoPor")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("Diferenca")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<DateTime?>("FechadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FechadoPor")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Observacoes")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ParoquiaId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal?>("SaldoFinalCalculado")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal?>("SaldoFinalContado")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal>("SaldoInicial")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParoquiaId");
-
-                    b.ToTable("SessoesCaixaBrecho");
-                });
-
             modelBuilder.Entity("Caritas.Models.Entities.Usuario", b =>
                 {
                     b.Property<int>("Id")
@@ -1181,17 +1125,6 @@ namespace Caritas.Repository.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Familia");
-                });
-
-            modelBuilder.Entity("Caritas.Models.Entities.SessaoCaixaBrecho", b =>
-                {
-                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
-                        .WithMany()
-                        .HasForeignKey("ParoquiaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Paroquia");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Usuario", b =>
