@@ -1,4 +1,5 @@
 import { type FormEvent, forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { useSession } from '@/components/SessionProvider'
 import { toast } from 'react-toastify'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -24,6 +25,8 @@ const today = () => new Date().toISOString().slice(0, 10)
 
 export const SaidaModal = forwardRef<SaidaModalRef, SaidaModalProps>(
   ({ paroquiaId, onSuccess }, ref) => {
+    const { session } = useSession()
+    const nomeUsuario = session ? `${session.nome} ${session.sobrenome}`.trim() : ''
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [familias, setFamilias] = useState<FamiliaOpcao[]>([])
@@ -32,7 +35,7 @@ export const SaidaModal = forwardRef<SaidaModalRef, SaidaModalProps>(
       valor: 0,
       destino: 'CestaBasica',
       familiaId: undefined,
-      responsavel: '',
+      responsavel: nomeUsuario,
       observacoes: '',
     })
 
@@ -55,7 +58,7 @@ export const SaidaModal = forwardRef<SaidaModalRef, SaidaModalProps>(
           valor: 0,
           destino: 'CestaBasica',
           familiaId: undefined,
-          responsavel: '',
+          responsavel: nomeUsuario,
           observacoes: '',
         })
         setIsOpen(true)
@@ -128,15 +131,16 @@ export const SaidaModal = forwardRef<SaidaModalRef, SaidaModalProps>(
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Família Beneficiada *</Label>
+              <Label>Família Beneficiada</Label>
               <Select
-                value={form.familiaId?.toString() ?? ''}
-                onValueChange={(v) => set('familiaId', Number(v))}
+                value={form.familiaId?.toString() ?? 'none'}
+                onValueChange={(v) => set('familiaId', v === 'none' ? undefined : Number(v))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar família..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {familias.map((f) => (
                     <SelectItem key={f.id} value={f.id.toString()}>
                       {f.responsavel.nome}

@@ -22,6 +22,9 @@ public class LancamentoCaixaResponseDto
     public string Responsavel { get; set; } = string.Empty;
     public bool GeradoAutomaticamente { get; set; }
     public string? Observacoes { get; set; }
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

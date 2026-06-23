@@ -1,4 +1,5 @@
 import { type FormEvent, forwardRef, useImperativeHandle, useState } from 'react'
+import { useSession } from '@/components/SessionProvider'
 import { toast } from 'react-toastify'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,13 +24,15 @@ const today = () => new Date().toISOString().slice(0, 10)
 
 export const EntradaModal = forwardRef<EntradaModalRef, EntradaModalProps>(
   ({ paroquiaId, onSuccess }, ref) => {
+    const { session } = useSession()
+    const nomeUsuario = session ? `${session.nome} ${session.sobrenome}`.trim() : ''
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState<Omit<CreateEntradaDto, 'paroquiaId'>>({
       data: today(),
       valor: 0,
       origem: 'Doacao',
-      responsavel: '',
+      responsavel: nomeUsuario,
       observacoes: '',
     })
 
@@ -38,7 +41,7 @@ export const EntradaModal = forwardRef<EntradaModalRef, EntradaModalProps>(
 
     useImperativeHandle(ref, () => ({
       open: () => {
-        setForm({ data: today(), valor: 0, origem: 'Doacao', responsavel: '', observacoes: '' })
+        setForm({ data: today(), valor: 0, origem: 'Doacao', responsavel: nomeUsuario, observacoes: '' })
         setIsOpen(true)
       },
     }))

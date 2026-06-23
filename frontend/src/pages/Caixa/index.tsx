@@ -1,4 +1,4 @@
-import { ArrowDownCircle, FileText, Plus, Trash2 } from 'lucide-react'
+import { ArrowDownCircle, Ban, FileText, Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/components/SessionProvider'
 import APIService, { type PagedResponse } from '@/services/api'
+import { CancelarModal } from './CancelarModal'
 import { EntradaModal } from './EntradaModal'
 import { SaidaModal } from './SaidaModal'
 import {
+  type CancelarModalRef,
   DESTINO_LABELS,
   type EntradaModalRef,
   type LancamentoCaixa,
@@ -23,9 +25,15 @@ const fmtCurrency = (v: number) =>
 
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('pt-BR')
 
+const valorClassName = (l: LancamentoCaixa) => {
+  if (l.cancelado) return 'line-through text-muted-foreground'
+  return l.tipo === 'Entrada' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'
+}
+
 export default function CaixaPage() {
   const entradaRef = useRef<EntradaModalRef>(null)
   const saidaRef = useRef<SaidaModalRef>(null)
+  const cancelarRef = useRef<CancelarModalRef>(null)
   const { paroquiaAtual } = useSession()
 
   const [data, setData] = useState<LancamentoCaixa[]>([])
@@ -56,22 +64,11 @@ export default function CaixaPage() {
     load(1)
   }, [load])
 
-  const handleDelete = async (lancamento: LancamentoCaixa) => {
-    if (!confirm('Remover este lançamento?')) return
-    try {
-      await APIService.deleteRequest({ url: `/caixa/lancamentos/${lancamento.id}` })
-      toast.success('Lançamento removido.')
-      load(pagination.page)
-    } catch {
-      toast.error('Erro ao remover lançamento.')
-    }
-  }
-
   const totalEntradas = data
-    .filter((l) => l.tipo === 'Entrada')
+    .filter((l) => l.tipo === 'Entrada' && !l.cancelado)
     .reduce((s, l) => s + l.valor, 0)
   const totalSaidas = data
-    .filter((l) => l.tipo === 'Saida')
+    .filter((l) => l.tipo === 'Saida' && !l.cancelado)
     .reduce((s, l) => s + l.valor, 0)
   const saldo = totalEntradas - totalSaidas
 
@@ -79,29 +76,31 @@ export default function CaixaPage() {
     {
       key: 'data',
       header: 'Data',
-      render: (l) => fmtDate(l.data),
+      render: (l) => (
+        <span className={l.cancelado ? 'line-through text-muted-foreground' : ''}>
+          {fmtDate(l.data)}
+        </span>
+      ),
     },
     {
       key: 'tipo',
       header: 'Tipo',
-      render: (l) => (
-        <Badge
-          variant={l.tipo === 'Entrada' ? 'default' : 'destructive'}
-          className="text-xs"
-        >
-          {l.tipo === 'Entrada' ? '↑ Entrada' : '↓ Saída'}
-        </Badge>
-      ),
+      render: (l) =>
+        l.cancelado ? (
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            Cancelado
+          </Badge>
+        ) : (
+          <Badge variant={l.tipo === 'Entrada' ? 'default' : 'destructive'} className="text-xs">
+            {l.tipo === 'Entrada' ? '↑ Entrada' : '↓ Saída'}
+          </Badge>
+        ),
     },
     {
       key: 'valor',
       header: 'Valor',
       render: (l) => (
-        <span
-          className={
-            l.tipo === 'Entrada' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'
-          }
-        >
+        <span className={valorClassName(l)}>
           {fmtCurrency(l.valor)}
         </span>
       ),
@@ -122,26 +121,40 @@ export default function CaixaPage() {
     {
       key: 'responsavel',
       header: 'Responsável',
-      render: (l) => l.responsavel,
+      render: (l) => (
+        <div>
+          <p>{l.responsavel}</p>
+          {l.cancelado && l.motivoCancelamento && (
+            <p className="text-xs text-muted-foreground">Motivo: {l.motivoCancelamento}</p>
+          )}
+        </div>
+      ),
     },
     {
       key: 'acoes',
       header: 'Ações',
-      render: (l) =>
-        l.geradoAutomaticamente ? (
-          <span className="text-xs text-muted-foreground italic">Automático</span>
-        ) : (
-          <div className="flex justify-end">
+      render: (l) => {
+        if (l.cancelado || l.geradoAutomaticamente) {
+          return (
+            <span className="text-xs text-muted-foreground italic">
+              {l.cancelado ? 'Cancelado' : 'Automático'}
+            </span>
+          )
+        }
+        return (
+          <div className="flex justify-center">
             <Button
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => handleDelete(l)}
+              onClick={() => cancelarRef.current?.open(l)}
+              title="Cancelar lançamento"
             >
-              <Trash2 className="h-4 w-4" />
+              <Ban className="h-4 w-4" />
             </Button>
           </div>
-        ),
+        )
+      },
     },
   ]
 
@@ -187,9 +200,7 @@ export default function CaixaPage() {
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Saldo</p>
-          <p
-            className={`text-2xl font-semibold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}
-          >
+          <p className={`text-2xl font-semibold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {fmtCurrency(saldo)}
           </p>
         </div>
@@ -216,6 +227,8 @@ export default function CaixaPage() {
           />
         </>
       )}
+
+      <CancelarModal ref={cancelarRef} onSuccess={() => load(pagination.page)} />
     </div>
   )
 }

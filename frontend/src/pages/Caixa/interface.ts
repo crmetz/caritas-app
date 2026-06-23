@@ -34,8 +34,23 @@ export interface LancamentoCaixa {
   responsavel: string
   geradoAutomaticamente: boolean
   observacoes?: string
+  cancelado: boolean
+  canceladoEm?: string
+  motivoCancelamento?: string
   criadoEm: string
   atualizadoEm: string
+}
+
+export interface CancelarLancamentoDto {
+  motivo: string
+}
+
+export interface CancelarModalRef {
+  open: (lancamento: LancamentoCaixa) => void
+}
+
+export interface CancelarModalProps {
+  onSuccess: () => void
 }
 
 export interface CreateEntradaDto {

@@ -76,15 +76,37 @@ public class CaixaService(CaritasDbContext context)
         return MapLancamento(lancamento);
     }
 
-    public async Task DeleteLancamentoAsync(int id)
+    public async Task CancelarLancamentoAsync(int id, CancelarLancamentoDto dto)
     {
         var lancamento = await context.LancamentosCaixa.FirstOrDefaultAsync(l => l.Id == id)
             ?? throw new KeyNotFoundException($"Lançamento com id {id} não encontrado.");
 
         if (lancamento.GeradoAutomaticamente)
-            throw new InvalidOperationException("Lançamentos gerados automaticamente não podem ser removidos.");
+            throw new InvalidOperationException("Lançamentos gerados automaticamente não podem ser cancelados.");
 
-        context.LancamentosCaixa.Remove(lancamento);
+        if (lancamento.Cancelado)
+            throw new InvalidOperationException("Este lançamento já foi cancelado.");
+
+        lancamento.Cancelado = true;
+        lancamento.CanceladoEm = DateTime.UtcNow;
+        lancamento.MotivoCancelamento = dto.Motivo;
+
+        var tipoEstorno = lancamento.Tipo == TipoLancamento.Entrada
+            ? TipoLancamento.Saida
+            : TipoLancamento.Entrada;
+
+        var estorno = new LancamentoCaixa
+        {
+            ParoquiaId = lancamento.ParoquiaId,
+            Data = DateTime.UtcNow,
+            Tipo = tipoEstorno,
+            Valor = lancamento.Valor,
+            GeradoAutomaticamente = true,
+            Responsavel = "Estorno",
+            Observacoes = $"Cancelamento do lançamento #{lancamento.Id}: {dto.Motivo}",
+        };
+
+        await context.LancamentosCaixa.AddAsync(estorno);
         await context.SaveChangesAsync();
     }
 
@@ -97,7 +119,7 @@ public class CaixaService(CaritasDbContext context)
             .Include(l => l.Familia).ThenInclude(f => f!.Responsavel)
             .Where(l => l.ParoquiaId == paroquiaId
                      && l.Data >= dataInicio
-                     && l.Data <= dataFim.AddDays(1))
+                     && l.Data < dataFim)
             .ToListAsync();
 
         var entradas = lancamentos.Where(l => l.Tipo == TipoLancamento.Entrada).ToList();
@@ -149,6 +171,9 @@ public class CaixaService(CaritasDbContext context)
         Responsavel = l.Responsavel,
         GeradoAutomaticamente = l.GeradoAutomaticamente,
         Observacoes = l.Observacoes,
+        Cancelado = l.Cancelado,
+        CanceladoEm = l.CanceladoEm,
+        MotivoCancelamento = l.MotivoCancelamento,
         CriadoEm = l.CriadoEm,
         AtualizadoEm = l.AtualizadoEm,
     };

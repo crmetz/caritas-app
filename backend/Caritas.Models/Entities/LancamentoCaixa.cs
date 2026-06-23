@@ -25,4 +25,8 @@ public class LancamentoCaixa : AuditableEntity
     public string Responsavel { get; set; } = string.Empty;
     public bool GeradoAutomaticamente { get; set; }
     public string? Observacoes { get; set; }
+
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
 }

@@ -34,10 +34,10 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return Created(string.Empty, result);
     }
 
-    [HttpDelete("lancamentos/{id:int}")]
-    public async Task<IActionResult> DeleteLancamento(int id)
+    [HttpPost("lancamentos/{id:int}/cancelar")]
+    public async Task<IActionResult> CancelarLancamento(int id, [FromBody] CancelarLancamentoDto dto)
     {
-        await _caixaService.DeleteLancamentoAsync(id);
+        await _caixaService.CancelarLancamentoAsync(id, dto);
         return NoContent();
     }
 
