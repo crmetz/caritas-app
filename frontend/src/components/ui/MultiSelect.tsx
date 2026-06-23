@@ -55,10 +55,22 @@ export function MultiSelect<T extends SelectValue = string>({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as HTMLElement | null;
+
+      // Ignora cliques na scrollbar de um container rolável (ex.: o modal). Sem
+      // isso, tentar arrastar a barra para rolar fecharia o dropdown, pois o
+      // mousedown na scrollbar tem como alvo um elemento fora do select.
+      if (target) {
+        const clicouScrollbarVertical =
+          target.scrollHeight > target.clientHeight &&
+          e.offsetX > target.clientWidth;
+        const clicouScrollbarHorizontal =
+          target.scrollWidth > target.clientWidth &&
+          e.offsetY > target.clientHeight;
+        if (clicouScrollbarVertical || clicouScrollbarHorizontal) return;
+      }
+
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setOpen(false);
         setSearch("");
       }
