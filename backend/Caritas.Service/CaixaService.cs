@@ -17,6 +17,7 @@ public class CaixaService(CaritasDbContext context)
             .Include(l => l.Familia).ThenInclude(f => f!.Responsavel)
             .Where(l => l.ParoquiaId == paroquiaId)
             .OrderByDescending(l => l.Data)
+            .ThenByDescending(l => l.CriadoEm)
             .ToPagedAsync(page, pageSize);
 
         return new PagedResponseDto<LancamentoCaixaResponseDto>
