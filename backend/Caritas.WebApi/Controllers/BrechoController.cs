@@ -9,6 +9,7 @@ namespace Caritas.WebApi.Controllers;
 public class BrechoController(CaritasDbContext context) : BaseApiController
 {
     private readonly BrechoService _brechoService = new(context);
+    private readonly SessaoCaixaBrechoService _sessaoCaixaService = new(context);
 
     [HttpGet("pecas")]
     public async Task<IActionResult> GetPecas(
@@ -44,24 +45,54 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     [HttpPost("vendas")]
     public async Task<IActionResult> CreateVenda([FromBody] VendaBrechoCreateDto dto)
     {
-        await _brechoService.CreateVendaAsync(dto);
-        return Created(string.Empty, null);
+        var result = await _brechoService.CreateVendaAsync(dto);
+        return Created(string.Empty, result);
     }
 
     [HttpGet("vendas")]
     public async Task<IActionResult> GetVendas(
         [FromQuery] int paroquiaId,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 15)
+        [FromQuery] int pageSize = 15,
+        [FromQuery] DateTime? abertoDesde = null,
+        [FromQuery] DateTime? ateData = null)
     {
-        var result = await _brechoService.GetVendasPagedAsync(paroquiaId, page, pageSize);
+        var result = await _brechoService.GetVendasPagedAsync(paroquiaId, page, pageSize, abertoDesde, ateData);
         return Ok(result);
     }
 
-    [HttpDelete("vendas/{id:int}")]
-    public async Task<IActionResult> DeleteVenda(int id)
+    [HttpPost("vendas/{id:int}/cancelar")]
+    public async Task<IActionResult> CancelarVenda(int id, [FromBody] CancelarVendaBrechoDto dto)
     {
-        await _brechoService.DeleteVendaAsync(id);
+        await _brechoService.CancelarVendaAsync(id, dto);
         return NoContent();
+    }
+
+    [HttpGet("caixa/sessao-atual")]
+    public async Task<IActionResult> GetSessaoAtual([FromQuery] int paroquiaId)
+    {
+        var result = await _sessaoCaixaService.GetSessaoAtualAsync(paroquiaId);
+        return Ok(result);
+    }
+
+    [HttpGet("caixa/sessao-recente")]
+    public async Task<IActionResult> GetSessaoRecente([FromQuery] int paroquiaId)
+    {
+        var result = await _sessaoCaixaService.GetSessaoRecenteAsync(paroquiaId);
+        return Ok(result);
+    }
+
+    [HttpPost("caixa/abrir")]
+    public async Task<IActionResult> AbrirCaixa([FromBody] AbrirCaixaBrechoDto dto)
+    {
+        var result = await _sessaoCaixaService.AbrirCaixaAsync(dto);
+        return Created(string.Empty, result);
+    }
+
+    [HttpPost("caixa/{id:int}/fechar")]
+    public async Task<IActionResult> FecharCaixa(int id, [FromBody] FecharCaixaBrechoDto dto)
+    {
+        var result = await _sessaoCaixaService.FecharCaixaAsync(id, dto);
+        return Ok(result);
     }
 }

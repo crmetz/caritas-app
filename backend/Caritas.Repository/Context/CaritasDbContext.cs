@@ -27,6 +27,7 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
     public DbSet<VendaBrecho> VendasBrecho { get; set; }
     public DbSet<ItemVendaBrecho> ItensVendaBrecho { get; set; }
     public DbSet<LancamentoCaixa> LancamentosCaixa { get; set; }
+    public DbSet<SessaoCaixaBrecho> SessoesCaixaBrecho { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
