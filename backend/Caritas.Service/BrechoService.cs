@@ -15,7 +15,7 @@ public class BrechoService(CaritasDbContext context)
     {
         var paged = await context.Pecas
             .Where(p => p.ParoquiaId == paroquiaId)
-            .OrderBy(p => p.Categoria)
+            .OrderByDescending(p => p.CriadoEm)
             .ToPagedAsync(page, pageSize);
 
         return new PagedResponseDto<PecaResponseDto>

@@ -13,7 +13,7 @@ public class BazarService(CaritasDbContext context)
     {
         var paged = await context.Pecas
             .Where(p => p.ParoquiaId == null)
-            .OrderBy(p => p.Categoria)
+            .OrderByDescending(p => p.CriadoEm)
             .ToPagedAsync(page, pageSize);
 
         return new PagedResponseDto<PecaResponseDto>
