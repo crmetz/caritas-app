@@ -20,7 +20,25 @@ export interface VendaBrecho {
   formaPagamento: FormaPagamento
   valorTotal: number
   quantidadeItens: number
+  registradoPor: string
+  cancelado: boolean
+  canceladoEm?: string
+  motivoCancelamento?: string
+  canceladoPor?: string
   itens: ItemVendaBrecho[]
   criadoEm: string
+}
+
+export interface CancelarVendaBrechoDto {
+  motivo: string
+  canceladoPor: string
+}
+
+export interface CancelarVendaModalRef {
+  open: (venda: VendaBrecho) => void
+}
+
+export interface CancelarVendaModalProps {
+  onSuccess: () => void
 }
 

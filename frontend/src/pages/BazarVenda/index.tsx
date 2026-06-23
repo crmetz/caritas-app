@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useSession } from '@/components/SessionProvider'
 import APIService, { type PagedResponse } from '@/services/api'
 import type { CreateVendaDto, FormaPagamento, ItemVenda, PecaOpcao } from './interface'
 import { FORMA_PAGAMENTO_LABELS } from './interface'
@@ -43,6 +44,8 @@ const validateCpf = (cpf: string): boolean => {
 
 export default function BazarVendaPage() {
   const navigate = useNavigate()
+  const { session } = useSession()
+  const nomeUsuario = session ? `${session.nome} ${session.sobrenome}`.trim() : ''
 
   const [pecas, setPecas] = useState<PecaOpcao[]>([])
   const [itens, setItens] = useState<ItemVenda[]>([emptyItem()])
@@ -107,7 +110,7 @@ export default function BazarVendaPage() {
     }
     setLoading(true)
     try {
-      const dto: CreateVendaDto = { itens, comprador, formaPagamento }
+      const dto: CreateVendaDto = { itens, comprador, formaPagamento, registradoPor: nomeUsuario }
       await APIService.postRequest({ url: '/bazar/vendas', body: dto })
       toast.success('Venda registrada com sucesso!')
       navigate('/bazar')

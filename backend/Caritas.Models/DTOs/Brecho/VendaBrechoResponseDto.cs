@@ -19,6 +19,11 @@ public class VendaBrechoResponseDto
     public FormaPagamento FormaPagamento { get; set; }
     public decimal ValorTotal { get; set; }
     public int QuantidadeItens { get; set; }
+    public string RegistradoPor { get; set; } = string.Empty;
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
     public IEnumerable<ItemVendaBrechoResponseDto> Itens { get; set; } = [];
     public DateTime CriadoEm { get; set; }
 }

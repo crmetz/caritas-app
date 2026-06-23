@@ -12,5 +12,7 @@ public class VendaBazar : AuditableEntity
     public decimal ValorTotal { get; set; }
     public DateTime DataVenda { get; set; }
 
+    public string RegistradoPor { get; set; } = string.Empty;
+
     public ICollection<ItemVendaBazar> Itens { get; set; } = [];
 }

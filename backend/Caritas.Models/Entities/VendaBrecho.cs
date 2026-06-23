@@ -15,6 +15,12 @@ public class VendaBrecho : AuditableEntity
     public decimal ValorTotal { get; set; }
     public DateTime DataVenda { get; set; }
 
+    public string RegistradoPor { get; set; } = string.Empty;
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
+
     public ICollection<ItemVendaBrecho> Itens { get; set; } = [];
     public LancamentoCaixa? LancamentoCaixa { get; set; }
 }

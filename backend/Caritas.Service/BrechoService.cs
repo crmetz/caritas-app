@@ -64,10 +64,16 @@ public class BrechoService(CaritasDbContext context)
         await context.SaveChangesAsync();
     }
 
-    public async Task CreateVendaAsync(VendaBrechoCreateDto dto)
+    public async Task<VendaBrechoResponseDto> CreateVendaAsync(VendaBrechoCreateDto dto)
     {
         if (!dto.Itens.Any())
             throw new ArgumentException("A venda deve ter pelo menos um item.");
+
+        var caixaAberto = await context.SessoesCaixaBrecho
+            .AnyAsync(s => s.ParoquiaId == dto.ParoquiaId && s.Aberto);
+
+        if (!caixaAberto)
+            throw new InvalidOperationException("Caixa do Brechó está fechado. Abra o caixa para registrar vendas.");
 
         await using var transaction = await context.Database.BeginTransactionAsync();
 
@@ -95,6 +101,7 @@ public class BrechoService(CaritasDbContext context)
             FormaPagamento = dto.FormaPagamento,
             ValorTotal = valorTotal,
             DataVenda = DateTime.UtcNow,
+            RegistradoPor = dto.RegistradoPor,
             Itens = dto.Itens.Select(i => new ItemVendaBrecho
             {
                 PecaId = i.PecaId,
@@ -115,21 +122,30 @@ public class BrechoService(CaritasDbContext context)
             Valor = valorTotal,
             Origem = OrigemEntrada.VendaBrecho,
             VendaBrechoId = venda.Id,
-            Responsavel = dto.Comprador.Nome,
+            Responsavel = dto.RegistradoPor,
             GeradoAutomaticamente = true,
         };
 
         await context.LancamentosCaixa.AddAsync(lancamento);
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
+
+        var vendaCriada = await context.VendasBrecho
+            .Include(v => v.Itens).ThenInclude(i => i.Peca)
+            .FirstAsync(v => v.Id == venda.Id);
+
+        return MapVenda(vendaCriada);
     }
 
     public async Task<PagedResponseDto<VendaBrechoResponseDto>> GetVendasPagedAsync(
-        int paroquiaId, int page, int pageSize)
+        int paroquiaId, int page, int pageSize,
+        DateTime? abertoDesde = null, DateTime? ateData = null)
     {
         var paged = await context.VendasBrecho
             .Include(v => v.Itens).ThenInclude(i => i.Peca)
-            .Where(v => v.ParoquiaId == paroquiaId)
+            .Where(v => v.ParoquiaId == paroquiaId
+                     && (abertoDesde == null || v.DataVenda >= abertoDesde)
+                     && (ateData == null || v.DataVenda <= ateData))
             .OrderByDescending(v => v.DataVenda)
             .ToPagedAsync(page, pageSize);
 
@@ -140,7 +156,7 @@ public class BrechoService(CaritasDbContext context)
         };
     }
 
-    public async Task DeleteVendaAsync(int id)
+    public async Task CancelarVendaAsync(int id, CancelarVendaBrechoDto dto)
     {
         var venda = await context.VendasBrecho
             .Include(v => v.Itens).ThenInclude(i => i.Peca)
@@ -148,17 +164,28 @@ public class BrechoService(CaritasDbContext context)
             .FirstOrDefaultAsync(v => v.Id == id)
             ?? throw new KeyNotFoundException($"Venda com id {id} não encontrada.");
 
+        if (venda.Cancelado)
+            throw new InvalidOperationException("Esta venda já foi cancelada.");
+
+        var caixaAberto = await context.SessoesCaixaBrecho
+            .AnyAsync(s => s.ParoquiaId == venda.ParoquiaId && s.Aberto);
+
+        if (!caixaAberto)
+            throw new InvalidOperationException("Caixa do Brechó está fechado. Abra o caixa para cancelar vendas.");
+
         await using var transaction = await context.Database.BeginTransactionAsync();
 
-        // Restaurar estoque de cada peça
+        venda.Cancelado = true;
+        venda.CanceladoEm = DateTime.UtcNow;
+        venda.MotivoCancelamento = dto.Motivo;
+        venda.CanceladoPor = dto.CanceladoPor;
+
         foreach (var item in venda.Itens)
             item.Peca.Quantidade += item.Quantidade;
 
-        // Remover lançamento automático do caixa vinculado
         if (venda.LancamentoCaixa is not null)
             context.LancamentosCaixa.Remove(venda.LancamentoCaixa);
 
-        context.VendasBrecho.Remove(venda);
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
     }
@@ -173,6 +200,11 @@ public class BrechoService(CaritasDbContext context)
         FormaPagamento = v.FormaPagamento,
         ValorTotal = v.ValorTotal,
         QuantidadeItens = v.Itens.Sum(i => i.Quantidade),
+        RegistradoPor = v.RegistradoPor,
+        Cancelado = v.Cancelado,
+        CanceladoEm = v.CanceladoEm,
+        MotivoCancelamento = v.MotivoCancelamento,
+        CanceladoPor = v.CanceladoPor,
         Itens = v.Itens.Select(i => new ItemVendaBrechoResponseDto
         {
             Categoria = i.Peca.Categoria,

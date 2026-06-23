@@ -30,4 +30,5 @@ export interface CreateVendaDto {
   itens: ItemVenda[]
   comprador: CompradorDto
   formaPagamento: FormaPagamento
+  registradoPor: string
 }

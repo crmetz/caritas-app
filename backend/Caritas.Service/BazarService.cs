@@ -88,6 +88,7 @@ public class BazarService(CaritasDbContext context)
             FormaPagamento = dto.FormaPagamento,
             ValorTotal = dto.Itens.Sum(i => i.Quantidade * i.ValorUnitario),
             DataVenda = DateTime.UtcNow,
+            RegistradoPor = dto.RegistradoPor,
             Itens = dto.Itens.Select(i => new ItemVendaBazar
             {
                 PecaId = i.PecaId,
@@ -161,6 +162,7 @@ public class BazarService(CaritasDbContext context)
         FormaPagamento = v.FormaPagamento,
         ValorTotal = v.ValorTotal,
         DataVenda = v.DataVenda,
+        RegistradoPor = v.RegistradoPor,
         Itens = v.Itens.Select(i => new ItemVendaResponseDto
         {
             Id = i.Id,

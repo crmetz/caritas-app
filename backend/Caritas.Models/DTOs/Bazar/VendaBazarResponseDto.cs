@@ -21,6 +21,7 @@ public class VendaBazarResponseDto
     public FormaPagamento FormaPagamento { get; set; }
     public decimal ValorTotal { get; set; }
     public DateTime DataVenda { get; set; }
+    public string RegistradoPor { get; set; } = string.Empty;
     public IEnumerable<ItemVendaResponseDto> Itens { get; set; } = [];
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

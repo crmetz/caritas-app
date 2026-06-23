@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Lock, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -44,14 +44,26 @@ const validateCpf = (cpf: string): boolean => {
 
 export default function BrechoVendaPage() {
   const navigate = useNavigate()
-  const { paroquiaAtual } = useSession()
+  const { session, paroquiaAtual } = useSession()
   const paroquiaId = paroquiaAtual?.value ?? 0
+  const nomeUsuario = session ? `${session.nome} ${session.sobrenome}`.trim() : ''
 
+  const [caixaAberto, setCaixaAberto] = useState<boolean | null>(null)
   const [pecas, setPecas] = useState<PecaOpcao[]>([])
   const [itens, setItens] = useState<ItemVenda[]>([emptyItem()])
   const [comprador, setComprador] = useState({ nome: '', cpf: '', identificacaoAlternativa: '' })
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>('Dinheiro')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!paroquiaId) return
+    APIService.getRequest<{ aberto: boolean } | null>({
+      url: '/brecho/caixa/sessao-atual',
+      params: { paroquiaId },
+    })
+      .then((r) => setCaixaAberto(r?.aberto === true))
+      .catch(() => setCaixaAberto(false))
+  }, [paroquiaId])
 
   useEffect(() => {
     if (!paroquiaId) return
@@ -111,7 +123,7 @@ export default function BrechoVendaPage() {
     }
     setLoading(true)
     try {
-      const dto: CreateVendaDto = { paroquiaId, itens, comprador, formaPagamento }
+      const dto: CreateVendaDto = { paroquiaId, itens, comprador, formaPagamento, registradoPor: nomeUsuario }
       await APIService.postRequest({ url: '/brecho/vendas', body: dto })
       toast.success('Venda registrada com sucesso!')
       navigate('/brecho')
@@ -135,6 +147,15 @@ export default function BrechoVendaPage() {
           </p>
         </div>
       </div>
+
+      {caixaAberto === false && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <Lock className="h-4 w-4 text-destructive shrink-0" />
+          <p className="text-sm text-destructive font-medium">
+            Caixa fechado. Volte ao Brechó e abra o caixa antes de registrar uma venda.
+          </p>
+        </div>
+      )}
 
       <section className="rounded-xl border bg-card p-6 space-y-4">
         <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
@@ -287,7 +308,7 @@ export default function BrechoVendaPage() {
         <Button variant="outline" onClick={() => navigate('/brecho')}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} disabled={loading || itensComErro.length > 0 || compradorInvalido}>
+        <Button onClick={handleSubmit} disabled={loading || itensComErro.length > 0 || compradorInvalido || caixaAberto === false}>
           {loading ? 'Registrando...' : 'Confirmar Venda'}
         </Button>
       </div>
