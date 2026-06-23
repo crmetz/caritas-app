@@ -96,7 +96,7 @@ export const PecaModal = forwardRef<PecaModalRef, PecaModalProps>(({ onSuccess }
               <Input
                 type="number"
                 min="0"
-                step="1"
+                step="0.01"
                 required
                 value={form.preco || ''}
                 onChange={(e) => set('preco', parseFloat(e.target.value) || 0)}
