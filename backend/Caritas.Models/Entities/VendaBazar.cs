@@ -13,6 +13,10 @@ public class VendaBazar : AuditableEntity
     public DateTime DataVenda { get; set; }
 
     public string RegistradoPor { get; set; } = string.Empty;
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
 
     public ICollection<ItemVendaBazar> Itens { get; set; } = [];
 }

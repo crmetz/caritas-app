@@ -41,11 +41,29 @@ public class BazarController(CaritasDbContext context) : BaseApiController
         return NoContent();
     }
 
+    [HttpGet("vendas")]
+    public async Task<IActionResult> GetVendas(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 15,
+        [FromQuery] DateTime? dataInicio = null,
+        [FromQuery] DateTime? dataFim = null)
+    {
+        var result = await _bazarService.GetVendasPagedAsync(page, pageSize, dataInicio, dataFim);
+        return Ok(result);
+    }
+
     [HttpPost("vendas")]
     public async Task<IActionResult> CreateVenda([FromBody] VendaBazarCreateDto dto)
     {
         var result = await _bazarService.CreateVendaAsync(dto);
         return Created(string.Empty, result);
+    }
+
+    [HttpPost("vendas/{id:int}/cancelar")]
+    public async Task<IActionResult> CancelarVenda(int id, [FromBody] CancelarVendaBazarDto dto)
+    {
+        await _bazarService.CancelarVendaAsync(id, dto);
+        return NoContent();
     }
 
     [HttpGet("relatorio")]
