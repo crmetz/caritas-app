@@ -127,7 +127,7 @@ export default function BazarRelatorioPage() {
         head: [['Data/Hora', 'Comprador', 'Registrado por', 'Peças', 'Pagamento', 'Total', 'Status']],
         body: todasVendas.map((v) => [
           fmtDateTime(v.dataVenda),
-          v.compradorNome,
+          v.compradorNome + (v.compradorCpf ? `\n${v.compradorCpf}` : v.compradorIdentificacaoAlternativa ? `\nID: ${v.compradorIdentificacaoAlternativa}` : ''),
           v.registradoPor,
           v.itens.map((i) => `${i.pecaCategoria} x${i.quantidade}`).join(', '),
           FORMA_PAGAMENTO_LABELS[v.formaPagamento],
@@ -291,6 +291,19 @@ export default function BazarRelatorioPage() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <h3 className="font-medium">Histórico de Vendas</h3>
+            <DataTable
+              columns={columns}
+              data={vendas}
+              pagination={{
+                ...vendasPagination,
+                onPageChange: (page) => loadVendas(page, dataInicio, dataFim),
+              }}
+              isLoading={false}
+            />
+          </div>
+
           <div className="rounded-xl border bg-card overflow-hidden">
             <div className="px-5 py-4 border-b">
               <h3 className="font-medium">Vendas por Categoria</h3>
@@ -313,19 +326,6 @@ export default function BazarRelatorioPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-medium">Histórico de Vendas</h3>
-            <DataTable
-              columns={columns}
-              data={vendas}
-              pagination={{
-                ...vendasPagination,
-                onPageChange: (page) => loadVendas(page, dataInicio, dataFim),
-              }}
-              isLoading={false}
-            />
           </div>
         </div>
       )}
