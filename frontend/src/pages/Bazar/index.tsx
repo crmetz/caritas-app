@@ -1,4 +1,4 @@
-import { FileText, ShoppingCart } from 'lucide-react'
+import { FileText, History, ShoppingCart } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -64,6 +64,12 @@ export default function BazarPage() {
           <p className="text-sm text-muted-foreground">Peças disponíveis para venda</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link to="/bazar/historico">
+            <Button variant="outline" size="sm">
+              <History className="h-4 w-4" />
+              Histórico
+            </Button>
+          </Link>
           <Link to="/bazar/relatorio">
             <Button variant="outline" size="sm">
               <FileText className="h-4 w-4" />

@@ -11,6 +11,7 @@ import { SessionProvider } from "./components/SessionProvider";
 import { Permissions } from "./constants/permissions";
 import AtendimentoPage from "./pages/Atendimento";
 import BazarPage from "./pages/Bazar";
+import BazarHistoricoPage from "./pages/BazarHistorico";
 import BazarRelatorioPage from "./pages/BazarRelatorio";
 import BazarVendaPage from "./pages/BazarVenda";
 import BrechoPage from "./pages/Brecho";
@@ -66,6 +67,7 @@ createRoot(rootElement).render(
 							</Route>
 							<Route path="/bazar" element={<BazarPage />} />
 							<Route path="/bazar/nova-venda" element={<BazarVendaPage />} />
+							<Route path="/bazar/historico" element={<BazarHistoricoPage />} />
 							<Route path="/bazar/relatorio" element={<BazarRelatorioPage />} />
 							<Route path="/brecho" element={<BrechoPage />} />
 							<Route path="/brecho/nova-venda" element={<BrechoVendaPage />} />

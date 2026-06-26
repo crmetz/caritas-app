@@ -104,6 +104,64 @@ public class BazarService(CaritasDbContext context)
         return await GetVendaResponseAsync(venda.Id);
     }
 
+    public async Task<PagedResponseDto<VendaBazarResponseDto>> GetVendasPagedAsync(
+        int page, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null)
+    {
+        var query = context.VendasBazar
+            .Include(v => v.Itens).ThenInclude(i => i.Peca)
+            .AsQueryable();
+
+        if (dataInicio.HasValue)
+        {
+            var inicio = DateTime.SpecifyKind(dataInicio.Value, DateTimeKind.Utc);
+            query = query.Where(v => v.DataVenda >= inicio);
+        }
+
+        if (dataFim.HasValue)
+        {
+            var fim = DateTime.SpecifyKind(dataFim.Value.AddDays(1), DateTimeKind.Utc);
+            query = query.Where(v => v.DataVenda < fim);
+        }
+
+        var paged = await query
+            .OrderByDescending(v => v.CriadoEm)
+            .ToPagedAsync(page, pageSize);
+
+        return new PagedResponseDto<VendaBazarResponseDto>
+        {
+            Items = paged.Items.Select(MapVenda),
+            TotalCount = paged.TotalCount,
+        };
+    }
+
+    public async Task CancelarVendaAsync(int id, CancelarVendaBazarDto dto)
+    {
+        var venda = await context.VendasBazar
+            .Include(v => v.Itens)
+            .FirstOrDefaultAsync(v => v.Id == id)
+            ?? throw new KeyNotFoundException($"Venda com id {id} não encontrada.");
+
+        if (venda.Cancelado)
+            throw new InvalidOperationException("Esta venda já foi cancelada.");
+
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        foreach (var item in venda.Itens)
+        {
+            var peca = await context.Pecas.FirstOrDefaultAsync(p => p.Id == item.PecaId && p.ParoquiaId == null);
+            if (peca != null)
+                peca.Quantidade += item.Quantidade;
+        }
+
+        venda.Cancelado = true;
+        venda.CanceladoEm = DateTime.UtcNow;
+        venda.MotivoCancelamento = dto.Motivo;
+        venda.CanceladoPor = dto.CanceladoPor;
+
+        await context.SaveChangesAsync();
+        await transaction.CommitAsync();
+    }
+
     public async Task<RelatorioBazarDto> GetRelatorioAsync(DateTime dataInicio, DateTime dataFim)
     {
         dataInicio = DateTime.SpecifyKind(dataInicio, DateTimeKind.Utc);
@@ -163,6 +221,10 @@ public class BazarService(CaritasDbContext context)
         ValorTotal = v.ValorTotal,
         DataVenda = v.DataVenda,
         RegistradoPor = v.RegistradoPor,
+        Cancelado = v.Cancelado,
+        CanceladoEm = v.CanceladoEm,
+        MotivoCancelamento = v.MotivoCancelamento,
+        CanceladoPor = v.CanceladoPor,
         Itens = v.Itens.Select(i => new ItemVendaResponseDto
         {
             Id = i.Id,

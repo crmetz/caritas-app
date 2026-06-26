@@ -22,6 +22,10 @@ public class VendaBazarResponseDto
     public decimal ValorTotal { get; set; }
     public DateTime DataVenda { get; set; }
     public string RegistradoPor { get; set; } = string.Empty;
+    public bool Cancelado { get; set; }
+    public DateTime? CanceladoEm { get; set; }
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
     public IEnumerable<ItemVendaResponseDto> Itens { get; set; } = [];
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
