@@ -21,19 +21,39 @@ api.interceptors.request.use((config) => {
 	return config;
 });
 
+// Token expirado/inválido: limpa a sessão e volta ao login (evita ficar "preso" com 401 silencioso).
 api.interceptors.response.use(
 	(response) => response,
 	(error) => {
-		if (axios.isAxiosError(error) && error.response?.status === 403 && !error.response?.data?.detail) {
+		if (
+			error?.response?.status === 401 &&
+			window.location.pathname !== "/login"
+		) {
+			localStorage.removeItem("token");
+			window.location.href = "/login";
+		}
+		return Promise.reject(error);
+	},
+);
+
+api.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		if (
+			axios.isAxiosError(error) &&
+			error.response?.status === 403 &&
+			!error.response?.data?.detail
+		) {
 			const method = error.config?.method?.toUpperCase();
 			error.response.data = {
-				detail: method === "GET"
-					? "Você não tem permissão para acessar este recurso."
-					: "Você não tem permissão para realizar esta ação.",
+				detail:
+					method === "GET"
+						? "Você não tem permissão para acessar este recurso."
+						: "Você não tem permissão para realizar esta ação.",
 			};
 		}
 		return Promise.reject(error);
-	}
+	},
 );
 
 export function getErrorMessage(error: unknown, fallback: string): string {

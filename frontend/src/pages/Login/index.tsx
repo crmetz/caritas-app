@@ -33,7 +33,10 @@ export default function LoginPage() {
 		e.preventDefault();
 		setIsLoading(true);
 		try {
-			const data = await APIService.postRequest<{ token: string }>({ url: "/auth/login", body: form });
+			const data = await APIService.postRequest<{ token: string }>({
+				url: "/auth/login",
+				body: form,
+			});
 			localStorage.setItem("token", data.token);
 			await refreshSession();
 			navigate("/");
@@ -48,7 +51,10 @@ export default function LoginPage() {
 		e.preventDefault();
 		setIsLoading(true);
 		try {
-			await APIService.postRequest({ url: "/auth/forgot-password", body: { email: forgotEmail } });
+			await APIService.postRequest({
+				url: "/auth/forgot-password",
+				body: { email: forgotEmail },
+			});
 		} catch {
 			// don't reveal whether the email exists
 		} finally {
@@ -67,9 +73,12 @@ export default function LoginPage() {
 
 					{forgotSent ? (
 						<div className="text-center">
-							<h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">Verifique seu e-mail</h1>
+							<h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
+								Verifique seu e-mail
+							</h1>
 							<p className="text-sm text-gray-500 mb-6">
-								Se esse e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
+								Se esse e-mail estiver cadastrado, você receberá um link para
+								redefinir sua senha.
 							</p>
 							<button
 								type="button"
@@ -85,13 +94,20 @@ export default function LoginPage() {
 					) : (
 						<>
 							<div className="mb-8 text-center">
-								<h1 className="text-2xl font-bold text-gray-900 tracking-tight">Esqueceu a senha?</h1>
-								<p className="mt-1 text-sm text-gray-500">Informe seu e-mail e enviaremos um link de recuperação</p>
+								<h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+									Esqueceu a senha?
+								</h1>
+								<p className="mt-1 text-sm text-gray-500">
+									Informe seu e-mail e enviaremos um link de recuperação
+								</p>
 							</div>
 
 							<form onSubmit={handleForgotPassword} className="space-y-4">
 								<div className="space-y-1.5">
-									<label htmlFor="forgotEmail" className="block text-sm font-medium text-gray-700">
+									<label
+										htmlFor="forgotEmail"
+										className="block text-sm font-medium text-gray-700"
+									>
 										E-mail
 									</label>
 									<Input
@@ -105,7 +121,12 @@ export default function LoginPage() {
 									/>
 								</div>
 
-								<Button type="submit" className="w-full mt-2" disabled={isLoading} style={{ backgroundColor: "#e32427" }}>
+								<Button
+									type="submit"
+									className="w-full mt-2"
+									disabled={isLoading}
+									style={{ backgroundColor: "#e32427" }}
+								>
 									{isLoading ? "Enviando…" : "Enviar link"}
 								</Button>
 
@@ -132,13 +153,20 @@ export default function LoginPage() {
 				</div>
 
 				<div className="mb-8 text-center">
-					<h1 className="text-2xl font-bold text-gray-900 tracking-tight">Entrar na sua conta</h1>
-					<p className="mt-1 text-sm text-gray-500">Insira suas credenciais para acessar o sistema</p>
+					<h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+						Entrar na sua conta
+					</h1>
+					<p className="mt-1 text-sm text-gray-500">
+						Insira suas credenciais para acessar o sistema
+					</p>
 				</div>
 
 				<form onSubmit={handleLogin} className="space-y-4">
 					<div className="space-y-1.5">
-						<label htmlFor="email" className="block text-sm font-medium text-gray-700">
+						<label
+							htmlFor="email"
+							className="block text-sm font-medium text-gray-700"
+						>
 							E-mail
 						</label>
 						<Input
@@ -155,7 +183,10 @@ export default function LoginPage() {
 
 					<div className="space-y-1.5">
 						<div className="flex items-center justify-between">
-							<label htmlFor="password" className="block text-sm font-medium text-gray-700">
+							<label
+								htmlFor="password"
+								className="block text-sm font-medium text-gray-700"
+							>
 								Senha
 							</label>
 							<button
@@ -189,7 +220,12 @@ export default function LoginPage() {
 						</div>
 					</div>
 
-					<Button type="submit" className="w-full mt-2" disabled={isLoading} style={{ backgroundColor: "#e32427" }}>
+					<Button
+						type="submit"
+						className="w-full mt-2"
+						disabled={isLoading}
+						style={{ backgroundColor: "#e32427" }}
+					>
 						{isLoading ? "Entrando…" : "Entrar"}
 					</Button>
 				</form>

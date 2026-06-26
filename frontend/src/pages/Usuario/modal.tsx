@@ -102,8 +102,7 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 							merged.set(p.value, {
 								value: p.value,
 								label: p.label ?? `Paróquia ${p.value}`,
-								disabled: true
-								
+								disabled: true,
 							});
 						}
 					}
@@ -271,7 +270,9 @@ export const UsuarioModal = forwardRef<UsuarioModalRef, UsuarioModalProps>(
 							</section>
 
 							{canManageAdmin && (
-								<div className={`space-y-1 rounded-md border bg-muted/40 p-3${isSelf ? " cursor-not-allowed opacity-50" : ""}`}>
+								<div
+									className={`space-y-1 rounded-md border bg-muted/40 p-3${isSelf ? " cursor-not-allowed opacity-50" : ""}`}
+								>
 									<label
 										htmlFor="usuario-admin"
 										className="flex items-center gap-2 font-medium text-sm"

@@ -110,7 +110,9 @@ export default function EvolucaoFamiliaPage() {
 					<p className="text-xs font-medium text-muted-foreground">
 						Atendimentos
 					</p>
-					<p className="mt-1 text-2xl font-semibold">{data.totalAtendimentos}</p>
+					<p className="mt-1 text-2xl font-semibold">
+						{data.totalAtendimentos}
+					</p>
 				</div>
 				<div className="rounded-xl border bg-card p-4 shadow-sm">
 					<p className="text-xs font-medium text-muted-foreground">
@@ -125,9 +127,7 @@ export default function EvolucaoFamiliaPage() {
 						{data.variacaoRenda != null && data.variacaoRenda !== 0 && (
 							<span
 								className={
-									data.variacaoRenda > 0
-										? "text-green-600"
-										: "text-destructive"
+									data.variacaoRenda > 0 ? "text-green-600" : "text-destructive"
 								}
 							>
 								{data.variacaoRenda > 0 ? (
@@ -143,9 +143,7 @@ export default function EvolucaoFamiliaPage() {
 					<p className="text-xs font-medium text-muted-foreground">
 						Membros trabalhando (atual)
 					</p>
-					<p className="mt-1 text-2xl font-semibold">
-						{membrosAtual ?? "—"}
-					</p>
+					<p className="mt-1 text-2xl font-semibold">{membrosAtual ?? "—"}</p>
 				</div>
 			</div>
 
@@ -169,7 +167,9 @@ export default function EvolucaoFamiliaPage() {
 
 			{/* Timeline */}
 			<div className="rounded-xl border bg-card p-4 shadow-sm">
-				<h3 className="mb-3 text-sm font-semibold">Histórico de atendimentos</h3>
+				<h3 className="mb-3 text-sm font-semibold">
+					Histórico de atendimentos
+				</h3>
 				{pontos.length === 0 ? (
 					<p className="py-6 text-center text-sm text-muted-foreground">
 						Nenhum atendimento registrado para esta família.

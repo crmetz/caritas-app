@@ -90,7 +90,10 @@ export function DataTable<T extends { id: number }>({
 									{columns.map((col) => (
 										<td
 											key={String(col.key)}
-											className={cn("px-5 py-4", alignClass[col.align ?? "left"])}
+											className={cn(
+												"px-5 py-4",
+												alignClass[col.align ?? "left"],
+											)}
 										>
 											{col.render
 												? col.render(row)

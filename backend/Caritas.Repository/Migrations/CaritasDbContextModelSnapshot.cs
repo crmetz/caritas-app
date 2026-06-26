@@ -82,6 +82,123 @@ namespace Caritas.Repository.Migrations
                     b.ToTable("Atendimentos");
                 });
 
+            modelBuilder.Entity("Caritas.Models.Entities.ConfiguracaoCesta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.ToTable("ConfiguracaoCesta", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Doacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdDoador")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdDoador");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.ToTable("Doacao", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Doador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Documento")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Doador", (string)null);
+                });
+
             modelBuilder.Entity("Caritas.Models.Entities.Endereco", b =>
                 {
                     b.Property<int>("Id")
@@ -108,6 +225,98 @@ namespace Caritas.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Endereco");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Entrega", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdFamilia")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdFamilia");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.ToTable("Entrega", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Estoque", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdItem")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Lote")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Quantidade")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int?>("Tamanho")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("Validade")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.HasIndex("IdItem", "IdParoquia", "Tamanho", "Validade", "Lote")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("IdItem", "IdParoquia", "Tamanho", "Validade", "Lote"), false);
+
+                    b.ToTable("Estoque", (string)null);
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
@@ -345,6 +554,246 @@ namespace Caritas.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("LancamentosCaixa");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Item", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Item", (string)null);
+
+                    b.UseTptMappingStrategy();
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.ItemConfiguracaoCesta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("IdAlimento")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdConfiguracaoCesta")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantidadePacotes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Tamanho")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdAlimento");
+
+                    b.HasIndex("IdConfiguracaoCesta");
+
+                    b.ToTable("ItemConfiguracaoCesta", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.LoteCesta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdConfiguracaoCesta")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdDoacao")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Origem")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantidadeDisponivel")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdConfiguracaoCesta");
+
+                    b.HasIndex("IdDoacao");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.ToTable("LoteCesta", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.MovimentacaoCesta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdEntrega")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdLoteCesta")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdEntrega");
+
+                    b.HasIndex("IdLoteCesta");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.ToTable("MovimentacaoCesta", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.MovimentacaoEstoque", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("AtualizadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CriadoPor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdItem")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdParoquia")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Lote")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OrigemId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OrigemTipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Tamanho")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TipoOperacao")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("Validade")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdParoquia");
+
+                    b.HasIndex("IdItem", "IdParoquia");
+
+                    b.HasIndex("OrigemTipo", "OrigemId");
+
+                    b.ToTable("MovimentacaoEstoque", (string)null);
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Paroquia", b =>
@@ -1004,6 +1453,54 @@ namespace Caritas.Repository.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Caritas.Models.Entities.Alimento", b =>
+                {
+                    b.HasBaseType("Caritas.Models.Entities.Item");
+
+                    b.Property<string>("FormaMedida")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.ToTable("Alimento", (string)null);
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Roupa", b =>
+                {
+                    b.HasBaseType("Caritas.Models.Entities.Item");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Condicao")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Estacao")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("FaixaEtaria")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Genero")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Tamanho")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.ToTable("Roupa", (string)null);
+                });
+
             modelBuilder.Entity("Caritas.Models.Entities.Atendimento", b =>
                 {
                     b.HasOne("Caritas.Models.Entities.Familia", "Familia")
@@ -1031,6 +1528,74 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("Voluntario");
                 });
 
+            modelBuilder.Entity("Caritas.Models.Entities.ConfiguracaoCesta", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Paroquia");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Doacao", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Doador", "Doador")
+                        .WithMany()
+                        .HasForeignKey("IdDoador")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doador");
+
+                    b.Navigation("Paroquia");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Entrega", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Familia", "Familia")
+                        .WithMany()
+                        .HasForeignKey("IdFamilia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Familia");
+
+                    b.Navigation("Paroquia");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Estoque", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("IdItem")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Paroquia");
+                });
+
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>
                 {
                     b.HasOne("Caritas.Models.Entities.FamiliaCidade", "Cidade")
@@ -1056,6 +1621,89 @@ namespace Caritas.Repository.Migrations
                     b.Navigation("Paroquia");
 
                     b.Navigation("Responsavel");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.ItemConfiguracaoCesta", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Alimento", "Alimento")
+                        .WithMany()
+                        .HasForeignKey("IdAlimento")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.ConfiguracaoCesta", "ConfiguracaoCesta")
+                        .WithMany("Itens")
+                        .HasForeignKey("IdConfiguracaoCesta")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Alimento");
+
+                    b.Navigation("ConfiguracaoCesta");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.LoteCesta", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.ConfiguracaoCesta", "ConfiguracaoCesta")
+                        .WithMany()
+                        .HasForeignKey("IdConfiguracaoCesta")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Caritas.Models.Entities.Doacao", "Doacao")
+                        .WithMany()
+                        .HasForeignKey("IdDoacao")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConfiguracaoCesta");
+
+                    b.Navigation("Doacao");
+
+                    b.Navigation("Paroquia");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.MovimentacaoCesta", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Entrega", null)
+                        .WithMany()
+                        .HasForeignKey("IdEntrega")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Caritas.Models.Entities.LoteCesta", "LoteCesta")
+                        .WithMany()
+                        .HasForeignKey("IdLoteCesta")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", null)
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LoteCesta");
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.MovimentacaoEstoque", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("IdItem")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Caritas.Models.Entities.Paroquia", null)
+                        .WithMany()
+                        .HasForeignKey("IdParoquia")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.ItemVendaBazar", b =>
@@ -1283,6 +1931,29 @@ namespace Caritas.Repository.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Alimento", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Item", null)
+                        .WithOne()
+                        .HasForeignKey("Caritas.Models.Entities.Alimento", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.Roupa", b =>
+                {
+                    b.HasOne("Caritas.Models.Entities.Item", null)
+                        .WithOne()
+                        .HasForeignKey("Caritas.Models.Entities.Roupa", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Caritas.Models.Entities.ConfiguracaoCesta", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Caritas.Models.Entities.Familia", b =>

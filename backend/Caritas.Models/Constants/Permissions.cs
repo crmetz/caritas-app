@@ -34,4 +34,10 @@ public static class Permissions
         public const string Visualizar = "familia.visualizar";
         public const string CriarEditar = "familia.criarEditar";
     }
+
+    public static class Suprimentos
+    {
+        public const string Visualizar = "suprimentos.visualizar";
+        public const string CriarEditar = "suprimentos.criarEditar";
+    }
 }

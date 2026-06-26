@@ -22,4 +22,8 @@ export const Permissions = {
 		Visualizar: "familia.visualizar",
 		CriarEditar: "familia.criarEditar",
 	},
+	Suprimentos: {
+		Visualizar: "suprimentos.visualizar",
+		CriarEditar: "suprimentos.criarEditar",
+	},
 } as const;
