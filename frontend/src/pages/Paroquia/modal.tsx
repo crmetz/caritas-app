@@ -1,6 +1,6 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { forwardRef, useImperativeHandle, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatCep } from "@/lib/utils";
 import APIService, { getErrorMessage } from "@/services/api";
 import type {
 	Paroquia,
@@ -54,6 +55,7 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 			register,
 			handleSubmit,
 			reset,
+			control,
 			formState: { errors, isSubmitting },
 		} = useForm<ParoquiaFormValues>({
 			resolver: yupResolver(schema),
@@ -154,10 +156,19 @@ export const ParoquiaModal = forwardRef<ParoquiaModalRef, ParoquiaModalProps>(
 								</div>
 								<div className="space-y-1">
 									<Label htmlFor="paroquia-cep">CEP</Label>
-									<Input
-										id="paroquia-cep"
-										placeholder="00000-000"
-										{...register("endereco.cep")}
+									<Controller
+										name="endereco.cep"
+										control={control}
+										render={({ field }) => (
+											<Input
+												id="paroquia-cep"
+												placeholder="00000-000"
+												value={field.value ?? ""}
+												onChange={(e) =>
+													field.onChange(formatCep(e.target.value))
+												}
+											/>
+										)}
 									/>
 									{errors.endereco?.cep && (
 										<p className="text-destructive text-xs">
