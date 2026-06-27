@@ -4,6 +4,8 @@ import {
 	PackageOpen,
 	ArrowUpDown,
 	AlertTriangle,
+	ChevronDown,
+	ChevronUp,
 	Clock,
 	PackageMinus,
 } from "lucide-react";
@@ -17,10 +19,7 @@ import {
 	TableRow,
 } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
-import {
-	PerishablesFilters,
-	type PerishablesFiltersState,
-} from "./filters";
+import { PerishablesFilters, type PerishablesFiltersState } from "./filters";
 import { PerishableFormDialog } from "./modal";
 import { SaidaEstoqueDialog } from "./saida";
 import {
@@ -70,6 +69,17 @@ export function EstoqueAlimentosTab() {
 	const [saidaItem, setSaidaItem] = useState<AlimentoEstoqueItem | null>(null);
 	const [sortKey, setSortKey] = useState<SortKey>("expiry");
 	const [sortDir, setSortDir] = useState<SortDir>("asc");
+	const [resumoExpandido, setResumoExpandido] = useState(false);
+	// Nº de colunas do grid do resumo (espelha grid-cols-2 / sm:3 / lg:5) para mostrar só a 1ª linha.
+	const [colunasResumo, setColunasResumo] = useState(() =>
+		typeof window === "undefined"
+			? 5
+			: window.innerWidth >= 1024
+				? 5
+				: window.innerWidth >= 640
+					? 3
+					: 2,
+	);
 
 	const fetchItems = async () => {
 		setLoading(true);
@@ -98,6 +108,20 @@ export function EstoqueAlimentosTab() {
 
 	useEffect(() => {
 		fetchItems();
+	}, []);
+
+	useEffect(() => {
+		const sm = window.matchMedia("(min-width: 640px)");
+		const lg = window.matchMedia("(min-width: 1024px)");
+		const atualizar = () =>
+			setColunasResumo(lg.matches ? 5 : sm.matches ? 3 : 2);
+		atualizar();
+		sm.addEventListener("change", atualizar);
+		lg.addEventListener("change", atualizar);
+		return () => {
+			sm.removeEventListener("change", atualizar);
+			lg.removeEventListener("change", atualizar);
+		};
 	}, []);
 
 	const filtered = useMemo(() => {
@@ -187,23 +211,51 @@ export function EstoqueAlimentosTab() {
 
 			{resumo.length > 0 && (
 				<div>
-					<h2 className="mb-2 text-sm font-semibold text-foreground">
-						Resumo por alimento
-					</h2>
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-						{resumo.map((r) => (
-							<div
-								key={r.idAlimento}
-								className="rounded-xl border border-border bg-surface px-4 py-3 shadow-[var(--shadow-soft)]"
+					<div className="mb-2 flex items-center justify-between gap-2">
+						<h2 className="text-sm font-semibold text-foreground">
+							Resumo por alimento
+						</h2>
+						{/* Por padrão mostra só a primeira linha (colunasResumo cards); o restante
+						    fica atrás do "Ver todos". */}
+						{resumo.length > colunasResumo && (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setResumoExpandido((v) => !v)}
 							>
-								<p className="truncate text-xs font-medium text-muted-foreground">
-									{r.nome}
-								</p>
-								<p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-									{r.textoFormatado}
-								</p>
-							</div>
-						))}
+								{resumoExpandido ? (
+									<>
+										Ver menos
+										<ChevronUp className="ml-1 h-4 w-4" />
+									</>
+								) : (
+									<>
+										Ver todos ({resumo.length})
+										<ChevronDown className="ml-1 h-4 w-4" />
+									</>
+								)}
+							</Button>
+						)}
+					</div>
+					<div
+						data-testid="resumo-alimentos"
+						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+					>
+						{(resumoExpandido ? resumo : resumo.slice(0, colunasResumo)).map(
+							(r) => (
+								<div
+									key={r.idAlimento}
+									className="rounded-xl border border-border bg-surface px-4 py-3 shadow-[var(--shadow-soft)]"
+								>
+									<p className="truncate text-xs font-medium text-muted-foreground">
+										{r.nome}
+									</p>
+									<p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+										{r.textoFormatado}
+									</p>
+								</div>
+							),
+						)}
 					</div>
 				</div>
 			)}

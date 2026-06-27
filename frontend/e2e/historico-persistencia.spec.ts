@@ -32,8 +32,12 @@ test.describe("Histórico, visualização e persistência", () => {
 		await expect(row).toContainText("L-VISU");
 		await expect(row).toContainText("7");
 		await expect(row).toContainText("31/12/2026");
-		// Resumo por alimento reflete o gênero.
-		await expect(page.getByText(nome).first()).toBeVisible();
+		// Resumo por alimento reflete o gênero (expandindo, pois mostra só a 1ª linha por padrão).
+		const verTodos = page.getByRole("button", { name: /Ver todos/i });
+		if (await verTodos.isVisible()) await verTodos.click();
+		await expect(
+			page.getByTestId("resumo-alimentos").getByText(nome, { exact: true }),
+		).toBeVisible();
 
 		// Persiste após recarregar a página.
 		await page.reload();

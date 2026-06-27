@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { criarAlimento, entradaEstoque, makeApi } from "./api";
 import {
 	expectToast,
 	gotoEstoque,
@@ -77,6 +78,39 @@ test.describe("Estoque de Alimentos", () => {
 		await expect(
 			dialog.getByRole("button", { name: "1 t", exact: true }),
 		).toBeVisible();
+	});
+
+	test("Resumo por alimento mostra só a 1ª linha e expande o restante", async ({
+		page,
+		request,
+	}) => {
+		const api = await makeApi(request);
+		const sufixo = Date.now();
+		// Vários gêneros com estoque, nomeados para ordenar por último (resumo é alfabético) —
+		// garante que fiquem além da primeira linha.
+		for (const l of ["a", "b", "c", "d", "e", "f"]) {
+			const id = await criarAlimento(api, `ZZZ Resumo ${sufixo} ${l}`, "Peso");
+			await entradaEstoque(api, {
+				idItem: id,
+				tamanhoValor: 1,
+				tamanhoUnidade: "kg",
+				validade: "2026-12-31",
+				quantidade: 1,
+			});
+		}
+		await page.reload();
+
+		const resumo = page.getByTestId("resumo-alimentos");
+		const ultimo = resumo.getByText(`ZZZ Resumo ${sufixo} f`, { exact: true });
+
+		// Recolhido (padrão): o último card fica oculto.
+		await expect(ultimo).toBeHidden();
+
+		// Expandir revela; recolher esconde de novo.
+		await page.getByRole("button", { name: /Ver todos/i }).click();
+		await expect(ultimo).toBeVisible();
+		await page.getByRole("button", { name: /Ver menos/i }).click();
+		await expect(ultimo).toBeHidden();
 	});
 
 	test("entrada exige campos obrigatórios", async ({ page }) => {
