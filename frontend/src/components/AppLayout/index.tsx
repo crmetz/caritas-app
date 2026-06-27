@@ -63,14 +63,8 @@ export function AppLayout() {
 						)}
 						{hasPermission(Permissions.Suprimentos.Visualizar) && (
 							<>
-								<NavLink to="/estoque-alimentos" className={linkClassName}>
-									Estoque Alimentos
-								</NavLink>
-								<NavLink to="/estoque-roupas" className={linkClassName}>
-									Estoque Roupas
-								</NavLink>
-								<NavLink to="/alimentos" className={linkClassName}>
-									Alimentos
+								<NavLink to="/estoque" className={linkClassName}>
+									Estoque
 								</NavLink>
 								<NavLink to="/cesta-basica" className={linkClassName}>
 									Cesta Básica

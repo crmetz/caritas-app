@@ -44,3 +44,12 @@ export async function pickDate(page: Page, trigger: Locator, day = "15") {
 export async function expectToast(page: Page, text: RegExp | string) {
 	await expect(page.getByText(text).first()).toBeVisible();
 }
+
+// Abre o módulo de Estoque e seleciona uma aba (Alimentos | Roupas | Gêneros | Histórico).
+export async function gotoEstoque(
+	page: Page,
+	aba: "Alimentos" | "Roupas" | "Gêneros" | "Histórico",
+) {
+	await page.goto("/estoque");
+	await page.getByRole("tab", { name: aba }).click();
+}

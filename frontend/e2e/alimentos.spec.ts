@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { gotoEstoque } from "./helpers";
 
 // Ponto 6: alimento em uso não pode ser excluído — botão desabilitado + tooltip explicativo.
 test("alimento em uso mostra tooltip e botão de excluir desabilitado", async ({
 	page,
 }) => {
-	await page.goto("/alimentos");
+	await gotoEstoque(page, "Gêneros");
 
 	// Arroz (gênero do seed) é usado no estoque/cesta → não excluível. Casa a célula exata para não
 	// pegar alimentos criados nos testes que contêm "Arroz" no nome (ex.: "Cadeia Arroz 123").

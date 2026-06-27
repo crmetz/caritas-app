@@ -29,7 +29,7 @@ const FORMA_LABEL: Record<string, string> = {
 	Unidade: "Unidade",
 };
 
-function AlimentosPage() {
+export function GenerosTab() {
 	const [alimentos, setAlimentos] = useState<Alimento[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [formOpen, setFormOpen] = useState(false);
@@ -93,15 +93,10 @@ function AlimentosPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-end justify-between">
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight text-foreground">
-						Alimentos
-					</h1>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Gêneros alimentícios e como cada um é medido.
-					</p>
-				</div>
+			<div className="flex items-center justify-between">
+				<p className="text-sm text-muted-foreground">
+					Gêneros alimentícios e como cada um é medido.
+				</p>
 
 				<Button onClick={openNew}>
 					<Plus className="mr-1.5 h-4 w-4" />
@@ -124,9 +119,7 @@ function AlimentosPage() {
 							<TableRow>
 								<TableHead className="pl-4">Nome</TableHead>
 								<TableHead>Forma de medida</TableHead>
-								<TableHead className="w-24 pr-4 text-right">
-									Ações
-								</TableHead>
+								<TableHead className="w-24 pr-4 text-right">Ações</TableHead>
 							</TableRow>
 						</TableHeader>
 
@@ -191,5 +184,3 @@ function AlimentosPage() {
 		</div>
 	);
 }
-
-export default AlimentosPage;

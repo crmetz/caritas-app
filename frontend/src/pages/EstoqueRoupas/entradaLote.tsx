@@ -21,7 +21,11 @@ interface Props {
 	onSuccess: () => void;
 }
 
-export function EntradaLoteRoupaDialog({ item, onOpenChange, onSuccess }: Props) {
+export function EntradaLoteRoupaDialog({
+	item,
+	onOpenChange,
+	onSuccess,
+}: Props) {
 	const [quantidade, setQuantidade] = useState<number | null>(1);
 	const [observacao, setObservacao] = useState("");
 	const [loading, setLoading] = useState(false);

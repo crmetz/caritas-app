@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { alimentoIdPorDescricao, makeApi } from "./api";
-import { expectToast, pickSelect } from "./helpers";
+import { expectToast, gotoEstoque, pickSelect } from "./helpers";
 
 // §3 Cadastro de Alimentos · §7.1 alimento disponível para uso em todo o sistema.
 test.describe("Cadastro de Alimentos", () => {
@@ -9,7 +9,7 @@ test.describe("Cadastro de Alimentos", () => {
 		request,
 	}) => {
 		const nome = `Lentilha E2E ${Date.now()}`;
-		await page.goto("/alimentos");
+		await gotoEstoque(page, "Gêneros");
 		await page.getByRole("button", { name: /Novo alimento/i }).click();
 
 		const dialog = page.getByRole("dialog");
@@ -21,6 +21,8 @@ test.describe("Cadastro de Alimentos", () => {
 		// Aparece na listagem e continua lá após recarregar (persistência).
 		await expect(page.getByRole("row", { name: new RegExp(nome) })).toBeVisible();
 		await page.reload();
+		// O reload volta para a aba padrão; reabrir "Gêneros" para conferir a persistência.
+		await page.getByRole("tab", { name: "Gêneros" }).click();
 		await expect(page.getByRole("row", { name: new RegExp(nome) })).toBeVisible();
 
 		// A unidade de medida foi persistida corretamente (conferência via API).
@@ -43,7 +45,7 @@ test.describe("Cadastro de Alimentos", () => {
 		expect(await alimentoIdPorDescricao(api, nome)).toBeTruthy();
 
 		// Na tela de estoque, o gênero aparece no seletor de entrada.
-		await page.goto("/estoque-alimentos");
+		await gotoEstoque(page, "Alimentos");
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");
 		await dialog.getByRole("combobox").click();

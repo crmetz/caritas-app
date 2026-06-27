@@ -5,6 +5,7 @@ import {
 	entradaEstoque,
 	makeApi,
 } from "./api";
+import { gotoEstoque } from "./helpers";
 
 // §1.1/§1.3 visualização do estoque · §4.2/§5.2/§6.2/§7.2 históricos consistentes após recarregar.
 test.describe("Histórico, visualização e persistência", () => {
@@ -24,7 +25,7 @@ test.describe("Histórico, visualização e persistência", () => {
 			quantidade: 7,
 		});
 
-		await page.goto("/estoque-alimentos");
+		await gotoEstoque(page, "Alimentos");
 		await page.getByPlaceholder(/Buscar por nome ou lote/i).fill(nome);
 		const row = page.getByRole("row", { name: new RegExp(nome) });
 		await expect(row).toBeVisible();

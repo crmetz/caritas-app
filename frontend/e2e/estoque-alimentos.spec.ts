@@ -1,9 +1,15 @@
 import { expect, test } from "@playwright/test";
-import { expectToast, pickDate, pickSelect, setQuantity } from "./helpers";
+import {
+	expectToast,
+	gotoEstoque,
+	pickDate,
+	pickSelect,
+	setQuantity,
+} from "./helpers";
 
 test.describe("Estoque de Alimentos", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/estoque-alimentos");
+		await gotoEstoque(page, "Alimentos");
 	});
 
 	// ── Entrada ──────────────────────────────────────────────────────────────

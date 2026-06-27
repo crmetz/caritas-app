@@ -8,6 +8,7 @@ import {
 } from "./api";
 import {
 	expectToast,
+	gotoEstoque,
 	pickSearchable,
 	pickSelect,
 	setQuantity,
@@ -27,7 +28,7 @@ test("cadeia completa: alimento → doação → estoque → cesta → montagem 
 
 	// 1. Cadastrar alimento (UI).
 	await test.step("cadastra alimento", async () => {
-		await page.goto("/alimentos");
+		await gotoEstoque(page, "Gêneros");
 		await page.getByRole("button", { name: /Novo alimento/i }).click();
 		const d = page.getByRole("dialog");
 		await d.locator("#descricao").fill(nomeAlim);
