@@ -6,6 +6,7 @@ import {
 	ArrowLeft,
 	ArrowUpDown,
 	PackageMinus,
+	PackagePlus,
 	ChevronLeft,
 	ChevronRight,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
 } from "./filters";
 import { ClothingFormDialog } from "./modal";
 import { SaidaRoupaDialog } from "./saida";
+import { EntradaLoteRoupaDialog } from "./entradaLote";
 import {
 	getConditionBadgeVariant,
 	CATEGORIAS_LABEL,
@@ -53,6 +55,7 @@ function ClothingInventoryPage() {
 	const [page, setPage] = useState(1);
 	const [formOpen, setFormOpen] = useState(false);
 	const [saidaItem, setSaidaItem] = useState<RoupaEstoqueItem | null>(null);
+	const [entradaItem, setEntradaItem] = useState<RoupaEstoqueItem | null>(null);
 	const [sortKey, setSortKey] = useState<SortKey>("descricao");
 	const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -266,14 +269,24 @@ function ClothingInventoryPage() {
 													{item.quantidade.toLocaleString("pt-BR")}
 												</TableCell>
 												<TableCell className="pr-4 text-right">
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() => setSaidaItem(item)}
-													>
-														<PackageMinus className="mr-1.5 h-4 w-4" />
-														Saída
-													</Button>
+													<div className="flex items-center justify-end gap-1">
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => setEntradaItem(item)}
+														>
+															<PackagePlus className="mr-1.5 h-4 w-4" />
+															Adicionar
+														</Button>
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => setSaidaItem(item)}
+														>
+															<PackageMinus className="mr-1.5 h-4 w-4" />
+															Saída
+														</Button>
+													</div>
 												</TableCell>
 											</TableRow>
 										);
@@ -316,6 +329,12 @@ function ClothingInventoryPage() {
 			<ClothingFormDialog
 				open={formOpen}
 				onOpenChange={setFormOpen}
+				onSuccess={fetchItems}
+			/>
+
+			<EntradaLoteRoupaDialog
+				item={entradaItem}
+				onOpenChange={(open) => !open && setEntradaItem(null)}
 				onSuccess={fetchItems}
 			/>
 

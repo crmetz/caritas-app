@@ -46,6 +46,36 @@ test.describe("Estoque de Roupas", () => {
 		await expect(row.locator("td").nth(4)).toHaveText("8");
 	});
 
+	test("adiciona mais peças a um lote existente", async ({ page }) => {
+		const nome = `Camisa Lote ${Date.now()}`;
+
+		// Cria o item com quantidade inicial 2.
+		await page.getByRole("button", { name: /Adicionar item/i }).click();
+		const novo = page.getByRole("dialog");
+		await novo.locator("#descricao").fill(nome);
+		await pickSelect(page, novo.locator("#categoria"), /^Camisa$/);
+		await setQuantity(novo.locator("#quantidade"), "2");
+		await novo.getByRole("button", { name: /^Adicionar$/ }).click();
+		await expectToast(page, /Item adicionado com sucesso/i);
+		await expect(novo).not.toBeVisible();
+
+		// Isola a linha pelo nome único.
+		await page.getByLabel("Buscar").fill(nome);
+		const row = page.getByRole("row").filter({ hasText: nome });
+		await expect(row).toHaveCount(1);
+		await expect(row.locator("td").nth(4)).toHaveText("2");
+
+		// Usa a ação "Adicionar" da própria linha para somar 5 ao lote.
+		await row.getByRole("button", { name: /Adicionar/i }).click();
+		const entrada = page.getByRole("dialog");
+		await setQuantity(entrada.locator("#qtd-entrada-roupa"), "5");
+		await entrada.getByRole("button", { name: /Registrar entrada/i }).click();
+		await expectToast(page, /Entrada registrada/i);
+
+		// Saldo consolidado: 2 + 5 = 7.
+		await expect(row.locator("td").nth(4)).toHaveText("7");
+	});
+
 	test("entrada exige nome, categoria e quantidade", async ({ page }) => {
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");
