@@ -8,8 +8,9 @@ namespace Caritas.Models.Interfaces.Services;
 public interface IMovimentacaoService
 {
     Task<MovimentacaoResponseDto> RegistrarAsync(MovimentacaoCreateDto dto);
-    Task<PagedResponseDto<MovimentacaoResponseDto>> GetHistoricoAsync(
-        int page, int pageSize, int? idItem, int? idParoquia, OrigemMovimentacao? origemTipo);
+    // Histórico da paróquia atual (header X-Paroquia-Id), com nome/tipo do item resolvidos.
+    Task<PagedResponseDto<MovimentacaoHistoricoDto>> GetHistoricoAsync(
+        int page, int pageSize, int? idItem, OrigemMovimentacao? origemTipo);
     // Aplica um movimento ao saldo SEM commit nem transação própria — usado por Doacao/Montagem.
     Task AplicarMovimentoAsync(MovimentacaoEstoque movimentacao);
     // Converte o tamanho do pacote (valor + unidade) para a unidade-base do alimento. null se valor ausente.

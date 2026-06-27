@@ -23,7 +23,7 @@ public class MovimentacoesController(IMovimentacaoService movimentacaoService) :
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
     public async Task<IActionResult> GetHistorico(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
-        [FromQuery] int? idItem = null, [FromQuery] int? idParoquia = null,
+        [FromQuery] int? idItem = null,
         [FromQuery] OrigemMovimentacao? origemTipo = null)
-        => Ok(await movimentacaoService.GetHistoricoAsync(page, pageSize, idItem, idParoquia, origemTipo));
+        => Ok(await movimentacaoService.GetHistoricoAsync(page, pageSize, idItem, origemTipo));
 }

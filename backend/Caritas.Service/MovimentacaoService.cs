@@ -73,10 +73,21 @@ public class MovimentacaoService(
         return MedidaHelper.ParaBase(valor.Value, unidade ?? string.Empty, forma);
     }
 
-    public async Task<PagedResponseDto<MovimentacaoResponseDto>> GetHistoricoAsync(
-        int page, int pageSize, int? idItem, int? idParoquia, OrigemMovimentacao? origemTipo)
+    public async Task<PagedResponseDto<MovimentacaoHistoricoDto>> GetHistoricoAsync(
+        int page, int pageSize, int? idItem, OrigemMovimentacao? origemTipo)
     {
+        var idParoquia = session.ParoquiaAtualId
+            ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
+
         var paged = await movimentacaoRepository.GetHistoricoAsync(page, pageSize, idItem, idParoquia, origemTipo);
-        return new() { Items = paged.Items.Select(m => m.ToResponseDto()), TotalCount = paged.TotalCount };
+
+        var ids = paged.Items.Select(m => m.IdItem).Distinct().ToList();
+        var itens = await context.Items.Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id);
+
+        return new()
+        {
+            Items = paged.Items.Select(m => m.ToHistoricoDto(itens.GetValueOrDefault(m.IdItem))),
+            TotalCount = paged.TotalCount,
+        };
     }
 }

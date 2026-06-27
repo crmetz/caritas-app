@@ -8,6 +8,7 @@ import {
 import { EstoqueAlimentosTab } from "../EstoqueAlimentos";
 import { EstoqueRoupasTab } from "../EstoqueRoupas";
 import { GenerosTab } from "../Alimentos";
+import { HistoricoTab } from "./HistoricoTab";
 
 function EstoquePage() {
 	const [tab, setTab] = useState("alimentos");
@@ -19,7 +20,8 @@ function EstoquePage() {
 					Estoque
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Saldo de alimentos e roupas e gêneros cadastrados.
+					Saldo de alimentos e roupas, gêneros cadastrados e histórico de
+					movimentações.
 				</p>
 			</div>
 
@@ -28,6 +30,7 @@ function EstoquePage() {
 					<TabsTrigger value="alimentos">Alimentos</TabsTrigger>
 					<TabsTrigger value="roupas">Roupas</TabsTrigger>
 					<TabsTrigger value="generos">Gêneros</TabsTrigger>
+					<TabsTrigger value="historico">Histórico</TabsTrigger>
 				</TabsList>
 				<TabsContent value="alimentos">
 					<EstoqueAlimentosTab />
@@ -37,6 +40,9 @@ function EstoquePage() {
 				</TabsContent>
 				<TabsContent value="generos">
 					<GenerosTab />
+				</TabsContent>
+				<TabsContent value="historico">
+					<HistoricoTab />
 				</TabsContent>
 			</Tabs>
 		</div>
