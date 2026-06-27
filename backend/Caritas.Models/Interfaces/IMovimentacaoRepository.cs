@@ -7,6 +7,6 @@ namespace Caritas.Models.Interfaces;
 public interface IMovimentacaoRepository : IBaseRepository<MovimentacaoEstoque>
 {
     Task<PagedResponseDto<MovimentacaoEstoque>> GetHistoricoAsync(
-        int page, int pageSize, int? idItem, int? idParoquia, OrigemMovimentacao? origemTipo);
+        int page, int pageSize, int? idItem, int? idParoquia, OrigemMovimentacao? origemTipo, TipoItem? tipoItem);
     void Add(MovimentacaoEstoque movimentacao);  // sem commit (uso transacional)
 }

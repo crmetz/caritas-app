@@ -24,6 +24,7 @@ public class MovimentacoesController(IMovimentacaoService movimentacaoService) :
     public async Task<IActionResult> GetHistorico(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
         [FromQuery] int? idItem = null,
-        [FromQuery] OrigemMovimentacao? origemTipo = null)
-        => Ok(await movimentacaoService.GetHistoricoAsync(page, pageSize, idItem, origemTipo));
+        [FromQuery] OrigemMovimentacao? origemTipo = null,
+        [FromQuery] TipoItem? tipoItem = null)
+        => Ok(await movimentacaoService.GetHistoricoAsync(page, pageSize, idItem, origemTipo, tipoItem));
 }

@@ -7,6 +7,8 @@ export type { OrigemMovimentacao, TipoOperacao };
 
 export type TipoItem = "Alimento" | "Roupa";
 
+export const TIPOS_ITEM: TipoItem[] = ["Alimento", "Roupa"];
+
 export interface MovimentacaoHistorico {
 	id: number;
 	idItem: number;

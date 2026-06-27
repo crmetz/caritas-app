@@ -20,7 +20,12 @@ import {
 } from "../../../components/ui/select";
 import { cn } from "../../../lib/utils";
 import APIService, { type PagedResponse } from "../../../services/api";
-import { ORIGENS, ORIGEM_LABEL, type MovimentacaoHistorico } from "./interface";
+import {
+	ORIGENS,
+	ORIGEM_LABEL,
+	TIPOS_ITEM,
+	type MovimentacaoHistorico,
+} from "./interface";
 
 const PAGE_SIZE = 10;
 const ALL_VALUE = "all";
@@ -43,6 +48,7 @@ export function HistoricoTab() {
 	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
 	const [origem, setOrigem] = useState<string>(ALL_VALUE);
+	const [tipo, setTipo] = useState<string>(ALL_VALUE);
 
 	const fetchItems = useCallback(async () => {
 		setLoading(true);
@@ -54,6 +60,7 @@ export function HistoricoTab() {
 				params: {
 					page,
 					pageSize: PAGE_SIZE,
+					tipoItem: tipo !== ALL_VALUE ? tipo : undefined,
 					origemTipo: origem !== ALL_VALUE ? origem : undefined,
 				},
 			});
@@ -64,7 +71,7 @@ export function HistoricoTab() {
 		} finally {
 			setLoading(false);
 		}
-	}, [page, origem]);
+	}, [page, origem, tipo]);
 
 	useEffect(() => {
 		fetchItems();
@@ -79,7 +86,37 @@ export function HistoricoTab() {
 					Todas as entradas e saídas de estoque, da mais recente para a mais
 					antiga.
 				</p>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
+					<Label
+						htmlFor="tipo-historico"
+						className="text-xs text-muted-foreground"
+					>
+						Tipo
+					</Label>
+					<Select
+						value={tipo}
+						onValueChange={(v) => {
+							setTipo(v);
+							setPage(1);
+						}}
+					>
+						<SelectTrigger
+							id="tipo-historico"
+							className="w-36"
+							aria-label="Tipo"
+						>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL_VALUE}>Todos</SelectItem>
+							{TIPOS_ITEM.map((t) => (
+								<SelectItem key={t} value={t}>
+									{t}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+
 					<Label
 						htmlFor="origem-historico"
 						className="text-xs text-muted-foreground"

@@ -74,12 +74,12 @@ public class MovimentacaoService(
     }
 
     public async Task<PagedResponseDto<MovimentacaoHistoricoDto>> GetHistoricoAsync(
-        int page, int pageSize, int? idItem, OrigemMovimentacao? origemTipo)
+        int page, int pageSize, int? idItem, OrigemMovimentacao? origemTipo, TipoItem? tipoItem)
     {
         var idParoquia = session.ParoquiaAtualId
             ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
 
-        var paged = await movimentacaoRepository.GetHistoricoAsync(page, pageSize, idItem, idParoquia, origemTipo);
+        var paged = await movimentacaoRepository.GetHistoricoAsync(page, pageSize, idItem, idParoquia, origemTipo, tipoItem);
 
         var ids = paged.Items.Select(m => m.IdItem).Distinct().ToList();
         var itens = await context.Items.Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id);
