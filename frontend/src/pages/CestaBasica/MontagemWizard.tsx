@@ -257,7 +257,7 @@ export function MontagemWizard({ open, onOpenChange, onSuccess }: Props) {
 														: "border-border",
 												)}
 											>
-												<span className="flex-1 text-foreground">
+												<span className="min-w-0 flex-1 truncate text-foreground">
 													{d.validade ? (
 														<>Validade {formatDateBR(d.validade)}</>
 													) : (

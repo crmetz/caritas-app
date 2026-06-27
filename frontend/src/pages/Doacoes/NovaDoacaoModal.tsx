@@ -213,7 +213,7 @@ export function NovaDoacaoModal({ open, onOpenChange, onSuccess }: Props) {
 									return (
 										<div className="space-y-2 rounded-lg border border-border p-3">
 											<div className="flex items-center gap-2">
-												<div className="flex-1">
+												<div className="min-w-0 flex-1">
 													<SearchableSelect
 														value={l.idItem}
 														onChange={(v) =>

@@ -263,7 +263,7 @@ export function NovaEntregaModal({ open, onOpenChange, onSuccess }: Props) {
 			addLabel="Adicionar item"
 			renderRow={(l, _i, update) => (
 				<div className="flex items-center gap-2">
-					<div className="flex-1">
+					<div className="min-w-0 flex-1">
 						<SearchableSelect
 							value={l.idPosicao}
 							onChange={(v) => update({ idPosicao: v })}
@@ -323,7 +323,7 @@ export function NovaEntregaModal({ open, onOpenChange, onSuccess }: Props) {
 								addLabel="Adicionar cesta"
 								renderRow={(l, _i, update) => (
 									<div className="flex items-center gap-2">
-										<div className="flex-1">
+										<div className="min-w-0 flex-1">
 											<SearchableSelect
 												value={l.idLote}
 												onChange={(v) => update({ idLote: v })}

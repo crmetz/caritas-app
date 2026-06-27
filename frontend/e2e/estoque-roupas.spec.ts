@@ -76,6 +76,22 @@ test.describe("Estoque de Roupas", () => {
 		await expect(row.locator("td").nth(4)).toHaveText("7");
 	});
 
+	test("clicar fora não fecha o modal (Esc fecha)", async ({ page }) => {
+		await page.getByRole("button", { name: /Adicionar item/i }).click();
+		const dialog = page.getByRole("dialog");
+		await expect(dialog).toBeVisible();
+		await dialog.locator("#descricao").fill("Não pode sumir");
+
+		// Clique fora (sobre o overlay, longe do modal centralizado): não deve fechar.
+		await page.mouse.click(5, 5);
+		await expect(dialog).toBeVisible();
+		await expect(dialog.locator("#descricao")).toHaveValue("Não pode sumir");
+
+		// Esc continua fechando.
+		await page.keyboard.press("Escape");
+		await expect(dialog).toBeHidden();
+	});
+
 	test("entrada exige nome, categoria e quantidade", async ({ page }) => {
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");

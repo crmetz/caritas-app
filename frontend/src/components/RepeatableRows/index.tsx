@@ -33,7 +33,7 @@ export function RepeatableRows<T>({
 			{rows.map((row, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: linhas não possuem id estável.
 				<div key={index} className="flex items-start gap-2">
-					<div className="flex-1">
+					<div className="min-w-0 flex-1">
 						{renderRow(row, index, (patch) => update(index, patch))}
 					</div>
 					{rows.length > minRows && (
