@@ -67,7 +67,7 @@ export function AppLayout() {
 									Estoque
 								</NavLink>
 								<NavLink to="/cesta-basica" className={linkClassName}>
-									Cesta Básica
+									Cestas
 								</NavLink>
 								<NavLink to="/doacoes" className={linkClassName}>
 									Doações
