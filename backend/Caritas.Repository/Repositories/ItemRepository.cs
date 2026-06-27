@@ -22,6 +22,17 @@ public class ItemRepository(CaritasDbContext context) : BaseRepository<Item>(con
         return roupa;
     }
 
+    public async Task<Roupa?> FindRoupaIdenticaAsync(Roupa roupa)
+        => await Context.Roupas.FirstOrDefaultAsync(r =>
+            r.Descricao.ToLower() == roupa.Descricao.ToLower()
+            && r.Categoria == roupa.Categoria
+            && r.Genero == roupa.Genero
+            && r.FaixaEtaria == roupa.FaixaEtaria
+            && r.Tamanho == roupa.Tamanho
+            && r.Estacao == roupa.Estacao
+            && r.Condicao == roupa.Condicao
+            && r.Codigo == roupa.Codigo);
+
     public async Task<Alimento?> GetAlimentoByIdAsync(int id)
         => await Context.Alimentos.FirstOrDefaultAsync(a => a.Id == id);
 

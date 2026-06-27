@@ -8,6 +8,8 @@ public interface IItemRepository : IBaseRepository<Item>
 {
     Task<Alimento> AddAlimentoAsync(Alimento alimento);
     Task<Roupa> AddRoupaAsync(Roupa roupa);
+    // Roupa já cadastrada com exatamente os mesmos atributos? (evita duplicar o item de catálogo a cada entrada)
+    Task<Roupa?> FindRoupaIdenticaAsync(Roupa roupa);
     Task<Alimento?> GetAlimentoByIdAsync(int id);
     Task<Roupa?> GetRoupaByIdAsync(int id);
     Task UpdateAsync(Item item);                 // atualiza subtipo já rastreado

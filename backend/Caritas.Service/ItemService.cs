@@ -31,8 +31,15 @@ public class ItemService(IItemRepository itemRepository) : IItemService
 
     public async Task<RoupaResponseDto> CreateRoupaAsync(RoupaCreateDto dto)
     {
+        dto.Descricao = dto.Descricao.Trim();
         dto.Tamanho = NormalizarTamanho(dto.Tamanho);
-        return (await itemRepository.AddRoupaAsync(dto.ToEntity())).ToResponseDto();
+        var roupa = dto.ToEntity();
+        // Entrada livre, mas sem duplicar o catálogo: reaproveita uma roupa idêntica se já existir,
+        // para que a movimentação consolide no mesmo item de estoque.
+        var existente = await itemRepository.FindRoupaIdenticaAsync(roupa);
+        if (existente is not null)
+            return existente.ToResponseDto();
+        return (await itemRepository.AddRoupaAsync(roupa)).ToResponseDto();
     }
 
     public async Task<RoupaResponseDto> UpdateRoupaAsync(int id, RoupaUpdateDto dto)
