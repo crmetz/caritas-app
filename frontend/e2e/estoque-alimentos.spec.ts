@@ -52,6 +52,33 @@ test.describe("Estoque de Alimentos", () => {
 		await expect(tamanho).toHaveValue("");
 	});
 
+	test('sugestão de medida não inclui "t" até o usuário digitar "t"', async ({
+		page,
+	}) => {
+		await page.getByRole("button", { name: /Adicionar item/i }).click();
+		const dialog = page.getByRole("dialog");
+		await pickSelect(page, dialog.getByRole("combobox"), "Arroz");
+
+		const tamanho = dialog.locator("#tamanho");
+		await tamanho.fill("1");
+		// Peso sugere g e kg, mas não tonelada (evita valores massivos por engano).
+		await expect(
+			dialog.getByRole("button", { name: "1 g", exact: true }),
+		).toBeVisible();
+		await expect(
+			dialog.getByRole("button", { name: "1 kg", exact: true }),
+		).toBeVisible();
+		await expect(
+			dialog.getByRole("button", { name: "1 t", exact: true }),
+		).toHaveCount(0);
+
+		// Ao começar a digitar "t", a tonelada passa a ser sugerida.
+		await tamanho.fill("1t");
+		await expect(
+			dialog.getByRole("button", { name: "1 t", exact: true }),
+		).toBeVisible();
+	});
+
 	test("entrada exige campos obrigatórios", async ({ page }) => {
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");

@@ -57,11 +57,15 @@ export function formatMedida(m: Medida): string {
 // Sugestões de autocomplete enquanto o usuário digita (estilo campo de horas do ClickUp): combina o
 // número já digitado com cada unidade válida da forma. Sem número ainda → mostra os formatos aceitos.
 export function sugestoesMedida(texto: string, forma: FormaMedida): string[] {
-	const unidades = UNIDADES_POR_FORMA[forma];
-	const num = texto
-		.trim()
-		.replace(",", ".")
-		.match(/^([0-9]*\.?[0-9]+)/);
+	const t = texto.trim().toLowerCase().replace(",", ".");
+	const num = t.match(/^([0-9]*\.?[0-9]+)/);
+	// Fragmento da unidade já digitada (letras após o número, ex.: "1k" → "k").
+	const unidadeDigitada = t.replace(/^[0-9]*\.?[0-9]*\s*/, "");
+	// "t" (tonelada) só é sugerida quando o usuário começa a digitar "t" — evita registrar
+	// valores massivos por engano. Não altera regra de negócio: parseMedida continua aceitando "t".
+	const unidades = UNIDADES_POR_FORMA[forma].filter(
+		(u) => u.toLowerCase() !== "t" || unidadeDigitada.startsWith("t"),
+	);
 	if (!num) return unidades.map((u) => `1 ${u}`);
 	const n = num[1].replace(".", ",");
 	return unidades.map((u) => `${n} ${u}`);
