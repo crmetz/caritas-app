@@ -1,10 +1,13 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Brecho;
 using Caritas.Repository.Context;
 using Caritas.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Controllers;
 
+[Authorize]
 [Route("api/brecho")]
 public class BrechoController(CaritasDbContext context) : BaseApiController
 {
@@ -12,6 +15,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     private readonly SessaoCaixaBrechoService _sessaoCaixaService = new(context);
 
     [HttpGet("pecas")]
+    [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetPecas(
         [FromQuery] int paroquiaId,
         [FromQuery] int page = 1,
@@ -22,6 +26,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("pecas")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> CreatePeca([FromBody] PecaBrechoCreateDto dto)
     {
         var result = await _brechoService.CreatePecaAsync(dto);
@@ -29,6 +34,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPut("pecas/{id:int}")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> UpdatePeca(int id, [FromBody] PecaBrechoCreateDto dto)
     {
         var result = await _brechoService.UpdatePecaAsync(id, dto);
@@ -36,6 +42,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpDelete("pecas/{id:int}")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> DeletePeca(int id)
     {
         await _brechoService.DeletePecaAsync(id);
@@ -43,6 +50,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("vendas")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> CreateVenda([FromBody] VendaBrechoCreateDto dto)
     {
         var result = await _brechoService.CreateVendaAsync(dto);
@@ -50,6 +58,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("vendas")]
+    [Authorize(Policy = Permissions.Brecho.Historico)]
     public async Task<IActionResult> GetVendas(
         [FromQuery] int paroquiaId,
         [FromQuery] int page = 1,
@@ -62,6 +71,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("vendas/{id:int}/cancelar")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> CancelarVenda(int id, [FromBody] CancelarVendaBrechoDto dto)
     {
         await _brechoService.CancelarVendaAsync(id, dto);
@@ -69,6 +79,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("caixa/sessao-atual")]
+    [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetSessaoAtual([FromQuery] int paroquiaId)
     {
         var result = await _sessaoCaixaService.GetSessaoAtualAsync(paroquiaId);
@@ -76,6 +87,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("caixa/sessao-recente")]
+    [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetSessaoRecente([FromQuery] int paroquiaId)
     {
         var result = await _sessaoCaixaService.GetSessaoRecenteAsync(paroquiaId);
@@ -83,6 +95,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("caixa/abrir")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> AbrirCaixa([FromBody] AbrirCaixaBrechoDto dto)
     {
         var result = await _sessaoCaixaService.AbrirCaixaAsync(dto);
@@ -90,6 +103,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("caixa/{id:int}/fechar")]
+    [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> FecharCaixa(int id, [FromBody] FecharCaixaBrechoDto dto)
     {
         var result = await _sessaoCaixaService.FecharCaixaAsync(id, dto);

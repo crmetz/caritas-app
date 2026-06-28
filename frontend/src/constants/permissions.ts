@@ -22,4 +22,19 @@ export const Permissions = {
 		Visualizar: "familia.visualizar",
 		CriarEditar: "familia.criarEditar",
 	},
+	Bazar: {
+		Visualizar: "bazar.visualizar",
+		RegistrarVenda: "bazar.registrarVenda",
+		Relatorio: "bazar.relatorio",
+	},
+	Brecho: {
+		Visualizar: "brecho.visualizar",
+		RegistrarVenda: "brecho.registrarVenda",
+		Historico: "brecho.historico",
+	},
+	Caixa: {
+		Visualizar: "caixa.visualizar",
+		Lancar: "caixa.lancar",
+		Relatorio: "caixa.relatorio",
+	},
 } as const;

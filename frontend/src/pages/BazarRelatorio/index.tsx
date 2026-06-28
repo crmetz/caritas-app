@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useSession } from '@/components/SessionProvider'
+import { Permissions } from '@/constants/permissions'
 import APIService, { type PagedResponse } from '@/services/api'
 import { CancelarVendaModal } from '@/pages/BazarHistorico/CancelarVendaModal'
 import type { CancelarVendaModalRef, VendaBazar } from '@/pages/BazarHistorico/interface'
@@ -44,6 +46,8 @@ interface RelatorioBazar {
 }
 
 export default function BazarRelatorioPage() {
+  const { hasPermission } = useSession()
+  const canRegistrarVenda = hasPermission(Permissions.Bazar.RegistrarVenda)
   const cancelarRef = useRef<CancelarVendaModalRef>(null)
   const [dataInicio, setDataInicio] = useState(firstOfMonth())
   const [dataFim, setDataFim] = useState(today())
@@ -217,8 +221,10 @@ export default function BazarRelatorioPage() {
       key: 'acoes',
       header: 'Ações',
       render: (v) =>
-        v.cancelado ? (
-          <span className="text-xs text-muted-foreground italic">Cancelada</span>
+        v.cancelado || !canRegistrarVenda ? (
+          <span className="text-xs text-muted-foreground italic">
+            {v.cancelado ? 'Cancelada' : '—'}
+          </span>
         ) : (
           <div className="flex justify-end">
             <Button

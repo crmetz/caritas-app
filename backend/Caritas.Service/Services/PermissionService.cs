@@ -13,6 +13,9 @@ public class PermissionService
         ["perfil"] = "Perfis",
         ["atendimento"] = "Atendimentos",
         ["familia"] = "Famílias",
+        ["bazar"] = "Bazar",
+        ["brecho"] = "Brechó",
+        ["caixa"] = "Caixa",
     };
 
     private static readonly Dictionary<string, string> ActionLabels = new()
@@ -20,11 +23,19 @@ public class PermissionService
         ["visualizar"] = "Visualizar",
         ["criarEditar"] = "Criar e Editar",
         ["visualizarEvolucao"] = "Visualizar Evolução",
+        ["registrarVenda"] = "Registrar Venda",
+        ["relatorio"] = "Relatório",
+        ["historico"] = "Histórico",
+        ["lancar"] = "Lançar",
     };
 
     private static readonly Dictionary<string, string[]> DependentPermissions = new()
     {
         ["criarEditar"] = ["visualizar"],
+        ["registrarVenda"] = ["visualizar"],
+        ["relatorio"] = ["visualizar"],
+        ["historico"] = ["visualizar"],
+        ["lancar"] = ["visualizar"],
     };
 
     public static readonly IReadOnlyList<PermissionModuleDto> Catalog = BuildCatalog();

@@ -7,6 +7,7 @@ import type { Column } from '@/components/DataTable/interface'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/components/SessionProvider'
+import { Permissions } from '@/constants/permissions'
 import APIService, { type PagedResponse } from '@/services/api'
 import { AbrirCaixaModal } from './AbrirCaixaModal'
 import { FecharCaixaModal } from './FecharCaixaModal'
@@ -40,7 +41,9 @@ const columns: Column<PecaBrecho>[] = [
 
 export default function BrechoPage() {
   const navigate = useNavigate()
-  const { paroquiaAtual } = useSession()
+  const { paroquiaAtual, hasPermission } = useSession()
+  const canRegistrarVenda = hasPermission(Permissions.Brecho.RegistrarVenda)
+  const canHistorico = hasPermission(Permissions.Brecho.Historico)
   const abrirRef = useRef<AbrirCaixaModalRef>(null)
   const fecharRef = useRef<FecharCaixaModalRef>(null)
 
@@ -126,27 +129,31 @@ export default function BrechoPage() {
                 <Badge variant="outline" className="text-green-700 border-green-300 dark:text-green-400">
                   Aberto
                 </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                  onClick={() => fecharRef.current?.open(sessao)}
-                >
-                  Fechar Caixa
-                </Button>
+                {canRegistrarVenda && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                    onClick={() => fecharRef.current?.open(sessao)}
+                  >
+                    Fechar Caixa
+                  </Button>
+                )}
               </>
             ) : (
               <>
                 <Badge variant="destructive" className="text-xs">
                   Fechado
                 </Badge>
-                <Button
-                  size="sm"
-                  onClick={() => abrirRef.current?.open()}
-                  disabled={!paroquiaAtual}
-                >
-                  Abrir Caixa
-                </Button>
+                {canRegistrarVenda && (
+                  <Button
+                    size="sm"
+                    onClick={() => abrirRef.current?.open()}
+                    disabled={!paroquiaAtual}
+                  >
+                    Abrir Caixa
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -161,23 +168,27 @@ export default function BrechoPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/brecho/historico')}
-          >
-            <ClipboardList className="h-4 w-4" />
-            Histórico
-          </Button>
-          <Button
-            className="bg-destructive hover:bg-destructive/90 text-white"
-            onClick={() => navigate('/brecho/nova-venda')}
-            disabled={!paroquiaAtual || !caixaAberto}
-            title={!caixaAberto ? 'Abra o caixa para registrar vendas' : undefined}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Registrar Venda
-          </Button>
+          {canHistorico && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/brecho/historico')}
+            >
+              <ClipboardList className="h-4 w-4" />
+              Histórico
+            </Button>
+          )}
+          {canRegistrarVenda && (
+            <Button
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={() => navigate('/brecho/nova-venda')}
+              disabled={!paroquiaAtual || !caixaAberto}
+              title={!caixaAberto ? 'Abra o caixa para registrar vendas' : undefined}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Registrar Venda
+            </Button>
+          )}
         </div>
       </div>
 

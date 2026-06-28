@@ -7,6 +7,7 @@ import type { Column } from '@/components/DataTable/interface'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/components/SessionProvider'
+import { Permissions } from '@/constants/permissions'
 import APIService, { type PagedResponse } from '@/services/api'
 import { CancelarModal } from './CancelarModal'
 import { EntradaModal } from './EntradaModal'
@@ -38,7 +39,9 @@ export default function CaixaPage() {
   const entradaRef = useRef<EntradaModalRef>(null)
   const saidaRef = useRef<SaidaModalRef>(null)
   const cancelarRef = useRef<CancelarModalRef>(null)
-  const { paroquiaAtual } = useSession()
+  const { paroquiaAtual, hasPermission } = useSession()
+  const canLancar = hasPermission(Permissions.Caixa.Lancar)
+  const canRelatorio = hasPermission(Permissions.Caixa.Relatorio)
 
   const [data, setData] = useState<LancamentoCaixa[]>([])
   const [loading, setLoading] = useState(false)
@@ -144,10 +147,10 @@ export default function CaixaPage() {
       key: 'acoes',
       header: 'Ações',
       render: (l) => {
-        if (l.cancelado || l.geradoAutomaticamente) {
+        if (l.cancelado || l.geradoAutomaticamente || !canLancar) {
           return (
             <span className="text-xs text-muted-foreground italic">
-              {l.cancelado ? 'Cancelado' : 'Automático'}
+              {l.cancelado ? 'Cancelado' : l.geradoAutomaticamente ? 'Automático' : '—'}
             </span>
           )
         }
@@ -178,24 +181,30 @@ export default function CaixaPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/caixa/relatorio">
-            <Button variant="outline" size="sm">
-              <FileText className="h-4 w-4" />
-              Relatório
-            </Button>
-          </Link>
-          <Button
-            variant="outline"
-            onClick={() => saidaRef.current?.open()}
-            disabled={!paroquiaAtual}
-          >
-            <ArrowDownCircle className="h-4 w-4" />
-            Registrar Saída
-          </Button>
-          <Button onClick={() => entradaRef.current?.open()} disabled={!paroquiaAtual}>
-            <Plus className="h-4 w-4" />
-            Entrada Manual
-          </Button>
+          {canRelatorio && (
+            <Link to="/caixa/relatorio">
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4" />
+                Relatório
+              </Button>
+            </Link>
+          )}
+          {canLancar && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => saidaRef.current?.open()}
+                disabled={!paroquiaAtual}
+              >
+                <ArrowDownCircle className="h-4 w-4" />
+                Registrar Saída
+              </Button>
+              <Button onClick={() => entradaRef.current?.open()} disabled={!paroquiaAtual}>
+                <Plus className="h-4 w-4" />
+                Entrada Manual
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

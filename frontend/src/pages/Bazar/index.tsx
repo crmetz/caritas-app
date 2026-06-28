@@ -5,6 +5,8 @@ import { toast } from 'react-toastify'
 import { DataTable } from '@/components/DataTable'
 import type { Column } from '@/components/DataTable/interface'
 import { Button } from '@/components/ui/button'
+import { useSession } from '@/components/SessionProvider'
+import { Permissions } from '@/constants/permissions'
 import APIService, { type PagedResponse } from '@/services/api'
 import type { PecaBazar } from './interface'
 
@@ -28,6 +30,9 @@ const columns: Column<PecaBazar>[] = [
 
 export default function BazarPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useSession()
+  const canRegistrarVenda = hasPermission(Permissions.Bazar.RegistrarVenda)
+  const canRelatorio = hasPermission(Permissions.Bazar.Relatorio)
 
   const [data, setData] = useState<PecaBazar[]>([])
   const [loading, setLoading] = useState(false)
@@ -64,16 +69,20 @@ export default function BazarPage() {
           <p className="text-sm text-muted-foreground">Peças disponíveis para venda</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/bazar/relatorio">
-            <Button variant="outline" size="sm">
-              <FileText className="h-4 w-4" />
-              Relatório
+          {canRelatorio && (
+            <Link to="/bazar/relatorio">
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4" />
+                Relatório
+              </Button>
+            </Link>
+          )}
+          {canRegistrarVenda && (
+            <Button className="bg-destructive hover:bg-destructive/90 text-white" onClick={() => navigate('/bazar/nova-venda')}>
+              <ShoppingCart className="h-4 w-4" />
+              Registrar Venda
             </Button>
-          </Link>
-          <Button className="bg-destructive hover:bg-destructive/90 text-white" onClick={() => navigate('/bazar/nova-venda')}>
-            <ShoppingCart className="h-4 w-4" />
-            Registrar Venda
-          </Button>
+          )}
         </div>
       </div>
 

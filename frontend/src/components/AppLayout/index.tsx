@@ -36,15 +36,21 @@ export function AppLayout() {
 								Atendimentos
 							</NavLink>
 						)}
-						<NavLink to="/bazar" className={linkClassName}>
-							Bazar
-						</NavLink>
-						<NavLink to="/brecho" className={linkClassName}>
-							Brechó
-						</NavLink>
-						<NavLink to="/caixa" className={linkClassName}>
-							Caixa
-						</NavLink>
+						{hasPermission(Permissions.Bazar.Visualizar) && (
+							<NavLink to="/bazar" className={linkClassName}>
+								Bazar
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Brecho.Visualizar) && (
+							<NavLink to="/brecho" className={linkClassName}>
+								Brechó
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Caixa.Visualizar) && (
+							<NavLink to="/caixa" className={linkClassName}>
+								Caixa
+							</NavLink>
+						)}
 						{hasPermission(Permissions.Paroquia.Visualizar) && (
 							<NavLink to="/paroquias" className={linkClassName}>
 								Paróquias
