@@ -32,6 +32,33 @@ test.describe("Configuração de Cesta", () => {
 		await expectToast(page, /Configuração criada/i);
 	});
 
+	test("'Adicionar item' não some após o commit atrasado da medida", async ({
+		page,
+	}) => {
+		await page.getByRole("button", { name: /Nova configuração/i }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog.locator("#nome").fill(`Cesta Flicker ${Date.now()}`);
+		await pickSearchable(dialog, /Alimento/i, "Arroz");
+
+		const medida = dialog.getByPlaceholder(/kg|ml|un/i).first();
+		await setQuantity(medida, "1kg");
+		await expect(medida).toHaveValue("1 kg");
+
+		const addItem = dialog.getByRole("button", { name: /Adicionar item/i });
+		await expect(addItem).toBeEnabled();
+
+		// Re-foca a medida e clica "Adicionar item": o onBlur agenda um commit em ~120ms
+		// que, com closure obsoleto, reverteria as linhas para antes do add.
+		await medida.click();
+		await addItem.click();
+
+		// Passada a janela do commit atrasado, a 2ª linha deve permanecer (2 botões "Remover linha").
+		await page.waitForTimeout(300);
+		await expect(
+			dialog.getByRole("button", { name: /Remover linha/i }),
+		).toHaveCount(2);
+	});
+
 	test("exige nome da cesta", async ({ page }) => {
 		await page.getByRole("button", { name: /Nova configuração/i }).click();
 		const dialog = page.getByRole("dialog");

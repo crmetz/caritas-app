@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 
 export interface RepeatableRowsProps<T> {
 	rows: T[];
-	onChange: (rows: T[]) => void;
+	// Aceita updater funcional (setState) — essencial para não sobrescrever o array
+	// com um snapshot obsoleto vindo de callbacks atrasados (ex.: commit do QuantityInput).
+	onChange: Dispatch<SetStateAction<T[]>>;
 	// Cria uma nova linha vazia.
 	newRow: () => T;
 	// Mínimo de dados obrigatórios preenchidos para a linha ser considerada completa.

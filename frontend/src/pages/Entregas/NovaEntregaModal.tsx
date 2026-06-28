@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { QuantityInput } from "../../components/QuantityInput";
 import { RepeatableRows } from "../../components/RepeatableRows";
@@ -252,7 +252,7 @@ export function NovaEntregaModal({ open, onOpenChange, onSuccess }: Props) {
 	// Renderiza um conjunto de linhas de item (alimentos ou roupas) com seu picker filtrado.
 	const renderItensTab = (
 		linhas: LinhaItemForm[],
-		setLinhas: (rows: LinhaItemForm[]) => void,
+		setLinhas: Dispatch<SetStateAction<LinhaItemForm[]>>,
 		options: SearchableSelectOption[],
 	) => (
 		<RepeatableRows

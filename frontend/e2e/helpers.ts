@@ -1,15 +1,18 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 
-// Seleciona um valor num SearchableSelect (componente custom: botão-gatilho + busca + opções).
+// Seleciona um valor num SearchableSelect (combobox: o gatilho é um input de busca;
+// as opções são portalizadas para o body, consultadas no nível da página).
 export async function pickSearchable(
 	scope: Locator | Page,
 	triggerName: RegExp | string,
 	optionLabel: RegExp | string,
 ) {
-	await scope.getByRole("button", { name: triggerName }).first().click();
-	const busca = scope.getByPlaceholder(/Buscar/i).first();
-	await busca.fill(typeof optionLabel === "string" ? optionLabel : "");
-	await scope.getByRole("button", { name: optionLabel }).first().click();
+	const page: Page = "page" in scope ? scope.page() : scope;
+	const trigger = scope.getByPlaceholder(triggerName).first();
+	await trigger.click();
+	// Digita a busca no próprio gatilho (input) para filtrar; reduz ambiguidade de opções.
+	if (typeof optionLabel === "string") await trigger.fill(optionLabel);
+	await page.getByRole("button", { name: optionLabel }).first().click();
 }
 
 // Seleciona num Select do shadcn (gatilho role=combobox; opções em portal no nível da página).

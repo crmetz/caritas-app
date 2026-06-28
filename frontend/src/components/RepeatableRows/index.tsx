@@ -15,15 +15,19 @@ export function RepeatableRows<T>({
 	minRows = 1,
 	className,
 }: RepeatableRowsProps<T>) {
+	// Atualizações funcionais: aplicam sobre o array atual, não sobre um snapshot
+	// capturado em closure (evita que callbacks atrasados revertam linhas recém-adicionadas).
 	const update = (index: number, patch: Partial<T>) => {
-		onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+		onChange((prev) =>
+			prev.map((r, i) => (i === index ? { ...r, ...patch } : r)),
+		);
 	};
 
 	const remove = (index: number) => {
-		onChange(rows.filter((_, i) => i !== index));
+		onChange((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const add = () => onChange([...rows, newRow()]);
+	const add = () => onChange((prev) => [...prev, newRow()]);
 
 	const lastRow = rows[rows.length - 1];
 	const canAdd = rows.length === 0 || (!!lastRow && isRowComplete(lastRow));
