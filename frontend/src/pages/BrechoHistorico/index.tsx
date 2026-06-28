@@ -9,6 +9,7 @@ import type { Column } from '@/components/DataTable/interface'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/components/SessionProvider'
+import { Permissions } from '@/constants/permissions'
 import APIService, { type PagedResponse } from '@/services/api'
 import type { SessaoCaixaBrecho } from '@/pages/Brecho/interface'
 import { CancelarVendaModal } from './CancelarVendaModal'
@@ -28,7 +29,8 @@ const fmtDateTime = (iso: string) =>
   })
 
 export default function BrechoHistoricoPage() {
-  const { paroquiaAtual } = useSession()
+  const { paroquiaAtual, hasPermission } = useSession()
+  const canRegistrarVenda = hasPermission(Permissions.Brecho.RegistrarVenda)
   const cancelarRef = useRef<CancelarVendaModalRef>(null)
   const [sessao, setSessao] = useState<SessaoCaixaBrecho | null | undefined>(undefined)
   const [data, setData] = useState<VendaBrecho[]>([])
@@ -207,7 +209,7 @@ export default function BrechoHistoricoPage() {
       key: 'acoes',
       header: 'Ações',
       render: (v) => {
-        if (v.cancelado || !sessao?.aberto) {
+        if (v.cancelado || !sessao?.aberto || !canRegistrarVenda) {
           return v.cancelado
             ? <span className="text-xs text-muted-foreground italic">Cancelada</span>
             : <span className="text-xs text-muted-foreground italic">—</span>

@@ -1,17 +1,21 @@
+using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Bazar;
 using Caritas.Repository.Context;
 using Caritas.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace Caritas.WebApi.Controllers;
 
+[Authorize]
 [Route("api/bazar")]
 public class BazarController(CaritasDbContext context) : BaseApiController
 {
     private readonly BazarService _bazarService = new(context);
 
     [HttpGet("pecas")]
+    [Authorize(Policy = Permissions.Bazar.Visualizar)]
     public async Task<IActionResult> GetPecas(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
@@ -21,6 +25,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("pecas")]
+    [Authorize(Policy = Permissions.Bazar.RegistrarVenda)]
     public async Task<IActionResult> CreatePeca([FromBody] PecaCreateDto dto)
     {
         var result = await _bazarService.CreatePecaAsync(dto);
@@ -28,6 +33,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPut("pecas/{id:int}")]
+    [Authorize(Policy = Permissions.Bazar.RegistrarVenda)]
     public async Task<IActionResult> UpdatePeca(int id, [FromBody] PecaUpdateDto dto)
     {
         var result = await _bazarService.UpdatePecaAsync(id, dto);
@@ -35,6 +41,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpDelete("pecas/{id:int}")]
+    [Authorize(Policy = Permissions.Bazar.RegistrarVenda)]
     public async Task<IActionResult> DeletePeca(int id)
     {
         await _bazarService.DeletePecaAsync(id);
@@ -42,6 +49,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("vendas")]
+    [Authorize(Policy = Permissions.Bazar.Relatorio)]
     public async Task<IActionResult> GetVendas(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 15,
@@ -53,6 +61,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("vendas")]
+    [Authorize(Policy = Permissions.Bazar.RegistrarVenda)]
     public async Task<IActionResult> CreateVenda([FromBody] VendaBazarCreateDto dto)
     {
         var result = await _bazarService.CreateVendaAsync(dto);
@@ -60,6 +69,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpPost("vendas/{id:int}/cancelar")]
+    [Authorize(Policy = Permissions.Bazar.RegistrarVenda)]
     public async Task<IActionResult> CancelarVenda(int id, [FromBody] CancelarVendaBazarDto dto)
     {
         await _bazarService.CancelarVendaAsync(id, dto);
@@ -67,6 +77,7 @@ public class BazarController(CaritasDbContext context) : BaseApiController
     }
 
     [HttpGet("relatorio")]
+    [Authorize(Policy = Permissions.Bazar.Relatorio)]
     public async Task<IActionResult> GetRelatorio(
         [FromQuery] DateTime dataInicio,
         [FromQuery] DateTime dataFim)
