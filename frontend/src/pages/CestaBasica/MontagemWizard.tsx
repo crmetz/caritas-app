@@ -13,13 +13,7 @@ import { QuantityInput } from "../../components/QuantityInput";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "../../components/ui/select";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import APIService, { type PagedResponse } from "../../services/api";
 import { cn } from "../../lib/utils";
 import { formatDateBR } from "../EstoqueAlimentos/interface";
@@ -167,18 +161,14 @@ export function MontagemWizard({ open, onOpenChange, onSuccess }: Props) {
 					<div className="space-y-4">
 						<div className="space-y-1.5">
 							<Label>Configuração de cesta</Label>
-							<Select value={configId} onValueChange={setConfigId}>
-								<SelectTrigger>
-									<SelectValue placeholder="Selecione a cesta" />
-								</SelectTrigger>
-								<SelectContent>
-									{configs.map((c) => (
-										<SelectItem key={c.id} value={String(c.id)}>
-											{c.nome}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<SearchableSelect
+								value={configId ? Number(configId) : null}
+								onChange={(v) => setConfigId(v != null ? String(v) : "")}
+								options={configs.map((c) => ({ value: c.id, label: c.nome }))}
+								placeholder="Selecione a cesta"
+								searchPlaceholder="Buscar configuração..."
+								emptyMessage="Nenhuma configuração encontrada."
+							/>
 						</div>
 						<div className="space-y-1.5">
 							<Label htmlFor="qtd-montar">Qtd. de cestas</Label>

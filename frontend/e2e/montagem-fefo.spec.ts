@@ -10,7 +10,7 @@ import {
 	somaPacotesAlimento,
 	totalCestasDisponiveis,
 } from "./api";
-import { expectToast, pickSelect, setQuantity } from "./helpers";
+import { expectToast, pickSearchable, setQuantity } from "./helpers";
 
 function isoEmDias(dias: number): string {
 	const d = new Date();
@@ -64,7 +64,7 @@ test.describe("Montagem de Cestas — FEFO e consumo de lotes", () => {
 		await page.goto("/cesta-basica");
 		await page.getByRole("button", { name: /Montar cestas/i }).click();
 		const dialog = page.getByRole("dialog");
-		await pickSelect(page, dialog.getByRole("combobox"), new RegExp(nomeConfig));
+		await pickSearchable(dialog, /Selecione a cesta/i, new RegExp(nomeConfig));
 		await setQuantity(dialog.locator("#qtd-montar"), "1");
 		await dialog.getByRole("button", { name: /Continuar/i }).click();
 
@@ -93,7 +93,7 @@ test.describe("Montagem de Cestas — FEFO e consumo de lotes", () => {
 		await page.goto("/cesta-basica");
 		await page.getByRole("button", { name: /Montar cestas/i }).click();
 		const dialog = page.getByRole("dialog");
-		await pickSelect(page, dialog.getByRole("combobox"), new RegExp(nomeConfig));
+		await pickSearchable(dialog, /Selecione a cesta/i, new RegExp(nomeConfig));
 		await setQuantity(dialog.locator("#qtd-montar"), "1");
 		await dialog.getByRole("button", { name: /Continuar/i }).click();
 		await dialog.getByRole("button", { name: /Confirmar montagem/i }).click();
@@ -116,7 +116,7 @@ test.describe("Montagem de Cestas — FEFO e consumo de lotes", () => {
 		await page.goto("/cesta-basica");
 		await page.getByRole("button", { name: /Montar cestas/i }).click();
 		const dialog = page.getByRole("dialog");
-		await pickSelect(page, dialog.getByRole("combobox"), new RegExp(nomeConfig));
+		await pickSearchable(dialog, /Selecione a cesta/i, new RegExp(nomeConfig));
 		await setQuantity(dialog.locator("#qtd-montar"), "1");
 		await dialog.getByRole("button", { name: /Continuar/i }).click();
 

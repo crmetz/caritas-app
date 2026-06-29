@@ -76,7 +76,7 @@ test("cadeia completa: alimento → doação → estoque → cesta → montagem 
 		await page.goto("/cesta-basica");
 		await page.getByRole("button", { name: /Montar cestas/i }).click();
 		const d = page.getByRole("dialog");
-		await pickSelect(page, d.getByRole("combobox"), new RegExp(nomeConfig));
+		await pickSearchable(d, /Selecione a cesta/i, new RegExp(nomeConfig));
 		await setQuantity(d.locator("#qtd-montar"), "1");
 		await d.getByRole("button", { name: /Continuar/i }).click();
 		await d.getByRole("button", { name: /Confirmar montagem/i }).click();

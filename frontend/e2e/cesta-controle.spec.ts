@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { alimentoIdPorDescricao, entradaEstoque, makeApi } from "./api";
-import { expectToast, pickSelect, setQuantity } from "./helpers";
+import { expectToast, pickSearchable, setQuantity } from "./helpers";
 
 // Roda em série e na ordem: a montagem cria um lote que a baixa depois consome.
 test.describe.configure({ mode: "serial" });
@@ -37,7 +37,7 @@ test.describe("Cesta Básica — Montagem e Baixa", () => {
 		await page.getByRole("button", { name: /Montar cestas/i }).click();
 		const dialog = page.getByRole("dialog");
 
-		await pickSelect(page, dialog.getByRole("combobox"), /Cesta Básica Padrão/i);
+		await pickSearchable(dialog, /Selecione a cesta/i, /Cesta Básica Padrão/i);
 		// Monta 3 para sobrar saldo para os testes de baixa seguintes.
 		await setQuantity(dialog.locator("#qtd-montar"), "3");
 		await dialog.getByRole("button", { name: /Continuar/i }).click();

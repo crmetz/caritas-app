@@ -48,9 +48,11 @@ test.describe("Cadastro de Alimentos", () => {
 		await gotoEstoque(page, "Alimentos");
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");
-		await dialog.getByRole("combobox").click();
+		const genero = dialog.getByPlaceholder(/Selecione o gênero/i);
+		await genero.click();
+		await genero.fill(nome);
 		await expect(
-			page.getByRole("option", { name: new RegExp(nome) }),
+			page.getByRole("button", { name: new RegExp(nome) }),
 		).toBeVisible();
 	});
 });

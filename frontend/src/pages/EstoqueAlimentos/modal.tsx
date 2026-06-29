@@ -13,13 +13,7 @@ import {
 } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "../../components/ui/select";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import APIService from "../../services/api";
 import {
 	type Alimento,
@@ -129,23 +123,23 @@ export function PerishableFormDialog({ open, onOpenChange, onSuccess }: Props) {
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-1.5">
 						<Label htmlFor="alimento">Alimento</Label>
-						<Select
-							value={form.idAlimento}
-							onValueChange={(v) =>
-								setForm({ ...form, idAlimento: v, tamanho: null })
+						<SearchableSelect
+							value={form.idAlimento ? Number(form.idAlimento) : null}
+							onChange={(v) =>
+								setForm({
+									...form,
+									idAlimento: v != null ? String(v) : "",
+									tamanho: null,
+								})
 							}
-						>
-							<SelectTrigger id="alimento" aria-invalid={!!errors.idAlimento}>
-								<SelectValue placeholder="Selecione o gênero" />
-							</SelectTrigger>
-							<SelectContent>
-								{alimentos.map((a) => (
-									<SelectItem key={a.id} value={String(a.id)}>
-										{a.descricao}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+							options={alimentos.map((a) => ({
+								value: a.id,
+								label: a.descricao,
+							}))}
+							placeholder="Selecione o gênero"
+							searchPlaceholder="Buscar gênero..."
+							emptyMessage="Nenhum gênero encontrado."
+						/>
 						{errors.idAlimento && (
 							<p className="text-xs font-medium text-destructive">
 								{errors.idAlimento}

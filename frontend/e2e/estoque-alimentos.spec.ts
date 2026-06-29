@@ -4,7 +4,7 @@ import {
 	expectToast,
 	gotoEstoque,
 	pickDate,
-	pickSelect,
+	pickSearchable,
 	setQuantity,
 } from "./helpers";
 
@@ -21,7 +21,7 @@ test.describe("Estoque de Alimentos", () => {
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible();
 
-		await pickSelect(page, dialog.getByRole("combobox"), "Arroz");
+		await pickSearchable(dialog, /Selecione o gênero/i, "Arroz");
 
 		const tamanho = dialog.locator("#tamanho");
 		await setQuantity(tamanho, "2kg");
@@ -39,7 +39,7 @@ test.describe("Estoque de Alimentos", () => {
 	}) => {
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");
-		await pickSelect(page, dialog.getByRole("combobox"), "Óleo");
+		await pickSearchable(dialog, /Selecione o gênero/i, "Óleo");
 
 		const tamanho = dialog.locator("#tamanho");
 		await setQuantity(tamanho, "500ml");
@@ -58,7 +58,7 @@ test.describe("Estoque de Alimentos", () => {
 	}) => {
 		await page.getByRole("button", { name: /Adicionar item/i }).click();
 		const dialog = page.getByRole("dialog");
-		await pickSelect(page, dialog.getByRole("combobox"), "Arroz");
+		await pickSearchable(dialog, /Selecione o gênero/i, "Arroz");
 
 		const tamanho = dialog.locator("#tamanho");
 		await tamanho.fill("1");
