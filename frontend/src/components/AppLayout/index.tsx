@@ -4,7 +4,8 @@ import { useSession } from "@/components/SessionProvider";
 import { Permissions } from "@/constants/permissions";
 
 export function AppLayout() {
-	const { session, paroquiaAtual, setParoquiaAtual, logout, hasPermission } = useSession();
+	const { session, paroquiaAtual, setParoquiaAtual, logout, hasPermission } =
+		useSession();
 	const navigate = useNavigate();
 
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
@@ -26,12 +27,31 @@ export function AppLayout() {
 				<div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-6">
 					<span className="font-semibold text-lg">Caritas</span>
 					<nav className="flex items-center gap-2">
-						<NavLink to="/familias" className={linkClassName}>
-							Famílias
-						</NavLink>
-						<NavLink to="/atendimentos" className={linkClassName}>
-							Atendimentos
-						</NavLink>
+						{hasPermission(Permissions.Familia.Visualizar) && (
+							<NavLink to="/familias" className={linkClassName}>
+								Famílias
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Atendimento.Visualizar) && (
+							<NavLink to="/atendimentos" className={linkClassName}>
+								Atendimentos
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Bazar.Visualizar) && (
+							<NavLink to="/bazar" className={linkClassName}>
+								Bazar
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Brecho.Visualizar) && (
+							<NavLink to="/brecho" className={linkClassName}>
+								Brechó
+							</NavLink>
+						)}
+						{hasPermission(Permissions.Caixa.Visualizar) && (
+							<NavLink to="/caixa" className={linkClassName}>
+								Caixa
+							</NavLink>
+						)}
 						{hasPermission(Permissions.Paroquia.Visualizar) && (
 							<NavLink to="/paroquias" className={linkClassName}>
 								Paróquias
@@ -46,6 +66,22 @@ export function AppLayout() {
 							<NavLink to="/perfis" className={linkClassName}>
 								Perfis
 							</NavLink>
+						)}
+						{hasPermission(Permissions.Suprimentos.Visualizar) && (
+							<>
+								<NavLink to="/estoque" className={linkClassName}>
+									Estoque
+								</NavLink>
+								<NavLink to="/cesta-basica" className={linkClassName}>
+									Cestas
+								</NavLink>
+								<NavLink to="/doacoes" className={linkClassName}>
+									Doações
+								</NavLink>
+								<NavLink to="/entregas" className={linkClassName}>
+									Entregas
+								</NavLink>
+							</>
 						)}
 					</nav>
 					<div className="ml-auto flex items-center gap-4">

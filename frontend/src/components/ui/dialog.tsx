@@ -26,15 +26,21 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
 	React.ElementRef<typeof DialogPrimitive.Content>,
 	React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onInteractOutside, ...props }, ref) => (
 	<DialogPortal>
 		<DialogOverlay />
 		<DialogPrimitive.Content
 			ref={ref}
 			className={cn(
-				"fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-5 border bg-background p-8 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-2xl",
+				"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto border bg-background p-8 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-2xl [&>*]:min-w-0",
 				className,
 			)}
+			// Clicar fora não fecha (evita perder o que já foi preenchido); Esc e o X seguem fechando.
+			// Override pontual possível passando onInteractOutside via props.
+			onInteractOutside={(e) => {
+				e.preventDefault();
+				onInteractOutside?.(e);
+			}}
 			{...props}
 		>
 			{children}
@@ -74,7 +80,34 @@ const DialogTitle = React.forwardRef<
 		{...props}
 	/>
 ));
+
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+const DialogFooter = ({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+	<div
+		className={cn(
+			"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+			className,
+		)}
+		{...props}
+	/>
+);
+DialogFooter.displayName = "DialogFooter";
+
+const DialogDescription = React.forwardRef<
+	React.ElementRef<typeof DialogPrimitive.Description>,
+	React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+	<DialogPrimitive.Description
+		ref={ref}
+		className={cn("text-sm text-muted-foreground", className)}
+		{...props}
+	/>
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
 	Dialog,
@@ -85,4 +118,6 @@ export {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	DialogFooter,
+	DialogDescription,
 };

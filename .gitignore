@@ -27,6 +27,11 @@ dist-ssr/
 .nuxt/
 .output/
 
+# Playwright / e2e artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
 # Environment files
 .env
 .env.local

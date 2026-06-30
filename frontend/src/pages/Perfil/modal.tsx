@@ -98,7 +98,10 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 						descricao: values.descricao || undefined,
 						permissions: selected,
 					};
-					await APIService.putRequest({ url: `/perfis/${editing.id}`, body: dto });
+					await APIService.putRequest({
+						url: `/perfis/${editing.id}`,
+						body: dto,
+					});
 					toast.success("Perfil atualizado.");
 				} else {
 					const dto: PerfilCreateDto = {
@@ -120,7 +123,9 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
 				<DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle>{editing ? "Editar Perfil" : "Novo Perfil"}</DialogTitle>
+						<DialogTitle>
+							{editing ? "Editar Perfil" : "Novo Perfil"}
+						</DialogTitle>
 					</DialogHeader>
 
 					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -132,7 +137,9 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 								<Label htmlFor="perfil-nome">Nome *</Label>
 								<Input id="perfil-nome" {...register("nome")} />
 								{errors.nome && (
-									<p className="text-destructive text-xs">{errors.nome.message}</p>
+									<p className="text-destructive text-xs">
+										{errors.nome.message}
+									</p>
 								)}
 							</div>
 							<div className="space-y-1">
@@ -152,9 +159,9 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 							<div className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
 								<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 								<p>
-									Atenção: permissões de criar/editar (especialmente de usuários e
-									perfis) permitem que o usuário conceda acessos a outros. Atribua com
-									cuidado a quem confia.
+									Atenção: permissões de criar/editar (especialmente de usuários
+									e perfis) permitem que o usuário conceda acessos a outros.
+									Atribua com cuidado a quem confia.
 								</p>
 							</div>
 							{modules.length === 0 ? (
@@ -209,7 +216,11 @@ export const PerfilModal = forwardRef<PerfilModalRef, PerfilModalProps>(
 								Cancelar
 							</Button>
 							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
+								{isSubmitting
+									? "Salvando..."
+									: editing
+										? "Salvar"
+										: "Cadastrar"}
 							</Button>
 						</div>
 					</form>

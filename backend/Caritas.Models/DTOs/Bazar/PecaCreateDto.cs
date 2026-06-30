@@ -1,0 +1,9 @@
+namespace Caritas.Models.DTOs.Bazar;
+
+public class PecaCreateDto
+{
+    public string Categoria { get; set; } = string.Empty;
+    public string? Descricao { get; set; }
+    public int Quantidade { get; set; }
+    public decimal Preco { get; set; }
+}

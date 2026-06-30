@@ -39,7 +39,9 @@ export const SITUACAO_COLOR: Record<SituacaoGeralFamilia, string> = {
 };
 
 /** Nível ordinal da situação (1=Crítica ... 4=Superada) para plotar a trajetória. */
-export function situacaoNivel(situacao: SituacaoGeralFamilia | null): number | null {
+export function situacaoNivel(
+	situacao: SituacaoGeralFamilia | null,
+): number | null {
 	if (!situacao) return null;
 	return SITUACAO_ORDER.indexOf(situacao) + 1;
 }
@@ -96,7 +98,10 @@ export function LineChartCard({
 		<ChartCard title={title}>
 			{hasData ? (
 				<ResponsiveContainer width="100%" height={height}>
-					<LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+					<LineChart
+						data={data}
+						margin={{ top: 8, right: 12, left: 4, bottom: 4 }}
+					>
 						<CartesianGrid strokeDasharray="3 3" className="stroke-border" />
 						<XAxis dataKey="label" {...axisProps} />
 						<YAxis
@@ -139,7 +144,10 @@ export function SituacaoStepChart({
 		<ChartCard title="Situação geral ao longo do tempo" highlight>
 			{hasData ? (
 				<ResponsiveContainer width="100%" height={height}>
-					<LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+					<LineChart
+						data={data}
+						margin={{ top: 8, right: 12, left: 4, bottom: 4 }}
+					>
 						<CartesianGrid strokeDasharray="3 3" className="stroke-border" />
 						<XAxis dataKey="label" {...axisProps} />
 						<YAxis
@@ -184,7 +192,10 @@ export function StackedSituacaoChart({
 		<ChartCard title="Evolução da situação geral das famílias" highlight>
 			{hasData ? (
 				<ResponsiveContainer width="100%" height={height}>
-					<BarChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+					<BarChart
+						data={data}
+						margin={{ top: 8, right: 12, left: 4, bottom: 4 }}
+					>
 						<CartesianGrid strokeDasharray="3 3" className="stroke-border" />
 						<XAxis dataKey="periodo" {...axisProps} />
 						<YAxis {...axisProps} width={36} allowDecimals={false} />

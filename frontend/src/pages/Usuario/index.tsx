@@ -33,9 +33,15 @@ export default function UsuarioPage() {
 		async (page: number, search?: string) => {
 			setLoading(true);
 			try {
-				const result = await APIService.getRequest<PagedResponse<UsuarioResponseDto>>({
+				const result = await APIService.getRequest<
+					PagedResponse<UsuarioResponseDto>
+				>({
 					url: "/usuarios",
-					params: { page, pageSize: pagination.pageSize, searchTerm: search ?? termo },
+					params: {
+						page,
+						pageSize: pagination.pageSize,
+						searchTerm: search ?? termo,
+					},
 				});
 				setData(result.items);
 				setPagination((prev) => ({
@@ -160,7 +166,8 @@ export default function UsuarioPage() {
 						Cadastro e manutenção dos acessos ao sistema
 					</p>
 					<p className="mt-2 inline-flex rounded-md bg-red-100 px-2.5 py-1 text-red-900 text-xs font-medium">
-						Você está visualizando usuários das paróquias às quais possui acesso.
+						Você está visualizando usuários das paróquias às quais possui
+						acesso.
 					</p>
 				</div>
 				{canEdit && (

@@ -1,4 +1,6 @@
-# Caritas — Guia para Claude Code
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Visão Geral
 
@@ -17,6 +19,9 @@ npm run dev
 
 # Typecheck frontend
 npm run typecheck
+
+# Lint/format frontend (Biome)
+npm run lint
 
 # Migrations EF (a partir de /backend)
 dotnet ef migrations add <Nome> --project Caritas.Repository --startup-project Caritas.WebApi
@@ -39,7 +44,7 @@ Quatro projetos em camadas — nunca pule camadas:
 ```
 Caritas.Models      → classes puras (entidades, DTOs, enums, interfaces)
 Caritas.Repository  → EF Core (DbContext, Mappings, Repositórios, Extensions)
-Caritas.Service     → serviços com regras de negócio
+Caritas.Service     → serviços com regras de negócio + mappers DTO↔Entity
 Caritas.WebApi      → Controllers, Middleware, Swagger, entrypoint HTTP
 ```
 
@@ -65,21 +70,14 @@ public class FamiliaService(CaritasDbContext context)
 
 ### BaseApiController
 
-Todos os controllers herdam `BaseApiController` (em `Caritas.WebApi/Controllers/`), que já traz:
-
-- `[ApiController]` e `[Route("api/[controller]")]`
-- Espaço reservado para helpers de claims JWT (a ser implementado)
-
-Nome do controller no plural: `FamiliasController` → rota `api/familias`.
+Todos os controllers herdam `BaseApiController` (em `Caritas.WebApi/Controllers/`), que já traz `[ApiController]` e `[Route("api/[controller]")]`. Nome do controller no plural: `FamiliasController` → rota `api/familias`.
 
 ### Padrão Repository Genérico
 
 `IBaseRepository<T>` em `Caritas.Models/Interfaces/`:
 - `GetByIdAsync(int id)`, `GetPagedAsync(int page, int pageSize)`, `AddAsync`, `UpdateAsync`, `DeleteAsync(int id)`
 
-Implementado em `Caritas.Repository/Repositories/BaseRepository.cs`.
-
-Repositórios específicos (ex: `IFamiliaRepository`) estendem `IBaseRepository<T>` e adicionam queries específicas.
+Implementado em `Caritas.Repository/Repositories/BaseRepository.cs`. Repositórios específicos (ex: `IFamiliaRepository`) estendem `IBaseRepository<T>` e adicionam queries específicas.
 
 ### Paginação
 
@@ -87,11 +85,11 @@ Sempre use `QueryableExtensions.ToPagedAsync` (em `Caritas.Repository/Extensions
 
 ```csharp
 return await context.Familias
-    .OrderBy(f => f.CreatedAt)
+    .OrderBy(f => f.CriadoEm)
     .ToPagedAsync(page, pageSize);
 ```
 
-Retorna `PagedResponseDto<T>` enxuto: apenas `Items` e `TotalCount`. Frontend deriva `totalPages`/controle de páginas localmente a partir do `pageSize` que ele já controla.
+Retorna `PagedResponseDto<T>` com apenas `Items` e `TotalCount`. Frontend deriva `totalPages` localmente a partir do `pageSize` que ele já controla.
 
 ### Tratamento de Erros
 
@@ -149,29 +147,32 @@ Não use `CancellationToken` nos métodos por enquanto — será introduzido dep
 - Cada componente em sua própria pasta: `components/NomeDoComponente/index.tsx`
 - Se houver tipagem local, adicionar `interface.ts` na mesma pasta
 - Tipos de uma page ficam em `pages/NomeDaPage/interface.ts`
-- Nada de pastas `ui/`, `layout/`, `shared/` — tudo direto em `components/`
+- `components/ui/` é exclusivo para primitivas geradas pelo shadcn/ui — não criar componentes customizados lá
+- Não criar pastas `layout/`, `shared/`, etc. — tudo direto em `components/`
 - `lib/utils.ts` já existe (vem do shadcn, expõe `cn()`); não criar outros arquivos de utilitários
+
+### Rotas
+
+Rotas são definidas em `frontend/src/main.tsx`. Novas páginas precisam de uma entrada em `<Routes>`:
+
+```tsx
+<Route path="/nova-entidade" element={<NovaEntidadePage />} />
+```
 
 ### Chamadas de API
 
-Sempre diretamente no componente via `APIService` (nunca criar service files separados por entidade):
+Sempre diretamente no componente via `APIService` (nunca criar service files separados por entidade). URL base configurável via `VITE_API_URL` (padrão: `http://localhost:8080`):
 
 ```typescript
 import APIService, { type PagedResponse } from '@/services/api';
 
-// GET com paginação
 const result = await APIService.getRequest<PagedResponse<Familia>>({
   url: '/familias',
   params: { page, pageSize },
 });
 
-// POST
 await APIService.postRequest({ url: '/familias', body: payload });
-
-// PUT
 await APIService.putRequest({ url: `/familias/${id}`, body: payload });
-
-// DELETE
 await APIService.deleteRequest({ url: `/familias/${id}` });
 ```
 
@@ -219,6 +220,10 @@ Use o componente genérico `DataTable` (em `components/DataTable/`):
 ```
 
 `DataTable` exige que `T` tenha `id: number`.
+
+### Notificações
+
+Use `toast` do `react-toastify` para feedback ao usuário. O `ToastContainer` já está montado em `main.tsx`.
 
 ## Convenções
 

@@ -13,7 +13,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import APIService, { getErrorMessage, type PagedResponse } from "@/services/api";
+import APIService, {
+	getErrorMessage,
+	type PagedResponse,
+} from "@/services/api";
 import { Permissions } from "@/constants/permissions";
 import type { Paroquia, ParoquiaModalRef } from "./interface";
 import { ParoquiaModal } from "./modal";
@@ -176,7 +179,8 @@ export default function ParoquiaPage() {
 						Cadastro e manutenção das paróquias atendidas
 					</p>
 					<p className="mt-2 inline-flex rounded-md bg-red-100 px-2.5 py-1 text-red-900 text-xs font-medium">
-						Você está visualizando os dados das paróquias às quais possui acesso.
+						Você está visualizando os dados das paróquias às quais possui
+						acesso.
 					</p>
 				</div>
 				{canEdit && (

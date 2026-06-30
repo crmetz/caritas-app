@@ -1,6 +1,7 @@
 using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Paroquia;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
 using Caritas.Repository.Repositories;
 using Caritas.Service.services;

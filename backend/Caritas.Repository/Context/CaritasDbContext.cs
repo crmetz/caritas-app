@@ -1,13 +1,15 @@
 using System.Reflection;
 using Caritas.Models.Common;
 using Caritas.Models.Entities;
+using Caritas.Models.Interfaces.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 
 namespace Caritas.Repository.Context;
 
-public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : IdentityDbContext<Usuario, Perfil, int>(options)
+public class CaritasDbContext(DbContextOptions<CaritasDbContext> options, ICurrentSession currentSession)
+    : IdentityDbContext<Usuario, Perfil, int>(options)
 {
     public DbSet<Familia> Familias => Set<Familia>();
     public DbSet<FamiliaCidade> FamiliaCidades => Set<FamiliaCidade>();
@@ -19,6 +21,28 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
     public DbSet<Perfil> Perfis { get; set; }
     public DbSet<Permissao> Permissoes { get; set; }
     public DbSet<PerfilPermissao> PerfilPermissoes { get; set; }
+
+    public DbSet<Remessa> Remessas { get; set; }
+    public DbSet<Peca> Pecas { get; set; }
+    public DbSet<VendaBazar> VendasBazar { get; set; }
+    public DbSet<ItemVendaBazar> ItensVendaBazar { get; set; }
+    public DbSet<VendaBrecho> VendasBrecho { get; set; }
+    public DbSet<ItemVendaBrecho> ItensVendaBrecho { get; set; }
+    public DbSet<LancamentoCaixa> LancamentosCaixa { get; set; }
+    public DbSet<SessaoCaixaBrecho> SessoesCaixaBrecho { get; set; }
+
+    public DbSet<Item> Items => Set<Item>();
+    public DbSet<Alimento> Alimentos => Set<Alimento>();
+    public DbSet<Roupa> Roupas => Set<Roupa>();
+    public DbSet<Estoque> Estoques => Set<Estoque>();
+    public DbSet<MovimentacaoEstoque> Movimentacoes => Set<MovimentacaoEstoque>();
+    public DbSet<Doador> Doadores => Set<Doador>();
+    public DbSet<Doacao> Doacoes => Set<Doacao>();
+    public DbSet<ConfiguracaoCesta> ConfiguracoesCesta => Set<ConfiguracaoCesta>();
+    public DbSet<ItemConfiguracaoCesta> ItensConfiguracaoCesta => Set<ItemConfiguracaoCesta>();
+    public DbSet<LoteCesta> LotesCesta => Set<LoteCesta>();
+    public DbSet<MovimentacaoCesta> MovimentacoesCesta => Set<MovimentacaoCesta>();
+    public DbSet<Entrega> Entregas => Set<Entrega>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +67,12 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
             .HasOne(u => u.UsuarioCriador)
             .WithMany(u => u.UsuariosCriados)
             .HasForeignKey(u => u.UsuarioCriadorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<LancamentoCaixa>()
+            .HasOne(l => l.VendaBrecho)
+            .WithOne(v => v.LancamentoCaixa)
+            .HasForeignKey<LancamentoCaixa>(l => l.VendaBrechoId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Paroquia>()
@@ -103,13 +133,19 @@ public class CaritasDbContext(DbContextOptions<CaritasDbContext> options) : Iden
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var agora = DateTime.UtcNow;
+        var usuarioId = currentSession.UsuarioId;
+
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
-            if (entry.State == EntityState.Added)
-                entry.Entity.CriadoEm = DateTime.UtcNow;
+            if (entry.State == EntityState.Added) entry.Entity.CriadoEm = agora;
+            if (entry.State == EntityState.Modified) entry.Entity.AtualizadoEm = agora;
+        }
 
-            if (entry.State == EntityState.Modified)
-                entry.Entity.AtualizadoEm = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<FullAuditableEntity>())
+        {
+            if (entry.State == EntityState.Added) entry.Entity.CriadoPor = usuarioId;
+            if (entry.State == EntityState.Modified) entry.Entity.AtualizadoPor = usuarioId;
         }
 
         return base.SaveChangesAsync(cancellationToken);

@@ -10,6 +10,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: caritas
       POSTGRES_USER: caritas

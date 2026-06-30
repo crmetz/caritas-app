@@ -1,4 +1,11 @@
-import { Pencil, Trash2, Eye } from "lucide-react";
+import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	Pencil,
+	Trash2,
+	Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DataTableProps } from "./interface";
@@ -13,12 +20,14 @@ export function DataTable<T extends { id: number }>({
 	columns,
 	data,
 	pagination,
+	sort,
 	isLoading,
 	onEdit,
 	onView,
 	onDelete,
 	canEdit,
 	canDelete,
+	rowClassName,
 }: DataTableProps<T>) {
 	const { page, pageSize, totalCount, onPageChange } = pagination;
 	const totalPages = Math.ceil(totalCount / pageSize);
@@ -46,7 +55,26 @@ export function DataTable<T extends { id: number }>({
 										alignClass[col.align ?? "left"],
 									)}
 								>
-									{col.header}
+									{sort && col.sortKey ? (
+										<button
+											type="button"
+											onClick={() => sort.onSort(col.sortKey as string)}
+											className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+										>
+											{col.header}
+											{sort.sortKey === col.sortKey ? (
+												sort.sortDir === "desc" ? (
+													<ArrowDown className="h-3.5 w-3.5" />
+												) : (
+													<ArrowUp className="h-3.5 w-3.5" />
+												)
+											) : (
+												<ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/50" />
+											)}
+										</button>
+									) : (
+										col.header
+									)}
 								</th>
 							))}
 							{hasActions && (
@@ -85,12 +113,18 @@ export function DataTable<T extends { id: number }>({
 							data.map((row) => (
 								<tr
 									key={row.id}
-									className="border-t hover:bg-muted/30 transition-colors"
+									className={cn(
+										"border-t hover:bg-muted/30 transition-colors",
+										rowClassName?.(row),
+									)}
 								>
 									{columns.map((col) => (
 										<td
 											key={String(col.key)}
-											className={cn("px-5 py-4", alignClass[col.align ?? "left"])}
+											className={cn(
+												"px-5 py-4",
+												alignClass[col.align ?? "left"],
+											)}
 										>
 											{col.render
 												? col.render(row)

@@ -30,6 +30,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Permissions } from "@/constants/permissions";
 import { formatCpf } from "@/lib/utils";
 import APIService, {
 	getErrorMessage,
@@ -338,19 +339,24 @@ function MembroForm({
 export default function FamiliaPage() {
 	const modalRef = useRef<FamiliaModalRef>(null);
 	const navigate = useNavigate();
-	const { paroquiaAtual, session } = useSession();
+	const { paroquiaAtual, session, hasPermission } = useSession();
+	const canEdit = hasPermission(Permissions.Familia.CriarEditar);
+	const canViewEvolucao = hasPermission(
+		Permissions.Atendimento.VisualizarEvolucao,
+	);
 
-	// O usuário só pode editar/excluir famílias das paróquias às quais tem acesso.
-	// Demais famílias ficam apenas para visualização.
+	// Só pode gerenciar famílias quem tem a permissão E acesso à paróquia da
+	// família (admins acessam todas). Demais famílias ficam só para visualização.
 	const paroquiasPermitidasIds = useMemo(
 		() => new Set(session?.paroquiasPermitidas.map((p) => p.value) ?? []),
 		[session],
 	);
 	const podeGerenciarFamilia = useCallback(
 		(familia: Familia) =>
-			(session?.isAdmin ?? false) ||
-			paroquiasPermitidasIds.has(familia.paroquiaId),
-		[session, paroquiasPermitidasIds],
+			canEdit &&
+			((session?.isAdmin ?? false) ||
+				paroquiasPermitidasIds.has(familia.paroquiaId)),
+		[canEdit, session, paroquiasPermitidasIds],
 	);
 	const [data, setData] = useState<Familia[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -504,22 +510,26 @@ export default function FamiliaPage() {
 			header: "Data de Registro",
 			render: (f) => formatDate(f.criadoEm),
 		},
-		{
-			key: "evolucao",
-			header: "Evolução",
-			render: (f) => (
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					className="h-8 gap-2 px-2 text-muted-foreground hover:text-foreground"
-					onClick={() => navigate(`/familias/${f.id}/evolucao`)}
-					title="Ver evolução"
-				>
-					<LineChart className="h-4 w-4" />
-				</Button>
-			),
-		},
+		...(canViewEvolucao
+			? [
+					{
+						key: "evolucao",
+						header: "Evolução",
+						render: (f: Familia) => (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className="h-8 gap-2 px-2 text-muted-foreground hover:text-foreground"
+								onClick={() => navigate(`/familias/${f.id}/evolucao`)}
+								title="Ver evolução"
+							>
+								<LineChart className="h-4 w-4" />
+							</Button>
+						),
+					},
+				]
+			: []),
 	];
 
 	useEffect(() => {
@@ -591,6 +601,10 @@ export default function FamiliaPage() {
 		return () => clearTimeout(timer);
 	}, [load]);
 
+	const handleEdit = (familia: Familia) => {
+		modalRef.current?.open(familia);
+	};
+
 	const handleDelete = async (familia: Familia) => {
 		if (!confirm(`Remover a família de ${familia.responsavel?.nome ?? "—"}?`))
 			return;
@@ -612,10 +626,12 @@ export default function FamiliaPage() {
 						Gestão de famílias cadastradas
 					</p>
 				</div>
-				<Button onClick={() => modalRef.current?.open()}>
-					<Plus className="h-4 w-4" />
-					Nova Família
-				</Button>
+				{canEdit && (
+					<Button onClick={() => modalRef.current?.open()}>
+						<Plus className="h-4 w-4" />
+						Nova Família
+					</Button>
+				)}
 			</div>
 
 			<div className="flex flex-wrap items-center gap-3">
@@ -689,7 +705,7 @@ export default function FamiliaPage() {
 					onPageChange: (page) => load(page),
 				}}
 				isLoading={loading}
-				onEdit={(f) => modalRef.current?.open(f)}
+				onEdit={handleEdit}
 				onView={(f) => modalRef.current?.openView(f)}
 				onDelete={handleDelete}
 				canEdit={podeGerenciarFamilia}
@@ -759,15 +775,17 @@ export default function FamiliaPage() {
 														"Sem dados complementares"}
 												</p>
 											</div>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												title="Editar membro"
-												onClick={() => handleStartEditPessoa(pessoa)}
-											>
-												<Pencil className="h-4 w-4" />
-											</Button>
+											{podeGerenciarFamilia(familiaMembros) && (
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													title="Editar membro"
+													onClick={() => handleStartEditPessoa(pessoa)}
+												>
+													<Pencil className="h-4 w-4" />
+												</Button>
+											)}
 										</div>
 
 										<div className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
