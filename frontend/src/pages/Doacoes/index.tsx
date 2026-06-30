@@ -1,47 +1,120 @@
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { HeartHandshake } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import { DataTable } from "../../components/DataTable";
+import type { Column } from "../../components/DataTable/interface";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../../components/ui/select";
 import APIService, { type PagedResponse } from "../../services/api";
 import { formatDateBR } from "../EstoqueAlimentos/interface";
 import { NovaDoacaoModal } from "./NovaDoacaoModal";
 import type { DoacaoListItem } from "./interface";
 
 const PAGE_SIZE = 10;
+const ALL = "all";
+
+type SortKey = "data" | "doador";
 
 function DoacoesPage() {
 	const [data, setData] = useState<DoacaoListItem[]>([]);
 	const [page, setPage] = useState(1);
 	const [totalCount, setTotalCount] = useState(0);
 	const [loading, setLoading] = useState(false);
+	const [busca, setBusca] = useState("");
+	const [tipo, setTipo] = useState<string>(ALL);
+	const [sortKey, setSortKey] = useState<SortKey>("data");
+	const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 	const [modalOpen, setModalOpen] = useState(false);
+	const reqIdRef = useRef(0);
 
-	const fetch = useCallback(async () => {
-		setLoading(true);
-		try {
-			const result = await APIService.getRequest<PagedResponse<DoacaoListItem>>(
-				{
+	const load = useCallback(
+		async (pageToLoad: number) => {
+			const reqId = ++reqIdRef.current;
+			setLoading(true);
+			try {
+				const result = await APIService.getRequest<
+					PagedResponse<DoacaoListItem>
+				>({
 					url: "/doacoes",
-					params: { page, pageSize: PAGE_SIZE },
-				},
-			);
-			setData(result.items);
-			setTotalCount(result.totalCount);
-		} catch {
-			toast.error("Erro ao carregar as doações.");
-		} finally {
-			setLoading(false);
-		}
-	}, [page]);
+					params: {
+						page: pageToLoad,
+						pageSize: PAGE_SIZE,
+						busca: busca.trim() || undefined,
+						tipo: tipo !== ALL ? tipo : undefined,
+						sortKey,
+						sortDir,
+					},
+				});
+				if (reqId !== reqIdRef.current) return;
+				setData(result.items);
+				setTotalCount(result.totalCount);
+				setPage(pageToLoad);
+			} catch {
+				toast.error("Erro ao carregar as doações.");
+			} finally {
+				if (reqId === reqIdRef.current) setLoading(false);
+			}
+		},
+		[busca, tipo, sortKey, sortDir],
+	);
 
 	useEffect(() => {
-		fetch();
-	}, [fetch]);
+		const t = setTimeout(() => load(1), 400);
+		return () => clearTimeout(t);
+	}, [load]);
+
+	const toggleSort = (key: string) => {
+		const k = key as SortKey;
+		if (k === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+		else {
+			setSortKey(k);
+			setSortDir("asc");
+		}
+	};
+
+	const columns: Column<DoacaoListItem>[] = [
+		{
+			key: "criadoEm",
+			header: "Data",
+			sortKey: "data",
+			render: (d) => formatDateBR(d.criadoEm.slice(0, 10)),
+		},
+		{
+			key: "nomeDoador",
+			header: "Doador",
+			sortKey: "doador",
+			render: (d) => d.nomeDoador ?? "—",
+		},
+		{
+			key: "tipo",
+			header: "Tipo",
+			render: (d) => (
+				<Badge variant="outline">
+					{d.tipo === "CestasFechadas" ? "Cestas" : "Itens"}
+				</Badge>
+			),
+		},
+		{
+			key: "quantidade",
+			header: "Quantidade",
+			align: "right",
+			render: (d) =>
+				d.tipo === "CestasFechadas"
+					? `${d.quantidade} cesta(s)`
+					: `${d.quantidade} item(ns)`,
+		},
+	];
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<div className="flex items-end justify-between">
 				<div>
 					<h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -57,54 +130,42 @@ function DoacoesPage() {
 				</Button>
 			</div>
 
+			<div className="flex flex-wrap items-center gap-3">
+				<Input
+					className="w-64"
+					placeholder="Buscar por doador"
+					value={busca}
+					onChange={(e) => setBusca(e.target.value)}
+				/>
+				<Select value={tipo} onValueChange={setTipo}>
+					<SelectTrigger className="w-44" aria-label="Tipo">
+						<SelectValue placeholder="Tipo" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value={ALL}>Todos os tipos</SelectItem>
+						<SelectItem value="Itens">Itens</SelectItem>
+						<SelectItem value="CestasFechadas">Cestas</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
+
 			<DataTable
-				columns={[
-					{
-						key: "criadoEm",
-						header: "Data",
-						render: (d) => formatDateBR(d.criadoEm.slice(0, 10)),
-					},
-					{
-						key: "nomeDoador",
-						header: "Doador",
-						render: (d) => d.nomeDoador ?? "—",
-					},
-					{
-						key: "tipo",
-						header: "Tipo",
-						render: (d) => (
-							<Badge variant="outline">
-								{d.tipo === "CestasFechadas" ? "Cestas" : "Itens"}
-							</Badge>
-						),
-					},
-					{
-						key: "quantidade",
-						header: "Quantidade",
-						align: "right",
-						render: (d) =>
-							d.tipo === "CestasFechadas"
-								? `${d.quantidade} cesta(s)`
-								: `${d.quantidade} item(ns)`,
-					},
-				]}
+				columns={columns}
 				data={data}
 				pagination={{
 					page,
 					pageSize: PAGE_SIZE,
 					totalCount,
-					onPageChange: setPage,
+					onPageChange: load,
 				}}
+				sort={{ sortKey, sortDir, onSort: toggleSort }}
 				isLoading={loading}
 			/>
 
 			<NovaDoacaoModal
 				open={modalOpen}
 				onOpenChange={setModalOpen}
-				onSuccess={() => {
-					setPage(1);
-					fetch();
-				}}
+				onSuccess={() => load(1)}
 			/>
 		</div>
 	);

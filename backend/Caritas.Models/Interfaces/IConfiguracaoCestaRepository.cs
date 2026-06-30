@@ -6,6 +6,7 @@ namespace Caritas.Models.Interfaces;
 public interface IConfiguracaoCestaRepository : IBaseRepository<ConfiguracaoCesta>
 {
     Task<ConfiguracaoCesta?> GetByIdWithItensAsync(int id);
-    Task<PagedResponseDto<ConfiguracaoCesta>> GetPagedWithItensAsync(int idParoquia, int page, int pageSize);
+    Task<PagedResponseDto<ConfiguracaoCesta>> GetPagedWithItensAsync(
+        int idParoquia, int page, int pageSize, string? busca, string? sortDir);
     Task SaveAsync();
 }

@@ -73,12 +73,13 @@ public class EntregaService(
         return entrega.ToResponseDto();
     }
 
-    public async Task<PagedResponseDto<EntregaListItemDto>> GetPagedAsync(int page, int pageSize)
+    public async Task<PagedResponseDto<EntregaListItemDto>> GetPagedAsync(
+        int page, int pageSize, string? busca, string? sortKey, string? sortDir)
     {
         var idParoquia = session.ParoquiaAtualId
             ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
 
-        var paged = await entregaRepository.GetPagedAsync(idParoquia, page, pageSize);
+        var paged = await entregaRepository.GetPagedAsync(idParoquia, page, pageSize, busca, sortKey, sortDir);
         var ids = paged.Items.Select(e => e.Id).ToList();
 
         // Resumo por entrega, sem N+1: cestas = Σ quantidade; itens = nº de linhas de movimentação.

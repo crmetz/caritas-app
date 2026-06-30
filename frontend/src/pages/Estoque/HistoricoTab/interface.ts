@@ -40,3 +40,8 @@ export const ORIGENS: OrigemMovimentacao[] = [
 	"Descarte",
 	"Entrega",
 ];
+
+export const TIPOS_OPERACAO: { value: TipoOperacao; label: string }[] = [
+	{ value: "Entrada", label: "Entrada" },
+	{ value: "Saida", label: "Saída" },
+];

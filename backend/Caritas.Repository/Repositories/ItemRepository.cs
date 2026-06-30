@@ -1,7 +1,9 @@
+using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.Entities;
 using Caritas.Models.Enums;
 using Caritas.Models.Interfaces;
 using Caritas.Repository.Context;
+using Caritas.Repository.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Caritas.Repository.Repositories;
@@ -50,8 +52,24 @@ public class ItemRepository(CaritasDbContext context) : BaseRepository<Item>(con
                       .OrderBy(i => i.Descricao)
                       .ToListAsync();
 
-    public async Task<List<Alimento>> GetAlimentosAsync()
-        => await Context.Alimentos.OrderBy(a => a.Descricao).ToListAsync();
+    public async Task<PagedResponseDto<Alimento>> GetAlimentosPagedAsync(
+        int page, int pageSize, string? busca, string? sortKey, string? sortDir)
+    {
+        var query = Context.Alimentos.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(busca))
+            query = query.Where(a => EF.Functions.ILike(a.Descricao, $"%{busca}%"));
+
+        var desc = string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+        var ordered = sortKey switch
+        {
+            "forma" => desc
+                ? query.OrderByDescending(a => a.FormaMedida)
+                : query.OrderBy(a => a.FormaMedida),
+            // "nome" (padrão)
+            _ => desc ? query.OrderByDescending(a => a.Descricao) : query.OrderBy(a => a.Descricao),
+        };
+        return await ordered.ThenBy(a => a.Id).ToPagedAsync(page, pageSize);
+    }
 
     public async Task<bool> AlimentoNomeExisteAsync(string descricao, int? ignoreId = null)
         => await Context.Alimentos.AnyAsync(a =>

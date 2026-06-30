@@ -16,7 +16,7 @@ import { Label } from "../../components/ui/label";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import APIService from "../../services/api";
 import {
-	type Alimento,
+	type AlimentoSelectOption,
 	type CreateMovimentacaoBody,
 	type Medida,
 	todayISO,
@@ -50,19 +50,22 @@ export function PerishableFormDialog({ open, onOpenChange, onSuccess }: Props) {
 		Partial<Record<keyof FormState, string>>
 	>({});
 	const [loading, setLoading] = useState(false);
-	const [alimentos, setAlimentos] = useState<Alimento[]>([]);
+	const [alimentos, setAlimentos] = useState<AlimentoSelectOption[]>([]);
 
 	useEffect(() => {
 		if (!open) return;
 		setForm({ ...empty });
 		setErrors({});
-		APIService.getRequest<Alimento[]>({ url: "/itens/alimentos" })
+		APIService.getRequest<AlimentoSelectOption[]>({
+			url: "/itens/select",
+			params: { tipo: "Alimento" },
+		})
 			.then(setAlimentos)
 			.catch(() => toast.error("Erro ao carregar os gêneros de alimento."));
 	}, [open]);
 
 	const alimentoSelecionado = alimentos.find(
-		(a) => String(a.id) === form.idAlimento,
+		(a) => String(a.value) === form.idAlimento,
 	);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -133,8 +136,8 @@ export function PerishableFormDialog({ open, onOpenChange, onSuccess }: Props) {
 								})
 							}
 							options={alimentos.map((a) => ({
-								value: a.id,
-								label: a.descricao,
+								value: a.value,
+								label: a.label,
 							}))}
 							placeholder="Selecione o gênero"
 							searchPlaceholder="Buscar gênero..."

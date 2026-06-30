@@ -25,6 +25,9 @@ public class MovimentacoesController(IMovimentacaoService movimentacaoService) :
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
         [FromQuery] int? idItem = null,
         [FromQuery] OrigemMovimentacao? origemTipo = null,
-        [FromQuery] TipoItem? tipoItem = null)
-        => Ok(await movimentacaoService.GetHistoricoAsync(page, pageSize, idItem, origemTipo, tipoItem));
+        [FromQuery] TipoItem? tipoItem = null,
+        [FromQuery] TipoOperacao? tipoOperacao = null,
+        [FromQuery] string? sortDir = null)
+        => Ok(await movimentacaoService.GetHistoricoAsync(
+            page, pageSize, idItem, origemTipo, tipoItem, tipoOperacao, sortDir));
 }

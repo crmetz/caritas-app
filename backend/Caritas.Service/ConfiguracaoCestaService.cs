@@ -43,11 +43,12 @@ public class ConfiguracaoCestaService(
         => (await repo.GetByIdWithItensAsync(id)
             ?? throw new KeyNotFoundException($"Configuração de cesta {id} não encontrada.")).ToResponseDto();
 
-    public async Task<PagedResponseDto<ConfiguracaoCestaResponseDto>> GetPagedAsync(int page, int pageSize)
+    public async Task<PagedResponseDto<ConfiguracaoCestaResponseDto>> GetPagedAsync(
+        int page, int pageSize, string? busca, string? sortDir)
     {
         var idParoquia = session.ParoquiaAtualId
             ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
-        var paged = await repo.GetPagedWithItensAsync(idParoquia, page, pageSize);
+        var paged = await repo.GetPagedWithItensAsync(idParoquia, page, pageSize, busca, sortDir);
         return new() { Items = paged.Items.Select(c => c.ToResponseDto()), TotalCount = paged.TotalCount };
     }
 

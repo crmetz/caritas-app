@@ -1,5 +1,6 @@
 using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Item;
+using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.Entities;
 using Caritas.Models.Enums;
 using Caritas.Models.Interfaces;
@@ -71,16 +72,20 @@ public class ItemService(IItemRepository itemRepository) : IItemService
     public async Task<List<ItemSelectDto>> GetSelectAsync(TipoItem? tipo)
         => (await itemRepository.GetSelectAsync(tipo)).Select(i => i.ToItemSelectDto()).ToList();
 
-    public async Task<List<AlimentoResponseDto>> GetAlimentosAsync()
+    public async Task<PagedResponseDto<AlimentoResponseDto>> GetAlimentosAsync(
+        int page, int pageSize, string? busca, string? sortKey, string? sortDir)
     {
         var emUso = await itemRepository.GetItensEmUsoAsync();
-        return (await itemRepository.GetAlimentosAsync())
-            .Select(a =>
+        var paged = await itemRepository.GetAlimentosPagedAsync(page, pageSize, busca, sortKey, sortDir);
+        return new()
+        {
+            Items = paged.Items.Select(a =>
             {
                 var dto = a.ToResponseDto();
                 dto.EmUso = emUso.Contains(a.Id);
                 return dto;
-            })
-            .ToList();
+            }),
+            TotalCount = paged.TotalCount,
+        };
     }
 }

@@ -91,6 +91,9 @@ test.describe("Configuração de Cesta", () => {
 		await dialog.getByRole("button", { name: /^Salvar$/ }).click();
 		await expectToast(page, /Configuração criada/i);
 
+		// Lista paginada/server-side: busca pelo nome antes de localizar a linha.
+		await page.getByPlaceholder("Buscar por nome").fill(nome);
+
 		// Exclui pela linha correspondente.
 		const linha = page.getByRole("row", { name: new RegExp(nome) });
 		await expect(linha).toBeVisible();

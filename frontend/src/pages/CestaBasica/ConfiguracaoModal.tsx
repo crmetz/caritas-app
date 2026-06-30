@@ -16,7 +16,7 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import APIService from "../../services/api";
-import type { Alimento } from "../EstoqueAlimentos/interface";
+import type { AlimentoSelectOption } from "../EstoqueAlimentos/interface";
 import type { ConfiguracaoCesta, ConfiguracaoCestaBody } from "./interface";
 
 interface Props {
@@ -62,7 +62,7 @@ export function ConfiguracaoModal({
 }: Props) {
 	const [nome, setNome] = useState("");
 	const [linhas, setLinhas] = useState<LinhaForm[]>([novaLinha()]);
-	const [alimentos, setAlimentos] = useState<Alimento[]>([]);
+	const [alimentos, setAlimentos] = useState<AlimentoSelectOption[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
@@ -77,14 +77,17 @@ export function ConfiguracaoModal({
 					}))
 				: [novaLinha()],
 		);
-		APIService.getRequest<Alimento[]>({ url: "/itens/alimentos" })
+		APIService.getRequest<AlimentoSelectOption[]>({
+			url: "/itens/select",
+			params: { tipo: "Alimento" },
+		})
 			.then(setAlimentos)
 			.catch(() => toast.error("Erro ao carregar alimentos."));
 	}, [open, editing]);
 
 	const alimentoOptions = alimentos.map((a) => ({
-		value: a.id,
-		label: a.descricao,
+		value: a.value,
+		label: a.label,
 	}));
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -174,7 +177,9 @@ export function ConfiguracaoModal({
 							isRowComplete={linhaCompleta}
 							addLabel="Adicionar item"
 							renderRow={(l, _i, update) => {
-								const alimento = alimentos.find((a) => a.id === l.idAlimento);
+								const alimento = alimentos.find(
+									(a) => a.value === l.idAlimento,
+								);
 								return (
 									<div className="grid grid-cols-[1fr_8rem_6rem] items-center gap-2">
 										<SearchableSelect

@@ -1,29 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
-	Plus,
-	PackageOpen,
-	ArrowUpDown,
 	AlertTriangle,
 	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
 	ChevronUp,
 	Clock,
 	PackageMinus,
+	Plus,
 } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "../../components/ui/table";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DataTable } from "../../components/DataTable";
+import type { Column } from "../../components/DataTable/interface";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { cn } from "../../lib/utils";
+import APIService, { type PagedResponse } from "../../services/api";
 import { PerishablesFilters, type PerishablesFiltersState } from "./filters";
-import { PerishableFormDialog } from "./modal";
-import { SaidaEstoqueDialog } from "./saida";
 import {
 	daysUntil,
 	formatDateBR,
@@ -33,11 +23,10 @@ import {
 	type ExpiryStatus,
 	type ResumoTipoAlimento,
 } from "./interface";
-import { cn } from "../../lib/utils";
-import APIService, { type PagedResponse } from "../../services/api";
+import { PerishableFormDialog } from "./modal";
+import { SaidaEstoqueDialog } from "./saida";
 
 type SortKey = "expiry" | "descricao" | "atualizacao";
-type SortDir = "asc" | "desc";
 
 const PAGE_SIZE = 10;
 
@@ -79,7 +68,7 @@ export function EstoqueAlimentosTab() {
 	const [formOpen, setFormOpen] = useState(false);
 	const [saidaItem, setSaidaItem] = useState<AlimentoEstoqueItem | null>(null);
 	const [sortKey, setSortKey] = useState<SortKey>("expiry");
-	const [sortDir, setSortDir] = useState<SortDir>("asc");
+	const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 	const [resumoExpandido, setResumoExpandido] = useState(false);
 	// Nº de colunas do grid do resumo (espelha grid-cols-2 / sm:3 / lg:5) para mostrar só a 1ª linha.
 	const [colunasResumo, setColunasResumo] = useState(() =>
@@ -91,39 +80,40 @@ export function EstoqueAlimentosTab() {
 					? 3
 					: 2,
 	);
-
-	// Ignora respostas obsoletas: com buscas concorrentes (ex.: fetch inicial + busca logo após),
-	// só a requisição mais recente aplica seu resultado.
 	const reqIdRef = useRef(0);
 
-	// Lista server-side (busca + filtro de validade + ordenação + paginação), padrão das Roupas.
-	const fetchItems = useCallback(async () => {
-		const reqId = ++reqIdRef.current;
-		setLoading(true);
-		try {
-			const data = await APIService.getRequest<
-				PagedResponse<AlimentoEstoqueItem>
-			>({
-				url: "/estoque/alimentos",
-				params: {
-					page,
-					pageSize: PAGE_SIZE,
-					busca: filters.search.trim() || undefined,
-					validadeDe: filters.expiryFrom || undefined,
-					validadeAte: filters.expiryTo || undefined,
-					sortKey,
-					sortDir,
-				},
-			});
-			if (reqId !== reqIdRef.current) return;
-			setItems(data.items);
-			setTotalCount(data.totalCount);
-		} catch {
-			// mantém os itens anteriores em caso de erro
-		} finally {
-			if (reqId === reqIdRef.current) setLoading(false);
-		}
-	}, [page, filters, sortKey, sortDir]);
+	// Lista server-side (busca + filtro de validade + ordenação + paginação).
+	const load = useCallback(
+		async (pageToLoad: number) => {
+			const reqId = ++reqIdRef.current;
+			setLoading(true);
+			try {
+				const data = await APIService.getRequest<
+					PagedResponse<AlimentoEstoqueItem>
+				>({
+					url: "/estoque/alimentos",
+					params: {
+						page: pageToLoad,
+						pageSize: PAGE_SIZE,
+						busca: filters.search.trim() || undefined,
+						validadeDe: filters.expiryFrom || undefined,
+						validadeAte: filters.expiryTo || undefined,
+						sortKey,
+						sortDir,
+					},
+				});
+				if (reqId !== reqIdRef.current) return;
+				setItems(data.items);
+				setTotalCount(data.totalCount);
+				setPage(pageToLoad);
+			} catch {
+				// mantém os itens anteriores em caso de erro
+			} finally {
+				if (reqId === reqIdRef.current) setLoading(false);
+			}
+		},
+		[filters, sortKey, sortDir],
+	);
 
 	// Resumo por gênero e alertas de validade são agregados server-side (independem da paginação).
 	const fetchAgregados = useCallback(async () => {
@@ -144,13 +134,14 @@ export function EstoqueAlimentosTab() {
 	}, []);
 
 	const refresh = () => {
-		fetchItems();
+		load(page);
 		fetchAgregados();
 	};
 
 	useEffect(() => {
-		fetchItems();
-	}, [fetchItems]);
+		const t = setTimeout(() => load(1), 400);
+		return () => clearTimeout(t);
+	}, [load]);
 
 	useEffect(() => {
 		fetchAgregados();
@@ -170,34 +161,101 @@ export function EstoqueAlimentosTab() {
 		};
 	}, []);
 
-	const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-	const openAdd = () => {
-		setFormOpen(true);
-	};
-
-	const handleFiltersChange = (next: PerishablesFiltersState) => {
-		setFilters(next);
-		setPage(1);
-	};
-
-	const toggleSort = (key: SortKey) => {
-		if (sortKey === key) {
-			setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-		} else {
-			setSortKey(key);
+	const toggleSort = (key: string) => {
+		const k = key as SortKey;
+		if (k === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+		else {
+			setSortKey(k);
 			setSortDir("asc");
 		}
-		setPage(1);
 	};
 
+	const columns: Column<AlimentoEstoqueItem>[] = [
+		{
+			key: "descricao",
+			header: "Nome / Lote",
+			sortKey: "descricao",
+			render: (item) => (
+				<div>
+					<div className="font-medium text-foreground">{item.descricao}</div>
+					{item.lote && (
+						<div className="text-xs text-muted-foreground">
+							Lote {item.lote}
+						</div>
+					)}
+				</div>
+			),
+		},
+		{
+			key: "tamanhoFormatado",
+			header: "Tamanho",
+			render: (item) => item.tamanhoFormatado ?? "—",
+		},
+		{
+			key: "quantidade",
+			header: "Pacotes",
+			align: "right",
+			render: (item) => item.quantidade.toLocaleString("pt-BR"),
+		},
+		{
+			key: "validade",
+			header: "Validade",
+			sortKey: "expiry",
+			render: (item) => {
+				const status = item.validade ? getExpiryStatus(item.validade) : null;
+				const days = item.validade ? daysUntil(item.validade) : null;
+				const badge = status ? STATUS_BADGE[status] : null;
+				if (!item.validade || !badge)
+					return <span className="text-muted-foreground">—</span>;
+				return (
+					<div className="flex flex-col gap-0.5">
+						<span className="tabular-nums font-medium text-foreground">
+							{formatDateBR(item.validade)}
+						</span>
+						<Badge
+							variant="outline"
+							className={cn("w-fit font-normal", badge.className)}
+						>
+							{status === "expired"
+								? `Vencido há ${Math.abs(days!)}d`
+								: status === "ok"
+									? badge.label
+									: `${badge.label} · ${days}d`}
+						</Badge>
+					</div>
+				);
+			},
+		},
+		{
+			key: "atualizadoEm",
+			header: "Última atualização",
+			sortKey: "atualizacao",
+			render: (item) => (
+				<span className="tabular-nums text-muted-foreground">
+					{formatDateBR(item.atualizadoEm.slice(0, 10))}
+				</span>
+			),
+		},
+		{
+			key: "acoes",
+			header: "Ações",
+			align: "right",
+			render: (item) => (
+				<Button variant="ghost" size="sm" onClick={() => setSaidaItem(item)}>
+					<PackageMinus className="mr-1.5 h-4 w-4" />
+					Saída
+				</Button>
+			),
+		},
+	];
+
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<p className="text-sm text-muted-foreground">
 					Controle de validade, lote e tamanho dos pacotes em estoque.
 				</p>
-				<Button onClick={openAdd}>
+				<Button onClick={() => setFormOpen(true)}>
 					<Plus className="mr-1.5 h-4 w-4" />
 					Adicionar item
 				</Button>
@@ -237,8 +295,6 @@ export function EstoqueAlimentosTab() {
 						<h2 className="text-sm font-semibold text-foreground">
 							Resumo por alimento
 						</h2>
-						{/* Por padrão mostra só a primeira linha (colunasResumo cards); o restante
-						    fica atrás do "Ver todos". */}
 						{resumo.length > colunasResumo && (
 							<Button
 								variant="ghost"
@@ -282,197 +338,33 @@ export function EstoqueAlimentosTab() {
 				</div>
 			)}
 
-			<PerishablesFilters filters={filters} onChange={handleFiltersChange} />
+			<PerishablesFilters
+				filters={filters}
+				onChange={(next) => {
+					setFilters(next);
+					setPage(1);
+				}}
+			/>
 
-			<div className="rounded-xl border border-border bg-surface shadow-[var(--shadow-soft)]">
-				<div className="flex items-center justify-between border-b border-border px-4 py-3">
-					<p className="text-sm text-muted-foreground">
-						<span className="font-medium text-foreground">{totalCount}</span>{" "}
-						{totalCount === 1 ? "item" : "itens"}
-					</p>
-				</div>
+			<DataTable
+				columns={columns}
+				data={items}
+				pagination={{
+					page,
+					pageSize: PAGE_SIZE,
+					totalCount,
+					onPageChange: load,
+				}}
+				sort={{ sortKey, sortDir, onSort: toggleSort }}
+				isLoading={loading}
+				rowClassName={(item) => {
+					const status = item.validade ? getExpiryStatus(item.validade) : null;
+					if (status === "expired") return "bg-destructive/5";
+					if (status === "critical") return "bg-destructive/[0.03]";
+					return "";
+				}}
+			/>
 
-				{loading ? (
-					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-						<p className="text-sm text-muted-foreground">Carregando...</p>
-					</div>
-				) : items.length === 0 ? (
-					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-						<div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-							<PackageOpen className="h-6 w-6 text-muted-foreground" />
-						</div>
-						<p className="text-sm font-medium text-foreground">
-							Nenhum item encontrado
-						</p>
-						<p className="mt-1 text-xs text-muted-foreground">
-							Ajuste os filtros ou adicione um novo item.
-						</p>
-					</div>
-				) : (
-					<div className="overflow-x-auto">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="pl-4">
-										<button
-											type="button"
-											onClick={() => toggleSort("descricao")}
-											className="inline-flex items-center gap-1 hover:text-foreground"
-										>
-											Nome / Lote
-											<ArrowUpDown
-												className={cn(
-													"h-3 w-3",
-													sortKey === "descricao"
-														? "text-foreground"
-														: "text-muted-foreground/60",
-												)}
-											/>
-										</button>
-									</TableHead>
-									<TableHead>Tamanho</TableHead>
-									<TableHead className="text-right">Pacotes</TableHead>
-									<TableHead>
-										<button
-											type="button"
-											onClick={() => toggleSort("expiry")}
-											className="inline-flex items-center gap-1 hover:text-foreground"
-										>
-											Validade
-											<ArrowUpDown
-												className={cn(
-													"h-3 w-3",
-													sortKey === "expiry"
-														? "text-foreground"
-														: "text-muted-foreground/60",
-												)}
-											/>
-										</button>
-									</TableHead>
-									<TableHead>
-										<button
-											type="button"
-											onClick={() => toggleSort("atualizacao")}
-											className="inline-flex items-center gap-1 hover:text-foreground"
-										>
-											Última atualização
-											<ArrowUpDown
-												className={cn(
-													"h-3 w-3",
-													sortKey === "atualizacao"
-														? "text-foreground"
-														: "text-muted-foreground/60",
-												)}
-											/>
-										</button>
-									</TableHead>
-									<TableHead className="pr-4 text-right">Ações</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{items.map((item) => {
-									const status = item.validade
-										? getExpiryStatus(item.validade)
-										: null;
-									const days = item.validade ? daysUntil(item.validade) : null;
-									const badge = status ? STATUS_BADGE[status] : null;
-									return (
-										<TableRow
-											key={item.id}
-											className={cn(
-												status === "expired" && "bg-destructive/5",
-												status === "critical" && "bg-destructive/[0.03]",
-											)}
-										>
-											<TableCell className="pl-4">
-												<div className="font-medium text-foreground">
-													{item.descricao}
-												</div>
-												{item.lote && (
-													<div className="text-xs text-muted-foreground">
-														Lote {item.lote}
-													</div>
-												)}
-											</TableCell>
-											<TableCell className="text-foreground">
-												{item.tamanhoFormatado ?? "—"}
-											</TableCell>
-											<TableCell className="text-right tabular-nums text-foreground">
-												{item.quantidade.toLocaleString("pt-BR")}
-											</TableCell>
-											<TableCell>
-												{item.validade && badge ? (
-													<div className="flex flex-col gap-0.5">
-														<span className="tabular-nums font-medium text-foreground">
-															{formatDateBR(item.validade)}
-														</span>
-														<Badge
-															variant="outline"
-															className={cn(
-																"w-fit font-normal",
-																badge.className,
-															)}
-														>
-															{status === "expired"
-																? `Vencido há ${Math.abs(days!)}d`
-																: status === "ok"
-																	? badge.label
-																	: `${badge.label} · ${days}d`}
-														</Badge>
-													</div>
-												) : (
-													<span className="text-muted-foreground">—</span>
-												)}
-											</TableCell>
-											<TableCell className="tabular-nums text-muted-foreground">
-												{formatDateBR(item.atualizadoEm.slice(0, 10))}
-											</TableCell>
-											<TableCell className="pr-4 text-right">
-												<Button
-													variant="ghost"
-													size="sm"
-													onClick={() => setSaidaItem(item)}
-												>
-													<PackageMinus className="mr-1.5 h-4 w-4" />
-													Saída
-												</Button>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</div>
-				)}
-
-				{totalPages > 1 && (
-					<div className="flex items-center justify-between border-t border-border px-4 py-3">
-						<p className="text-sm text-muted-foreground">
-							Página {page} de {totalPages}
-						</p>
-						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={page <= 1}
-								onClick={() => setPage((p) => Math.max(1, p - 1))}
-							>
-								<ChevronLeft className="h-4 w-4" />
-								Anterior
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={page >= totalPages}
-								onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-							>
-								Próxima
-								<ChevronRight className="h-4 w-4" />
-							</Button>
-						</div>
-					</div>
-				)}
-			</div>
 			<PerishableFormDialog
 				open={formOpen}
 				onOpenChange={setFormOpen}

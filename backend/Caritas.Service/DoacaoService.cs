@@ -80,12 +80,14 @@ public class DoacaoService(
         return doacao.ToResponseDto();
     }
 
-    public async Task<PagedResponseDto<DoacaoListItemDto>> GetPagedAsync(int page, int pageSize)
+    public async Task<PagedResponseDto<DoacaoListItemDto>> GetPagedAsync(
+        int page, int pageSize, string? busca, TipoDoacao? tipo, string? sortKey, string? sortDir)
     {
         var idParoquia = session.ParoquiaAtualId
             ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
 
-        var paged = await doacaoRepository.GetPagedAsync(idParoquia, page, pageSize);
+        var paged = await doacaoRepository.GetPagedAsync(
+            idParoquia, page, pageSize, busca, tipo, sortKey, sortDir);
         var ids = paged.Items.Select(d => d.Id).ToList();
 
         // Quantidade por doação, sem N+1: itens = nº de linhas de movimentação; cestas = nº de cestas do lote.

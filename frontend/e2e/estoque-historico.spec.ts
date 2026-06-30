@@ -48,8 +48,8 @@ test("aba Histórico exibe a entrada e a saída de um item", async ({
 	await expect(linhaSaida).toContainText("Descarte");
 });
 
-// Filtro por tipo de item (filtrado no backend): separa alimentos e roupas.
-test("aba Histórico filtra por tipo de item (Alimento/Roupa)", async ({
+// Filtro por gênero (filtrado no backend): separa alimentos e roupas.
+test("aba Histórico filtra por gênero (Alimento/Roupa)", async ({
 	page,
 	request,
 }) => {
@@ -79,8 +79,8 @@ test("aba Histórico filtra por tipo de item (Alimento/Roupa)", async ({
 
 	await gotoEstoque(page, "Histórico");
 
-	// Tipo = Roupa: aparece a roupa, some o alimento.
-	await pickSelect(page, page.getByLabel("Tipo"), "Roupa");
+	// Gênero = Roupa: aparece a roupa, some o alimento.
+	await pickSelect(page, page.getByLabel("Gênero", { exact: true }), "Roupa");
 	await expect(page.getByRole("row").filter({ hasText: nomeRoupa })).toHaveCount(
 		1,
 	);
@@ -88,12 +88,54 @@ test("aba Histórico filtra por tipo de item (Alimento/Roupa)", async ({
 		0,
 	);
 
-	// Tipo = Alimento: inverte.
-	await pickSelect(page, page.getByLabel("Tipo"), "Alimento");
+	// Gênero = Alimento: inverte.
+	await pickSelect(page, page.getByLabel("Gênero", { exact: true }), "Alimento");
 	await expect(page.getByRole("row").filter({ hasText: nomeAlim })).toHaveCount(
 		1,
 	);
 	await expect(page.getByRole("row").filter({ hasText: nomeRoupa })).toHaveCount(
 		0,
 	);
+});
+
+// Novo filtro "Tipo" = tipo de transação (Entrada/Saída), server-side.
+test("aba Histórico filtra por tipo de transação (Entrada/Saída)", async ({
+	page,
+	request,
+}) => {
+	const api = await makeApi(request);
+	const nome = `Hist Tipo ${Date.now()}`;
+	const idItem = await criarAlimento(api, nome, "Peso");
+	await entradaEstoque(api, {
+		idItem,
+		tamanhoValor: 1,
+		tamanhoUnidade: "kg",
+		validade: "2026-12-31",
+		lote: "L-T",
+		quantidade: 5,
+	});
+	await api.post("/movimentacoes", {
+		idItem,
+		tamanhoValor: 1,
+		tamanhoUnidade: "kg",
+		validade: "2026-12-31",
+		lote: "L-T",
+		tipoOperacao: "Saida",
+		quantidade: 2,
+		origemTipo: "Descarte",
+	});
+
+	await gotoEstoque(page, "Histórico");
+
+	// Tipo = Saída: a linha do item é a saída; a entrada some.
+	await pickSelect(page, page.getByLabel("Tipo", { exact: true }), "Saída");
+	const linhaSaida = page.getByRole("row").filter({ hasText: nome });
+	await expect(linhaSaida).toHaveCount(1);
+	await expect(linhaSaida).toContainText("Saída");
+
+	// Tipo = Entrada: inverte.
+	await pickSelect(page, page.getByLabel("Tipo", { exact: true }), "Entrada");
+	const linhaEntrada = page.getByRole("row").filter({ hasText: nome });
+	await expect(linhaEntrada).toHaveCount(1);
+	await expect(linhaEntrada).toContainText("Entrada");
 });

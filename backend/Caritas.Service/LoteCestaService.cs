@@ -44,11 +44,14 @@ public class LoteCestaService(
         return lote.ToResponseDto();
     }
 
-    public async Task<PagedResponseDto<LoteCestaResponseDto>> GetControleAsync(int page, int pageSize)
+    public async Task<PagedResponseDto<LoteCestaResponseDto>> GetControleAsync(
+        int page, int pageSize, string? busca, OrigemCesta? origem, string? status,
+        string? sortKey, string? sortDir)
     {
         var idParoquia = session.ParoquiaAtualId
             ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
-        var paged = await loteRepository.GetControlePagedAsync(idParoquia, page, pageSize);
+        var paged = await loteRepository.GetControlePagedAsync(
+            idParoquia, page, pageSize, busca, origem, status, sortKey, sortDir);
 
         // Validade mais próxima entre os itens consumidos por cada lote montado (saídas ligadas via OrigemId).
         var loteIds = paged.Items.Where(l => l.Origem == OrigemCesta.Montagem).Select(l => l.Id).ToList();

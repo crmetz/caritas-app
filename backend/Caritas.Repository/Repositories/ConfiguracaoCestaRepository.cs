@@ -15,12 +15,20 @@ public class ConfiguracaoCestaRepository(CaritasDbContext context)
             .Include(c => c.Itens).ThenInclude(i => i.Alimento)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-    public async Task<PagedResponseDto<ConfiguracaoCesta>> GetPagedWithItensAsync(int idParoquia, int page, int pageSize)
-        => await Context.ConfiguracoesCesta
+    public async Task<PagedResponseDto<ConfiguracaoCesta>> GetPagedWithItensAsync(
+        int idParoquia, int page, int pageSize, string? busca, string? sortDir)
+    {
+        var query = Context.ConfiguracoesCesta
             .Include(c => c.Itens).ThenInclude(i => i.Alimento)
-            .Where(c => c.IdParoquia == idParoquia)
-            .OrderBy(c => c.Nome)
-            .ToPagedAsync(page, pageSize);
+            .Where(c => c.IdParoquia == idParoquia);
+
+        if (!string.IsNullOrWhiteSpace(busca))
+            query = query.Where(c => EF.Functions.ILike(c.Nome, $"%{busca}%"));
+
+        var desc = string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+        var ordered = desc ? query.OrderByDescending(c => c.Nome) : query.OrderBy(c => c.Nome);
+        return await ordered.ThenBy(c => c.Id).ToPagedAsync(page, pageSize);
+    }
 
     public Task SaveAsync() => Context.SaveChangesAsync();
 }

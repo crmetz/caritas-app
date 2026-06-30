@@ -1,5 +1,6 @@
 using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Doacao;
+using Caritas.Models.Enums;
 using Caritas.Models.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,8 +12,11 @@ public class DoacoesController(IDoacaoService doacaoService) : BaseApiController
 {
     [HttpGet]
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
-    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-        => Ok(await doacaoService.GetPagedAsync(page, pageSize));
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? busca = null,
+        [FromQuery] TipoDoacao? tipo = null, [FromQuery] string? sortKey = null,
+        [FromQuery] string? sortDir = null)
+        => Ok(await doacaoService.GetPagedAsync(page, pageSize, busca, tipo, sortKey, sortDir));
 
     [HttpPost]
     [Authorize(Policy = Permissions.Suprimentos.CriarEditar)]

@@ -1,5 +1,6 @@
 using Caritas.Models.DTOs.Common;
 using Caritas.Models.DTOs.Item;
+using Caritas.Models.DTOs.Pagination;
 using Caritas.Models.Enums;
 
 namespace Caritas.Models.Interfaces.Services;
@@ -12,5 +13,6 @@ public interface IItemService
     Task<RoupaResponseDto> UpdateRoupaAsync(int id, RoupaUpdateDto dto);
     Task DeleteAsync(int id);
     Task<List<ItemSelectDto>> GetSelectAsync(TipoItem? tipo);
-    Task<List<AlimentoResponseDto>> GetAlimentosAsync();   // catálogo de gêneros
+    Task<PagedResponseDto<AlimentoResponseDto>> GetAlimentosAsync(
+        int page, int pageSize, string? busca, string? sortKey, string? sortDir); // catálogo de gêneros
 }

@@ -12,8 +12,10 @@ public class ConfiguracoesCestaController(IConfiguracaoCestaService service) : B
 {
     [HttpGet]
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
-    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-        => Ok(await service.GetPagedAsync(page, pageSize));
+    public async Task<IActionResult> Get(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
+        [FromQuery] string? busca = null, [FromQuery] string? sortDir = null)
+        => Ok(await service.GetPagedAsync(page, pageSize, busca, sortDir));
 
     [HttpGet("{id:int}")]
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]

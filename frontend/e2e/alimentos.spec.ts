@@ -1,27 +1,24 @@
 import { expect, test } from "@playwright/test";
 import { gotoEstoque } from "./helpers";
 
-// Ponto 6: alimento em uso não pode ser excluído — botão desabilitado + tooltip explicativo.
-test("alimento em uso mostra tooltip e botão de excluir desabilitado", async ({
-	page,
-}) => {
+// Ponto 6: alimento em uso não pode ser excluído — o DataTable oculta o botão de excluir.
+test("alimento em uso não exibe botão de excluir", async ({ page }) => {
 	await gotoEstoque(page, "Gêneros");
+	await page.getByPlaceholder(/Buscar por nome/i).fill("Arroz");
 
-	// Arroz (gênero do seed) é usado no estoque/cesta → não excluível. Casa a célula exata para não
-	// pegar alimentos criados nos testes que contêm "Arroz" no nome (ex.: "Cadeia Arroz 123").
+	// Arroz (gênero do seed) é usado no estoque/cesta → não excluível. Casa a célula exata para
+	// não pegar alimentos de teste que contêm "Arroz" no nome (ex.: "Cadeia Arroz 123").
 	const linhaArroz = page
 		.getByRole("row")
 		.filter({ has: page.getByRole("cell", { name: "Arroz", exact: true }) })
 		.first();
 	await expect(linhaArroz).toBeVisible();
 
-	// O botão de excluir (envolto num span por estar desabilitado) deve estar desabilitado.
-	const excluir = linhaArroz.getByRole("button").last();
-	await expect(excluir).toBeDisabled();
-
-	// Ao passar o mouse no gatilho, surge o tooltip explicativo.
-	await linhaArroz.locator("span").last().hover();
+	// Sem botão "Excluir" (em uso); o de "Editar" permanece.
 	await expect(
-		page.getByText(/não pode ser excluído porque está sendo utilizado/i),
+		linhaArroz.getByRole("button", { name: "Excluir" }),
+	).toHaveCount(0);
+	await expect(
+		linhaArroz.getByRole("button", { name: "Editar" }),
 	).toBeVisible();
 });

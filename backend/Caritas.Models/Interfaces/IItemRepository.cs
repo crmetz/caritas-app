@@ -14,7 +14,9 @@ public interface IItemRepository : IBaseRepository<Item>
     Task<Roupa?> GetRoupaByIdAsync(int id);
     Task UpdateAsync(Item item);                 // atualiza subtipo já rastreado
     Task<List<Item>> GetSelectAsync(TipoItem? tipo);
-    Task<List<Alimento>> GetAlimentosAsync();    // catálogo de gêneros, ordenado por nome
+    // Catálogo de gêneros paginado (busca por nome; sort nome/forma).
+    Task<PagedResponseDto<Alimento>> GetAlimentosPagedAsync(
+        int page, int pageSize, string? busca, string? sortKey, string? sortDir);
     // Já existe um gênero de alimento com este nome? (unicidade no service, pois Descricao mora em Item sob TPT)
     Task<bool> AlimentoNomeExisteAsync(string descricao, int? ignoreId = null);
     Task<HashSet<int>> GetItensEmUsoAsync();     // ids vinculados a estoque/movimentação/cesta

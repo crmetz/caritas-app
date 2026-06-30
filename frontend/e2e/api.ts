@@ -115,10 +115,11 @@ export async function alimentoIdPorDescricao(
 	api: Api,
 	descricao: string,
 ): Promise<number | undefined> {
-	const list = await api.get<{ id: number; descricao: string }[]>(
-		"/itens/alimentos",
+	// /itens/alimentos agora é paginado; o seletor (/itens/select) retorna todos os gêneros.
+	const list = await api.get<{ value: number; label: string }[]>(
+		"/itens/select?tipo=Alimento",
 	);
-	return list.find((a) => a.descricao === descricao)?.id;
+	return list.find((a) => a.label === descricao)?.value;
 }
 
 // ── Preparação determinística (setup) ────────────────────────────────────────

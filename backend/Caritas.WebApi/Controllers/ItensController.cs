@@ -59,6 +59,8 @@ public class ItensController(IItemService itemService) : BaseApiController
 
     [HttpGet("alimentos")]
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
-    public async Task<IActionResult> GetAlimentos()
-        => Ok(await itemService.GetAlimentosAsync());
+    public async Task<IActionResult> GetAlimentos(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? busca = null,
+        [FromQuery] string? sortKey = null, [FromQuery] string? sortDir = null)
+        => Ok(await itemService.GetAlimentosAsync(page, pageSize, busca, sortKey, sortDir));
 }

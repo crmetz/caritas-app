@@ -11,8 +11,10 @@ public class EntregasController(IEntregaService entregaService) : BaseApiControl
 {
     [HttpGet]
     [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
-    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-        => Ok(await entregaService.GetPagedAsync(page, pageSize));
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? busca = null,
+        [FromQuery] string? sortKey = null, [FromQuery] string? sortDir = null)
+        => Ok(await entregaService.GetPagedAsync(page, pageSize, busca, sortKey, sortDir));
 
     [HttpPost]
     [Authorize(Policy = Permissions.Suprimentos.CriarEditar)]

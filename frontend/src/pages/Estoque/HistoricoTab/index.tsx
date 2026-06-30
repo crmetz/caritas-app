@@ -1,16 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, History } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DataTable } from "../../../components/DataTable";
+import type { Column } from "../../../components/DataTable/interface";
 import { Badge } from "../../../components/ui/badge";
 import { Label } from "../../../components/ui/label";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "../../../components/ui/table";
 import {
 	Select,
 	SelectContent,
@@ -24,6 +16,7 @@ import {
 	ORIGENS,
 	ORIGEM_LABEL,
 	TIPOS_ITEM,
+	TIPOS_OPERACAO,
 	type MovimentacaoHistorico,
 } from "./interface";
 
@@ -45,66 +38,131 @@ function formatDateTimeBR(iso: string): string {
 export function HistoricoTab() {
 	const [items, setItems] = useState<MovimentacaoHistorico[]>([]);
 	const [totalCount, setTotalCount] = useState(0);
-	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
-	const [origem, setOrigem] = useState<string>(ALL_VALUE);
+	const [genero, setGenero] = useState<string>(ALL_VALUE);
 	const [tipo, setTipo] = useState<string>(ALL_VALUE);
+	const [origem, setOrigem] = useState<string>(ALL_VALUE);
+	const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+	const [loading, setLoading] = useState(false);
+	const reqIdRef = useRef(0);
 
-	const fetchItems = useCallback(async () => {
-		setLoading(true);
-		try {
-			const data = await APIService.getRequest<
-				PagedResponse<MovimentacaoHistorico>
-			>({
-				url: "/movimentacoes",
-				params: {
-					page,
-					pageSize: PAGE_SIZE,
-					tipoItem: tipo !== ALL_VALUE ? tipo : undefined,
-					origemTipo: origem !== ALL_VALUE ? origem : undefined,
-				},
-			});
-			setItems(data.items);
-			setTotalCount(data.totalCount);
-		} catch {
-			// mantém os itens anteriores em caso de erro
-		} finally {
-			setLoading(false);
-		}
-	}, [page, origem, tipo]);
+	const load = useCallback(
+		async (pageToLoad: number) => {
+			const reqId = ++reqIdRef.current;
+			setLoading(true);
+			try {
+				const data = await APIService.getRequest<
+					PagedResponse<MovimentacaoHistorico>
+				>({
+					url: "/movimentacoes",
+					params: {
+						page: pageToLoad,
+						pageSize: PAGE_SIZE,
+						tipoItem: genero !== ALL_VALUE ? genero : undefined,
+						tipoOperacao: tipo !== ALL_VALUE ? tipo : undefined,
+						origemTipo: origem !== ALL_VALUE ? origem : undefined,
+						sortDir,
+					},
+				});
+				if (reqId !== reqIdRef.current) return;
+				setItems(data.items);
+				setTotalCount(data.totalCount);
+				setPage(pageToLoad);
+			} catch {
+				// mantém os itens anteriores em caso de erro
+			} finally {
+				if (reqId === reqIdRef.current) setLoading(false);
+			}
+		},
+		[genero, tipo, origem, sortDir],
+	);
 
 	useEffect(() => {
-		fetchItems();
-	}, [fetchItems]);
+		const t = setTimeout(() => load(1), 400);
+		return () => clearTimeout(t);
+	}, [load]);
 
-	const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+	const columns: Column<MovimentacaoHistorico>[] = [
+		{
+			key: "criadoEm",
+			header: "Data",
+			sortKey: "data",
+			render: (m) => (
+				<span className="tabular-nums text-muted-foreground">
+					{formatDateTimeBR(m.criadoEm)}
+				</span>
+			),
+		},
+		{
+			key: "descricao",
+			header: "Item",
+			render: (m) => (
+				<div>
+					<div className="font-medium text-foreground">
+						{m.descricao ?? "—"}
+					</div>
+					{m.tipoItem && (
+						<div className="text-xs text-muted-foreground">{m.tipoItem}</div>
+					)}
+				</div>
+			),
+		},
+		{
+			key: "tipoOperacao",
+			header: "Tipo",
+			render: (m) => {
+				const entrada = m.tipoOperacao === "Entrada";
+				return (
+					<Badge
+						variant="outline"
+						className={cn(
+							"font-normal",
+							entrada
+								? "border-success/25 bg-success/10 text-success"
+								: "border-destructive/25 bg-destructive/10 text-destructive",
+						)}
+					>
+						{entrada ? "Entrada" : "Saída"}
+					</Badge>
+				);
+			},
+		},
+		{
+			key: "quantidade",
+			header: "Quantidade",
+			align: "right",
+			render: (m) => (
+				<span className="tabular-nums text-foreground">
+					{m.tipoOperacao === "Entrada" ? "+" : "−"}
+					{m.quantidade.toLocaleString("pt-BR")}
+				</span>
+			),
+		},
+		{
+			key: "origemTipo",
+			header: "Origem",
+			render: (m) => ORIGEM_LABEL[m.origemTipo] ?? m.origemTipo,
+		},
+		{
+			key: "lote",
+			header: "Lote",
+			render: (m) => m.lote ?? "—",
+		},
+	];
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<p className="text-sm text-muted-foreground">
-					Todas as entradas e saídas de estoque, da mais recente para a mais
-					antiga.
-				</p>
-				<div className="flex flex-wrap items-center gap-2">
-					<Label
-						htmlFor="tipo-historico"
-						className="text-xs text-muted-foreground"
-					>
-						Tipo
-					</Label>
+		<div className="space-y-4">
+			<div className="flex flex-wrap items-end gap-3">
+				<div className="space-y-1.5">
+					<Label className="text-xs text-muted-foreground">Gênero</Label>
 					<Select
-						value={tipo}
+						value={genero}
 						onValueChange={(v) => {
-							setTipo(v);
+							setGenero(v);
 							setPage(1);
 						}}
 					>
-						<SelectTrigger
-							id="tipo-historico"
-							className="w-36"
-							aria-label="Tipo"
-						>
+						<SelectTrigger className="w-40" aria-label="Gênero">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -116,13 +174,33 @@ export function HistoricoTab() {
 							))}
 						</SelectContent>
 					</Select>
+				</div>
 
-					<Label
-						htmlFor="origem-historico"
-						className="text-xs text-muted-foreground"
+				<div className="space-y-1.5">
+					<Label className="text-xs text-muted-foreground">Tipo</Label>
+					<Select
+						value={tipo}
+						onValueChange={(v) => {
+							setTipo(v);
+							setPage(1);
+						}}
 					>
-						Origem
-					</Label>
+						<SelectTrigger className="w-40" aria-label="Tipo">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL_VALUE}>Todos</SelectItem>
+							{TIPOS_OPERACAO.map((o) => (
+								<SelectItem key={o.value} value={o.value}>
+									{o.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+
+				<div className="space-y-1.5">
+					<Label className="text-xs text-muted-foreground">Origem</Label>
 					<Select
 						value={origem}
 						onValueChange={(v) => {
@@ -130,11 +208,7 @@ export function HistoricoTab() {
 							setPage(1);
 						}}
 					>
-						<SelectTrigger
-							id="origem-historico"
-							className="w-48"
-							aria-label="Origem"
-						>
+						<SelectTrigger className="w-48" aria-label="Origem">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -149,120 +223,22 @@ export function HistoricoTab() {
 				</div>
 			</div>
 
-			<div className="rounded-xl border border-border bg-surface shadow-[var(--shadow-soft)]">
-				<div className="flex items-center justify-between border-b border-border px-4 py-3">
-					<p className="text-sm text-muted-foreground">
-						<span className="font-medium text-foreground">{totalCount}</span>{" "}
-						{totalCount === 1 ? "movimentação" : "movimentações"}
-					</p>
-				</div>
-
-				{loading ? (
-					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-						<p className="text-sm text-muted-foreground">Carregando...</p>
-					</div>
-				) : items.length === 0 ? (
-					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-						<div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-							<History className="h-6 w-6 text-muted-foreground" />
-						</div>
-						<p className="text-sm font-medium text-foreground">
-							Nenhuma movimentação encontrada
-						</p>
-						<p className="mt-1 text-xs text-muted-foreground">
-							As entradas e saídas de estoque aparecerão aqui.
-						</p>
-					</div>
-				) : (
-					<div className="overflow-x-auto">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="pl-4">Data</TableHead>
-									<TableHead>Item</TableHead>
-									<TableHead>Tipo</TableHead>
-									<TableHead className="text-right">Quantidade</TableHead>
-									<TableHead>Origem</TableHead>
-									<TableHead className="pr-4">Lote</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{items.map((m) => {
-									const entrada = m.tipoOperacao === "Entrada";
-									return (
-										<TableRow key={m.id}>
-											<TableCell className="pl-4 tabular-nums text-muted-foreground">
-												{formatDateTimeBR(m.criadoEm)}
-											</TableCell>
-											<TableCell>
-												<div className="font-medium text-foreground">
-													{m.descricao ?? "—"}
-												</div>
-												{m.tipoItem && (
-													<div className="text-xs text-muted-foreground">
-														{m.tipoItem}
-													</div>
-												)}
-											</TableCell>
-											<TableCell>
-												<Badge
-													variant="outline"
-													className={cn(
-														"font-normal",
-														entrada
-															? "border-success/25 bg-success/10 text-success"
-															: "border-destructive/25 bg-destructive/10 text-destructive",
-													)}
-												>
-													{entrada ? "Entrada" : "Saída"}
-												</Badge>
-											</TableCell>
-											<TableCell className="text-right tabular-nums text-foreground">
-												{entrada ? "+" : "−"}
-												{m.quantidade.toLocaleString("pt-BR")}
-											</TableCell>
-											<TableCell className="text-muted-foreground">
-												{ORIGEM_LABEL[m.origemTipo] ?? m.origemTipo}
-											</TableCell>
-											<TableCell className="pr-4 text-muted-foreground">
-												{m.lote ?? "—"}
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</div>
-				)}
-
-				{totalPages > 1 && (
-					<div className="flex items-center justify-between border-t border-border px-4 py-3">
-						<p className="text-sm text-muted-foreground">
-							Página {page} de {totalPages}
-						</p>
-						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={page <= 1}
-								onClick={() => setPage((p) => Math.max(1, p - 1))}
-							>
-								<ChevronLeft className="h-4 w-4" />
-								Anterior
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={page >= totalPages}
-								onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-							>
-								Próxima
-								<ChevronRight className="h-4 w-4" />
-							</Button>
-						</div>
-					</div>
-				)}
-			</div>
+			<DataTable
+				columns={columns}
+				data={items}
+				pagination={{
+					page,
+					pageSize: PAGE_SIZE,
+					totalCount,
+					onPageChange: load,
+				}}
+				sort={{
+					sortKey: "data",
+					sortDir,
+					onSort: () => setSortDir((d) => (d === "asc" ? "desc" : "asc")),
+				}}
+				isLoading={loading}
+			/>
 		</div>
 	);
 }

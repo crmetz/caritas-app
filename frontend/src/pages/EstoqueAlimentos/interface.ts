@@ -64,6 +64,14 @@ export interface EstoqueAlertas {
 	proximos: number; // a vencer em até 30 dias
 }
 
+// Opção de seleção de alimento (vem de /itens/select?tipo=Alimento), com a forma de medida
+// para o campo de quantidade. Usada nos modais (entrada de estoque, configuração de cesta).
+export interface AlimentoSelectOption {
+	value: number;
+	label: string;
+	formaMedida: FormaMedida;
+}
+
 export interface ResumoTipoAlimento {
 	idAlimento: number;
 	nome: string;

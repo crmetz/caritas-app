@@ -6,5 +6,6 @@ namespace Caritas.Models.Interfaces;
 public interface IEntregaRepository : IBaseRepository<Entrega>
 {
     void Add(Entrega entrega);   // sem commit (uso transacional)
-    Task<PagedResponseDto<Entrega>> GetPagedAsync(int idParoquia, int page, int pageSize);
+    Task<PagedResponseDto<Entrega>> GetPagedAsync(
+        int idParoquia, int page, int pageSize, string? busca, string? sortKey, string? sortDir);
 }
