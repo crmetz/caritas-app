@@ -4,7 +4,8 @@ import { useSession } from "@/components/SessionProvider";
 import { Permissions } from "@/constants/permissions";
 
 export function AppLayout() {
-	const { session, paroquiaAtual, setParoquiaAtual, logout, hasPermission } = useSession();
+	const { session, paroquiaAtual, setParoquiaAtual, logout, hasPermission } =
+		useSession();
 	const navigate = useNavigate();
 
 	const linkClassName = ({ isActive }: { isActive: boolean }) =>
@@ -65,6 +66,22 @@ export function AppLayout() {
 							<NavLink to="/perfis" className={linkClassName}>
 								Perfis
 							</NavLink>
+						)}
+						{hasPermission(Permissions.Suprimentos.Visualizar) && (
+							<>
+								<NavLink to="/estoque" className={linkClassName}>
+									Estoque
+								</NavLink>
+								<NavLink to="/cesta-basica" className={linkClassName}>
+									Cestas
+								</NavLink>
+								<NavLink to="/doacoes" className={linkClassName}>
+									Doações
+								</NavLink>
+								<NavLink to="/entregas" className={linkClassName}>
+									Entregas
+								</NavLink>
+							</>
 						)}
 					</nav>
 					<div className="ml-auto flex items-center gap-4">

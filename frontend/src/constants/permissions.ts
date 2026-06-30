@@ -37,4 +37,8 @@ export const Permissions = {
 		Lancar: "caixa.lancar",
 		Relatorio: "caixa.relatorio",
 	},
+	Suprimentos: {
+		Visualizar: "suprimentos.visualizar",
+		CriarEditar: "suprimentos.criarEditar",
+	},
 } as const;

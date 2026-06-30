@@ -45,7 +45,7 @@ export interface CreateUsuarioDto {
 	admin: boolean;
 }
 
-export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {};
+export interface UpdateUsuarioDto extends Omit<CreateUsuarioDto, "email"> {}
 
 export interface UsuarioModalRef {
 	open: (id?: number) => void;

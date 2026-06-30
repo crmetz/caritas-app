@@ -32,7 +32,11 @@ export default function PerfilPage() {
 					params: { page, pageSize: pagination.pageSize },
 				});
 				setData(result.items);
-				setPagination((prev) => ({ ...prev, page, totalCount: result.totalCount }));
+				setPagination((prev) => ({
+					...prev,
+					page,
+					totalCount: result.totalCount,
+				}));
 			} catch {
 				toast.error("Erro ao carregar perfis.");
 			} finally {

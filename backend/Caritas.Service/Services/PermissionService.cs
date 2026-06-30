@@ -16,6 +16,7 @@ public class PermissionService
         ["bazar"] = "Bazar",
         ["brecho"] = "Brechó",
         ["caixa"] = "Caixa",
+        ["suprimentos"] = "Suprimentos",
     };
 
     private static readonly Dictionary<string, string> ActionLabels = new()

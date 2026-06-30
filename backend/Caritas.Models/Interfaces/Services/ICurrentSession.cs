@@ -1,8 +1,9 @@
-namespace Caritas.Service.Session;
+namespace Caritas.Models.Interfaces.Services;
 
 /// <summary>
 /// Informações da sessão atual (usuário autenticado e paróquia selecionada),
-/// acessíveis a partir de qualquer service via injeção de dependência.
+/// acessíveis a partir de qualquer camada via injeção de dependência.
+/// Vive em Caritas.Models para que a camada Repository (DbContext) também possa consumi-la.
 /// </summary>
 public interface ICurrentSession
 {

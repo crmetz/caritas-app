@@ -168,7 +168,9 @@ export const AtendimentoModal = forwardRef<
 			}
 			setIsOpen(false);
 			onSuccess();
-			toast.success(editing ? "Atendimento atualizado." : "Atendimento registrado.");
+			toast.success(
+				editing ? "Atendimento atualizado." : "Atendimento registrado.",
+			);
 		} catch (e) {
 			toast.error(getErrorMessage(e, "Erro ao salvar atendimento."));
 		}
@@ -360,7 +362,9 @@ export const AtendimentoModal = forwardRef<
 									min="0"
 									step="1"
 									disabled={disabled}
-									{...register("qtdMembrosTrabalhando", { valueAsNumber: true })}
+									{...register("qtdMembrosTrabalhando", {
+										valueAsNumber: true,
+									})}
 								/>
 								{errors.qtdMembrosTrabalhando && (
 									<p className="text-destructive text-xs">

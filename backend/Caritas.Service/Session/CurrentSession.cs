@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Caritas.Models.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace Caritas.Service.Session;

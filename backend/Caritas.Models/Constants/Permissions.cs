@@ -55,4 +55,10 @@ public static class Permissions
         public const string Lancar = "caixa.lancar";
         public const string Relatorio = "caixa.relatorio";
     }
+
+    public static class Suprimentos
+    {
+        public const string Visualizar = "suprimentos.visualizar";
+        public const string CriarEditar = "suprimentos.criarEditar";
+    }
 }
