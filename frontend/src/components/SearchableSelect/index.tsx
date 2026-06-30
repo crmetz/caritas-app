@@ -1,20 +1,13 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import type { SearchableSelectProps } from "./interface";
 
-interface ListaPos {
-	left: number;
-	width: number;
-	top?: number;
-	bottom?: number;
-}
-
-// Combobox com busca. O gatilho é um <input> (fica dentro do modal, então mantém o foco sem disputa
-// com o focus-trap do Dialog). A lista de opções é portalizada para o body (posição fixed) para
-// sobrepor e exceder o modal sem recortes — sem role="dialog" (não colide com o modal) e sem
-// elementos focáveis (selecionadas via onMouseDown, mantendo o foco no input).
+// Combobox com busca. Segue o mesmo modelo do MultiSelect (padrão da app): a lista é renderizada
+// in-flow (absoluta dentro do próprio container, sem portal), então fica dentro do conteúdo do
+// Dialog e (1) volta a rolar com a roda do mouse — o react-remove-scroll só bloqueia a roda fora do
+// conteúdo do modal — e (2) arrastar a barra de scroll não fecha a lista, pois o handler de clique
+// externo ignora cliques na scrollbar. O gatilho é um <input> que também serve de busca inline.
 export function SearchableSelect({
 	value,
 	onChange,
@@ -26,11 +19,10 @@ export function SearchableSelect({
 	className,
 }: SearchableSelectProps) {
 	const [open, setOpen] = useState(false);
+	const [openUp, setOpenUp] = useState(false);
 	const [search, setSearch] = useState("");
-	const [pos, setPos] = useState<ListaPos | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
-	const listRef = useRef<HTMLDivElement>(null);
 
 	const selected = options.find((o) => o.value === value);
 	const termo = search.trim().toLowerCase();
@@ -47,46 +39,35 @@ export function SearchableSelect({
 		inputRef.current?.blur();
 	};
 
-	// Fecha ao clicar fora do gatilho e da lista (a lista vive num portal, fora do container).
+	// Abre para cima quando não há espaço suficiente abaixo (ex.: linha perto do fim do modal).
+	useLayoutEffect(() => {
+		if (!open) return;
+		const r = containerRef.current?.getBoundingClientRect();
+		if (!r) return;
+		const espacoAbaixo = window.innerHeight - r.bottom;
+		setOpenUp(espacoAbaixo < 280 && r.top > espacoAbaixo);
+	}, [open]);
+
+	// Fecha ao clicar fora — ignorando cliques na scrollbar de qualquer container rolável (do modal
+	// ou da própria lista), cujo mousedown tem alvo fora do select e fecharia a lista sem querer.
 	useEffect(() => {
 		if (!open) return;
 		const handler = (e: MouseEvent) => {
-			const t = e.target as Node;
-			if (containerRef.current?.contains(t)) return;
-			if (listRef.current?.contains(t)) return;
-			close();
+			const target = e.target as HTMLElement | null;
+			if (target) {
+				const naScrollbarVertical =
+					target.scrollHeight > target.clientHeight &&
+					e.offsetX > target.clientWidth;
+				const naScrollbarHorizontal =
+					target.scrollWidth > target.clientWidth &&
+					e.offsetY > target.clientHeight;
+				if (naScrollbarVertical || naScrollbarHorizontal) return;
+			}
+			if (containerRef.current && !containerRef.current.contains(target))
+				close();
 		};
 		document.addEventListener("mousedown", handler);
 		return () => document.removeEventListener("mousedown", handler);
-	}, [open]);
-
-	// Posiciona a lista (fixed) ancorada ao gatilho, acompanhando scroll/resize.
-	useLayoutEffect(() => {
-		if (!open) {
-			setPos(null);
-			return;
-		}
-		const atualizar = () => {
-			const r = containerRef.current?.getBoundingClientRect();
-			if (!r) return;
-			const espacoAbaixo = window.innerHeight - r.bottom;
-			const altoEstimado = 300;
-			const abrirAcima = espacoAbaixo < altoEstimado && r.top > espacoAbaixo;
-			setPos({
-				left: r.left,
-				width: r.width,
-				...(abrirAcima
-					? { bottom: window.innerHeight - r.top + 4 }
-					: { top: r.bottom + 4 }),
-			});
-		};
-		atualizar();
-		window.addEventListener("scroll", atualizar, true);
-		window.addEventListener("resize", atualizar);
-		return () => {
-			window.removeEventListener("scroll", atualizar, true);
-			window.removeEventListener("resize", atualizar);
-		};
 	}, [open]);
 
 	return (
@@ -124,73 +105,64 @@ export function SearchableSelect({
 				)}
 			/>
 
-			{open &&
-				pos &&
-				createPortal(
-					<div
-						ref={listRef}
-						style={{
-							position: "fixed",
-							left: pos.left,
-							width: pos.width,
-							top: pos.top,
-							bottom: pos.bottom,
-						}}
-						// pointer-events-auto: o Dialog modal põe pointer-events:none no body.
-						className="pointer-events-auto z-[60] rounded-xl border bg-popover shadow-lg"
-					>
-						<div className="max-h-56 overflow-y-auto p-1">
-							{allOptionLabel && (
-								<button
-									type="button"
-									// onMouseDown + preventDefault: seleciona sem tirar o foco do input.
-									onMouseDown={(e) => {
-										e.preventDefault();
-										handleSelect(null);
-									}}
-									className={cn(
-										"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
-										"hover:bg-accent hover:text-accent-foreground",
-										value === null && "bg-accent/50",
-									)}
-								>
-									<span className="flex h-4 w-4 shrink-0 items-center justify-center">
-										{value === null && <Check className="h-3 w-3" />}
-									</span>
-									{allOptionLabel}
-								</button>
-							)}
+			{open && (
+				<div
+					className={cn(
+						"absolute left-0 right-0 z-50 rounded-xl border bg-popover shadow-lg",
+						openUp ? "bottom-full mb-1" : "top-full mt-1",
+					)}
+				>
+					<div className="max-h-56 overflow-y-auto p-1">
+						{allOptionLabel && (
+							<button
+								type="button"
+								// onMouseDown + preventDefault: seleciona sem tirar o foco do input.
+								onMouseDown={(e) => {
+									e.preventDefault();
+									handleSelect(null);
+								}}
+								className={cn(
+									"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+									"hover:bg-accent hover:text-accent-foreground",
+									value === null && "bg-accent/50",
+								)}
+							>
+								<span className="flex h-4 w-4 shrink-0 items-center justify-center">
+									{value === null && <Check className="h-3 w-3" />}
+								</span>
+								<span className="truncate">{allOptionLabel}</span>
+							</button>
+						)}
 
-							{filtered.map((o) => (
-								<button
-									key={o.value}
-									type="button"
-									onMouseDown={(e) => {
-										e.preventDefault();
-										handleSelect(o.value);
-									}}
-									className={cn(
-										"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
-										"hover:bg-accent hover:text-accent-foreground",
-										o.value === value && "bg-accent/50",
-									)}
-								>
-									<span className="flex h-4 w-4 shrink-0 items-center justify-center">
-										{o.value === value && <Check className="h-3 w-3" />}
-									</span>
-									{o.label}
-								</button>
-							))}
+						{filtered.map((o) => (
+							<button
+								key={o.value}
+								type="button"
+								onMouseDown={(e) => {
+									e.preventDefault();
+									handleSelect(o.value);
+								}}
+								className={cn(
+									"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+									"hover:bg-accent hover:text-accent-foreground",
+									o.value === value && "bg-accent/50",
+								)}
+							>
+								<span className="flex h-4 w-4 shrink-0 items-center justify-center">
+									{o.value === value && <Check className="h-3 w-3" />}
+								</span>
+								<span className="truncate">{o.label}</span>
+							</button>
+						))}
 
-							{filtered.length === 0 && (
-								<p className="py-4 text-center text-sm text-muted-foreground">
-									{emptyMessage}
-								</p>
-							)}
-						</div>
-					</div>,
-					document.body,
-				)}
+						{filtered.length === 0 && (
+							<p className="py-4 text-center text-sm text-muted-foreground">
+								{emptyMessage}
+							</p>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
