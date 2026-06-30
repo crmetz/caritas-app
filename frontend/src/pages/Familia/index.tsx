@@ -500,6 +500,11 @@ export default function FamiliaPage() {
 			render: (f) => f.cidadeNome,
 		},
 		{
+			key: "criadoEm",
+			header: "Data de Registro",
+			render: (f) => formatDate(f.criadoEm),
+		},
+		{
 			key: "evolucao",
 			header: "Evolução",
 			render: (f) => (
