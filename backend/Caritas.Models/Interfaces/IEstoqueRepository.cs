@@ -7,7 +7,12 @@ namespace Caritas.Models.Interfaces;
 
 public interface IEstoqueRepository : IBaseRepository<Estoque>
 {
-    Task<PagedResponseDto<Estoque>> GetPagedByTipoAsync(TipoItem tipo, int page, int pageSize, string? busca);
+    // Estoque de alimentos com busca/filtro de validade/ordenação/paginação server-side.
+    Task<PagedResponseDto<Estoque>> GetAlimentosPagedAsync(
+        int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
+        string? sortKey, string? sortDir);
+    // Contagens de vencidos / a vencer em até 30 dias (independem da paginação).
+    Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(DateOnly hoje);
     Task<PagedResponseDto<Estoque>> GetRoupasPagedAsync(
         int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
         string? sortKey, string? sortDir);

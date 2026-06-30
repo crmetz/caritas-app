@@ -9,11 +9,17 @@ namespace Caritas.Service;
 
 public class EstoqueService(IEstoqueRepository estoqueRepository, ICurrentSession session) : IEstoqueService
 {
-    public async Task<PagedResponseDto<EstoqueAlimentoResponseDto>> GetAlimentosAsync(int page, int pageSize, string? busca)
+    public async Task<PagedResponseDto<EstoqueAlimentoResponseDto>> GetAlimentosAsync(
+        int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
+        string? sortKey, string? sortDir)
     {
-        var paged = await estoqueRepository.GetPagedByTipoAsync(TipoItem.Alimento, page, pageSize, busca);
+        var paged = await estoqueRepository.GetAlimentosPagedAsync(
+            page, pageSize, busca, validadeDe, validadeAte, sortKey, sortDir);
         return new() { Items = paged.Items.Select(e => e.ToAlimentoDto()), TotalCount = paged.TotalCount };
     }
+
+    public Task<EstoqueAlertasDto> GetAlimentosAlertasAsync()
+        => estoqueRepository.GetAlimentosAlertasAsync(DateOnly.FromDateTime(DateTime.UtcNow));
 
     public async Task<PagedResponseDto<EstoqueRoupaResponseDto>> GetRoupasAsync(
         int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,

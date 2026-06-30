@@ -11,18 +11,49 @@ namespace Caritas.Repository.Repositories;
 
 public class EstoqueRepository(CaritasDbContext context) : BaseRepository<Estoque>(context), IEstoqueRepository
 {
-    public async Task<PagedResponseDto<Estoque>> GetPagedByTipoAsync(
-        TipoItem tipo, int page, int pageSize, string? busca)
+    public async Task<PagedResponseDto<Estoque>> GetAlimentosPagedAsync(
+        int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
+        string? sortKey, string? sortDir)
     {
         // Lotes zerados (saldo aplicado a 0 após saídas) não aparecem na listagem.
         var query = DbSet.Include(e => e.Item)
-                         .Where(e => e.Item.Tipo == tipo && e.Quantidade > 0);
+                         .Where(e => e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0);
 
         if (!string.IsNullOrWhiteSpace(busca))
             query = query.Where(e => EF.Functions.ILike(e.Item.Descricao, $"%{busca}%")
                                   || (e.Lote != null && EF.Functions.ILike(e.Lote, $"%{busca}%")));
+        // Itens sem validade permanecem visíveis mesmo com o filtro de validade aplicado.
+        if (validadeDe.HasValue)
+            query = query.Where(e => e.Validade == null || e.Validade >= validadeDe.Value);
+        if (validadeAte.HasValue)
+            query = query.Where(e => e.Validade == null || e.Validade <= validadeAte.Value);
 
-        return await query.OrderBy(e => e.Validade).ThenBy(e => e.Id).ToPagedAsync(page, pageSize);
+        var desc = string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+        var ordered = sortKey switch
+        {
+            "descricao" => desc
+                ? query.OrderByDescending(e => e.Item.Descricao)
+                : query.OrderBy(e => e.Item.Descricao),
+            "atualizacao" => desc
+                ? query.OrderByDescending(e => e.AtualizadoEm)
+                : query.OrderBy(e => e.AtualizadoEm),
+            // "expiry" (padrão): por validade
+            _ => desc ? query.OrderByDescending(e => e.Validade) : query.OrderBy(e => e.Validade),
+        };
+
+        return await ordered.ThenBy(e => e.Id).ToPagedAsync(page, pageSize);
+    }
+
+    public async Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(DateOnly hoje)
+    {
+        var baseQuery = DbSet.Where(e =>
+            e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0 && e.Validade != null);
+        var limite = hoje.AddDays(30);
+        return new EstoqueAlertasDto
+        {
+            Vencidos = await baseQuery.CountAsync(e => e.Validade < hoje),
+            Proximos = await baseQuery.CountAsync(e => e.Validade >= hoje && e.Validade <= limite),
+        };
     }
 
     // Estoque de roupas com filtros/ordenação/paginação server-side.

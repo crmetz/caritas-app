@@ -59,6 +59,11 @@ export interface AlimentoEstoqueItem {
 	atualizadoEm: string;
 }
 
+export interface EstoqueAlertas {
+	vencidos: number;
+	proximos: number; // a vencer em até 30 dias
+}
+
 export interface ResumoTipoAlimento {
 	idAlimento: number;
 	nome: string;

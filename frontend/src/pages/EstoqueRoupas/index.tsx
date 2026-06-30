@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	Plus,
 	PackageOpen,
@@ -57,7 +57,11 @@ export function EstoqueRoupasTab() {
 	const [sortKey, setSortKey] = useState<SortKey>("descricao");
 	const [sortDir, setSortDir] = useState<SortDir>("asc");
 
+	// Ignora respostas obsoletas de buscas concorrentes (só a requisição mais recente aplica).
+	const reqIdRef = useRef(0);
+
 	const fetchItems = useCallback(async () => {
+		const reqId = ++reqIdRef.current;
 		setLoading(true);
 		try {
 			const data = await APIService.getRequest<PagedResponse<RoupaEstoqueItem>>(
@@ -76,12 +80,13 @@ export function EstoqueRoupasTab() {
 					},
 				},
 			);
+			if (reqId !== reqIdRef.current) return;
 			setItems(data.items);
 			setTotalCount(data.totalCount);
 		} catch {
 			// silently keep previous items on error
 		} finally {
-			setLoading(false);
+			if (reqId === reqIdRef.current) setLoading(false);
 		}
 	}, [page, filters, sortKey, sortDir]);
 

@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	Plus,
 	PackageOpen,
 	ArrowUpDown,
 	AlertTriangle,
 	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
 	ChevronUp,
 	Clock,
 	PackageMinus,
@@ -27,6 +29,7 @@ import {
 	formatDateBR,
 	getExpiryStatus,
 	type AlimentoEstoqueItem,
+	type EstoqueAlertas,
 	type ExpiryStatus,
 	type ResumoTipoAlimento,
 } from "./interface";
@@ -35,6 +38,8 @@ import APIService, { type PagedResponse } from "../../services/api";
 
 type SortKey = "expiry" | "descricao" | "atualizacao";
 type SortDir = "asc" | "desc";
+
+const PAGE_SIZE = 10;
 
 const STATUS_BADGE: Record<ExpiryStatus, { label: string; className: string }> =
 	{
@@ -58,13 +63,19 @@ const STATUS_BADGE: Record<ExpiryStatus, { label: string; className: string }> =
 
 export function EstoqueAlimentosTab() {
 	const [items, setItems] = useState<AlimentoEstoqueItem[]>([]);
+	const [totalCount, setTotalCount] = useState(0);
 	const [resumo, setResumo] = useState<ResumoTipoAlimento[]>([]);
+	const [alertas, setAlertas] = useState<EstoqueAlertas>({
+		vencidos: 0,
+		proximos: 0,
+	});
 	const [loading, setLoading] = useState(false);
 	const [filters, setFilters] = useState<PerishablesFiltersState>({
 		search: "",
 		expiryFrom: "",
 		expiryTo: "",
 	});
+	const [page, setPage] = useState(1);
 	const [formOpen, setFormOpen] = useState(false);
 	const [saidaItem, setSaidaItem] = useState<AlimentoEstoqueItem | null>(null);
 	const [sortKey, setSortKey] = useState<SortKey>("expiry");
@@ -81,34 +92,69 @@ export function EstoqueAlimentosTab() {
 					: 2,
 	);
 
-	const fetchItems = async () => {
+	// Ignora respostas obsoletas: com buscas concorrentes (ex.: fetch inicial + busca logo após),
+	// só a requisição mais recente aplica seu resultado.
+	const reqIdRef = useRef(0);
+
+	// Lista server-side (busca + filtro de validade + ordenação + paginação), padrão das Roupas.
+	const fetchItems = useCallback(async () => {
+		const reqId = ++reqIdRef.current;
 		setLoading(true);
 		try {
 			const data = await APIService.getRequest<
 				PagedResponse<AlimentoEstoqueItem>
 			>({
 				url: "/estoque/alimentos",
-				params: { page: 1, pageSize: 100 },
+				params: {
+					page,
+					pageSize: PAGE_SIZE,
+					busca: filters.search.trim() || undefined,
+					validadeDe: filters.expiryFrom || undefined,
+					validadeAte: filters.expiryTo || undefined,
+					sortKey,
+					sortDir,
+				},
 			});
+			if (reqId !== reqIdRef.current) return;
 			setItems(data.items);
+			setTotalCount(data.totalCount);
 		} catch {
-			// silently keep previous items on error; user can retry via add/reload
+			// mantém os itens anteriores em caso de erro
 		} finally {
-			setLoading(false);
+			if (reqId === reqIdRef.current) setLoading(false);
 		}
+	}, [page, filters, sortKey, sortDir]);
+
+	// Resumo por gênero e alertas de validade são agregados server-side (independem da paginação).
+	const fetchAgregados = useCallback(async () => {
 		try {
-			const r = await APIService.getRequest<ResumoTipoAlimento[]>({
-				url: "/estoque/alimentos/resumo",
-			});
+			const [r, a] = await Promise.all([
+				APIService.getRequest<ResumoTipoAlimento[]>({
+					url: "/estoque/alimentos/resumo",
+				}),
+				APIService.getRequest<EstoqueAlertas>({
+					url: "/estoque/alimentos/alertas",
+				}),
+			]);
 			setResumo(r);
+			setAlertas(a);
 		} catch {
-			// resumo é complementar; mantém o anterior em caso de erro
+			// agregados são complementares; mantém os anteriores em caso de erro
 		}
+	}, []);
+
+	const refresh = () => {
+		fetchItems();
+		fetchAgregados();
 	};
 
 	useEffect(() => {
 		fetchItems();
-	}, []);
+	}, [fetchItems]);
+
+	useEffect(() => {
+		fetchAgregados();
+	}, [fetchAgregados]);
 
 	useEffect(() => {
 		const sm = window.matchMedia("(min-width: 640px)");
@@ -124,42 +170,15 @@ export function EstoqueAlimentosTab() {
 		};
 	}, []);
 
-	const filtered = useMemo(() => {
-		const q = filters.search.trim().toLowerCase();
-		const list = items.filter((it) => {
-			const expiry = it.validade ?? "";
-			if (filters.expiryFrom && expiry && expiry < filters.expiryFrom)
-				return false;
-			if (filters.expiryTo && expiry && expiry > filters.expiryTo) return false;
-			if (q) {
-				const hay = `${it.descricao} ${it.lote ?? ""}`.toLowerCase();
-				if (!hay.includes(q)) return false;
-			}
-			return true;
-		});
-		const keyOf = (i: AlimentoEstoqueItem) =>
-			sortKey === "expiry"
-				? (i.validade ?? "")
-				: sortKey === "atualizacao"
-					? i.atualizadoEm
-					: i.descricao.toLowerCase();
-		return list.sort((a, b) => {
-			const cmp = keyOf(a).localeCompare(keyOf(b));
-			return sortDir === "asc" ? cmp : -cmp;
-		});
-	}, [items, filters, sortKey, sortDir]);
-
-	const vencidosCount = filtered.filter(
-		(i) => i.validade && getExpiryStatus(i.validade) === "expired",
-	).length;
-	const proximosCount = filtered.filter((i) => {
-		if (!i.validade) return false;
-		const s = getExpiryStatus(i.validade);
-		return s === "critical" || s === "warning";
-	}).length;
+	const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
 	const openAdd = () => {
 		setFormOpen(true);
+	};
+
+	const handleFiltersChange = (next: PerishablesFiltersState) => {
+		setFilters(next);
+		setPage(1);
 	};
 
 	const toggleSort = (key: SortKey) => {
@@ -169,6 +188,7 @@ export function EstoqueAlimentosTab() {
 			setSortKey(key);
 			setSortDir("asc");
 		}
+		setPage(1);
 	};
 
 	return (
@@ -183,25 +203,27 @@ export function EstoqueAlimentosTab() {
 				</Button>
 			</div>
 
-			{vencidosCount > 0 && (
+			{alertas.vencidos > 0 && (
 				<div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
 					<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
 					<p className="text-foreground">
 						<span className="font-semibold text-destructive">
-							{vencidosCount}
+							{alertas.vencidos}
 						</span>{" "}
-						{vencidosCount === 1 ? "item vencido" : "itens vencidos"} — retire
-						do estoque o quanto antes.
+						{alertas.vencidos === 1 ? "item vencido" : "itens vencidos"} —
+						retire do estoque o quanto antes.
 					</p>
 				</div>
 			)}
 
-			{proximosCount > 0 && (
+			{alertas.proximos > 0 && (
 				<div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
 					<Clock className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 					<p className="text-foreground">
-						<span className="font-semibold text-warning">{proximosCount}</span>{" "}
-						{proximosCount === 1
+						<span className="font-semibold text-warning">
+							{alertas.proximos}
+						</span>{" "}
+						{alertas.proximos === 1
 							? "item próximo do vencimento"
 							: "itens próximos do vencimento"}{" "}
 						— priorize o uso nas próximas cestas.
@@ -260,15 +282,13 @@ export function EstoqueAlimentosTab() {
 				</div>
 			)}
 
-			<PerishablesFilters filters={filters} onChange={setFilters} />
+			<PerishablesFilters filters={filters} onChange={handleFiltersChange} />
 
 			<div className="rounded-xl border border-border bg-surface shadow-[var(--shadow-soft)]">
 				<div className="flex items-center justify-between border-b border-border px-4 py-3">
 					<p className="text-sm text-muted-foreground">
-						<span className="font-medium text-foreground">
-							{filtered.length}
-						</span>{" "}
-						{filtered.length === 1 ? "item" : "itens"}
+						<span className="font-medium text-foreground">{totalCount}</span>{" "}
+						{totalCount === 1 ? "item" : "itens"}
 					</p>
 				</div>
 
@@ -276,7 +296,7 @@ export function EstoqueAlimentosTab() {
 					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
 						<p className="text-sm text-muted-foreground">Carregando...</p>
 					</div>
-				) : filtered.length === 0 ? (
+				) : items.length === 0 ? (
 					<div className="flex flex-col items-center justify-center px-4 py-16 text-center">
 						<div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 							<PackageOpen className="h-6 w-6 text-muted-foreground" />
@@ -350,7 +370,7 @@ export function EstoqueAlimentosTab() {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{filtered.map((item) => {
+								{items.map((item) => {
 									const status = item.validade
 										? getExpiryStatus(item.validade)
 										: null;
@@ -424,17 +444,45 @@ export function EstoqueAlimentosTab() {
 						</Table>
 					</div>
 				)}
+
+				{totalPages > 1 && (
+					<div className="flex items-center justify-between border-t border-border px-4 py-3">
+						<p className="text-sm text-muted-foreground">
+							Página {page} de {totalPages}
+						</p>
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={page <= 1}
+								onClick={() => setPage((p) => Math.max(1, p - 1))}
+							>
+								<ChevronLeft className="h-4 w-4" />
+								Anterior
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={page >= totalPages}
+								onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+							>
+								Próxima
+								<ChevronRight className="h-4 w-4" />
+							</Button>
+						</div>
+					</div>
+				)}
 			</div>
 			<PerishableFormDialog
 				open={formOpen}
 				onOpenChange={setFormOpen}
-				onSuccess={fetchItems}
+				onSuccess={refresh}
 			/>
 
 			<SaidaEstoqueDialog
 				item={saidaItem}
 				onOpenChange={(open) => !open && setSaidaItem(null)}
-				onSuccess={fetchItems}
+				onSuccess={refresh}
 			/>
 		</div>
 	);

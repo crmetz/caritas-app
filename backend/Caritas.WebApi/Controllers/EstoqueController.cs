@@ -11,8 +11,15 @@ public class EstoqueController(IEstoqueService estoqueService) : BaseApiControll
 {
     [HttpGet("alimentos")]
     public async Task<IActionResult> GetAlimentos(
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? busca = null)
-        => Ok(await estoqueService.GetAlimentosAsync(page, pageSize, busca));
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? busca = null,
+        [FromQuery] DateOnly? validadeDe = null, [FromQuery] DateOnly? validadeAte = null,
+        [FromQuery] string? sortKey = null, [FromQuery] string? sortDir = null)
+        => Ok(await estoqueService.GetAlimentosAsync(
+            page, pageSize, busca, validadeDe, validadeAte, sortKey, sortDir));
+
+    [HttpGet("alimentos/alertas")]
+    public async Task<IActionResult> GetAlimentosAlertas()
+        => Ok(await estoqueService.GetAlimentosAlertasAsync());
 
     [HttpGet("roupas")]
     public async Task<IActionResult> GetRoupas(
