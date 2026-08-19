@@ -9,11 +9,14 @@ estáticos do `vite build` e faz proxy de `/api` para o backend pela rede intern
 do Docker:
 
 ```
-Internet → :80 da VM → container frontend (nginx)
-                         ├─ /      → /usr/share/nginx/html (SPA React)
-                         └─ /api/  → http://backend:8080
-                                        └─ postgres:5432
+Internet → :8081 da VM → container frontend (nginx)
+                           ├─ /      → /usr/share/nginx/html (SPA React)
+                           └─ /api/  → http://backend:8080
+                                          └─ postgres:5432
 ```
+
+A porta publicada vem de `APP_PORT` no `.env` (padrão `8081`). **Não use 80/443**: a
+VM de deploy é compartilhada com um servidor de e-mail (mailcow) que já ocupa as duas.
 
 Backend e PostgreSQL **não são acessíveis de fora da VM**. Como o frontend e a API
 respondem na mesma origem, não há CORS nem preflight, e o `VITE_API_URL` fica
@@ -48,15 +51,51 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER   # reabrir a sessão SSH depois disso
 ```
 
-Liberar a porta 80 no firewall da VM **e** no grupo de segurança do provedor
-(AWS/Azure/GCP/Oracle têm firewall próprio, separado do `ufw`):
+Conferir que a porta escolhida está livre antes de subir a stack:
 
 ```bash
-sudo ufw allow 80/tcp
+ss -tulpn | grep -E ':8081|:8080'   # não pode retornar nada
+```
+
+Liberar a porta no firewall da VM **e** no firewall do provedor, se houver:
+
+```bash
+sudo ufw allow 8081/tcp
 ```
 
 Requisitos: ~2 GB de RAM livres para o build (SDK .NET + `npm ci` rodam na VM).
-Se a VM tiver 1 GB, criar swap antes: `sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`.
+Conferir com `free -m` antes; se não houver folga, criar swap:
+
+```bash
+sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab   # persiste no reboot
+```
+
+### VM compartilhada (importante)
+
+O servidor de deploy atual (`177.104.188.217`, Ubuntu 24.04, 2 vCPU / 4 GB) **também roda
+um servidor de e-mail de produção (mailcow) administrado por terceiros**. Consequências:
+
+- **80 e 443 são do mailcow.** A stack publica só `APP_PORT` (porta alta).
+- **RAM é escassa.** O compose define `mem_limit` em todos os serviços para que um pico
+  da aplicação não mate os containers do mailcow por OOM. Não remova esses limites.
+- **Build na VM é o principal risco de OOM** (o SDK .NET sozinho passa de 1 GB). Com swap
+  configurado costuma passar; se travar, buildar fora da VM (ver "Build fora da VM").
+- Os containers têm nome prefixado (`caritas-*`) para não colidir com os do mailcow.
+
+### Build fora da VM (alternativa)
+
+Se o build na VM ficar inviável, buildar na máquina local e enviar as imagens:
+
+```bash
+docker build -t caritas-backend ./backend -f backend/Caritas.WebApi/Dockerfile
+docker save caritas-backend | ssh -i xplay.pem xplay@177.104.188.217 "docker load"
+# idem para o frontend; no compose da VM, trocar "build:" por "image: caritas-backend"
+```
+
+Na Fase 2 (CI/CD) esse dilema some: o GitHub Actions builda, publica no GHCR e a VM só
+faz `docker compose pull`.
 
 ## Primeiro deploy
 
@@ -77,7 +116,8 @@ docker compose -f docker-compose.prod.yml up -d --build
 | `POSTGRES_PASSWORD` | `openssl rand -base64 24` |
 | `JWT_KEY` | `openssl rand -base64 48`. **Obrigatório** — sem ele a API lança `Jwt:Key não configurado.` e o container entra em restart loop |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | Admin inicial, só no primeiro deploy (veja abaixo) |
-| `FRONTEND_URL` | URL pública, sem barra no final (ex.: `http://203.0.113.10`). Usada nos links de recuperação de senha |
+| `APP_PORT` | Porta publicada na VM (padrão `8081`). Nunca 80/443 — são do mailcow |
+| `FRONTEND_URL` | URL pública **com a porta**, sem barra no final (ex.: `http://177.104.188.217:8081`). Usada nos links de recuperação de senha |
 | `SMTP_*` | Credenciais de envio de e-mail |
 
 ### Admin inicial
@@ -102,13 +142,14 @@ Verificar:
 ```bash
 docker compose -f docker-compose.prod.yml ps       # 3 containers Up, postgres healthy
 docker compose -f docker-compose.prod.yml logs backend
-curl http://localhost/health                        # {"status":"ok"}
+curl http://localhost:8081/health                   # {"status":"ok"}
+ss -tulpn | grep 8081                               # só o docker-proxy, mailcow intacto
 ```
 
 As migrations do EF são aplicadas automaticamente no startup da API — não é preciso
 rodar `dotnet ef database update` manualmente.
 
-Depois acessar `http://IP-DA-VM` no navegador e entrar com as credenciais de
+Depois acessar `http://IP-DA-VM:8081` no navegador e entrar com as credenciais de
 `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
 
 ## Operação
@@ -166,11 +207,17 @@ limite e um único atacante derruba o login de todo mundo.
 O token JWT trafega em texto claro entre navegador e VM. Com um IP público isso
 atravessa a internet aberta, então **TLS é a próxima prioridade**.
 
-Para adicionar HTTPS, o caminho mais curto é: apontar um domínio para a VM,
-adicionar um `server` block na 443 no `frontend/nginx.conf` com `ssl_certificate`,
-montar os certificados via volume no serviço `frontend` do compose, publicar a porta
-443 e transformar o `server` da 80 em redirect. Nada do resto da stack muda — o
-backend não faz `UseHttpsRedirection`, então TLS é responsabilidade exclusiva do nginx.
+Nesta VM o caminho normal (certbot na 80/443) **não está disponível**: as duas portas são
+do mailcow, e o certbot em modo standalone precisaria pará-lo. As opções realistas são:
+
+1. Pedir à XPLAY que o nginx do mailcow faça reverse proxy de um subdomínio para
+   `127.0.0.1:8081` — o mailcow já tem certificado Let's Encrypt e renovação automática.
+2. Emitir o certificado por DNS-01 (sem tocar nas portas) e terminar TLS no nosso próprio
+   nginx: `server` block na 443 com `ssl_certificate`, certificados montados por volume no
+   serviço `frontend`, porta 443 publicada — o que também esbarra no mailcow.
+
+A opção 1 é a menos invasiva. Em qualquer caso nada muda no backend: ele não faz
+`UseHttpsRedirection`, então TLS é responsabilidade exclusiva do nginx.
 
 ## Notas
 

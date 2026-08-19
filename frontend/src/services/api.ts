@@ -1,7 +1,15 @@
 import axios from "axios";
 
+// Em produção (imagem Docker) o VITE_API_URL vem vazio de propósito: as chamadas
+// saem relativas ("/api") e o nginx faz o proxy para o backend. O fallback para
+// localhost:8080 só vale em desenvolvimento — se vazasse para o build de produção,
+// o navegador tentaria falar com a máquina do próprio usuário.
+const apiUrl =
+	import.meta.env.VITE_API_URL ??
+	(import.meta.env.DEV ? "http://localhost:8080" : "");
+
 const api = axios.create({
-	baseURL: `${import.meta.env.VITE_API_URL ?? "http://localhost:8080"}/api`,
+	baseURL: `${apiUrl}/api`,
 });
 
 export interface PagedResponse<T> {

@@ -4,12 +4,18 @@
 # Fica na raiz de propósito: assim o backend/docker-compose.override.yml (que é
 # de desenvolvimento e força ASPNETCORE_ENVIRONMENT=Development) não é carregado.
 # Só o frontend publica porta para fora; backend e postgres ficam na rede interna.
+#
+# A porta publicada vem de APP_PORT (padrão 8081), NUNCA 80/443: a VM de deploy é
+# compartilhada com um servidor de e-mail (mailcow) que já ocupa 80 e 443.
+# Os limites de memória também existem por causa disso — a VM tem 4 GB e roda
+# serviços de terceiros; sem limite, um pico aqui derruba o mailcow por OOM.
 
 services:
   postgres:
     image: postgres:16-alpine
     container_name: caritas-postgres
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -26,8 +32,9 @@ services:
     build:
       context: ./backend
       dockerfile: Caritas.WebApi/Dockerfile
-    container_name: backend
+    container_name: caritas-backend
     restart: unless-stopped
+    mem_limit: 768m
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,10 +69,12 @@ services:
         VITE_API_URL: ""
     container_name: caritas-frontend
     restart: unless-stopped
+    mem_limit: 128m
     depends_on:
       - backend
     ports:
-      - "80:80"
+      # Porta alta: 80/443 pertencem ao mailcow nesta VM.
+      - "${APP_PORT:-8081}:80"
 
 volumes:
   postgres_data:
