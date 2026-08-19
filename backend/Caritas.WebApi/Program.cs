@@ -18,9 +18,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 using Caritas.Service.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// A API roda atrás do nginx (container do frontend), que repassa X-Forwarded-For.
+// Sem isso, o rate limiter enxergaria o IP do proxy em toda requisição e um único
+// atacante derrubaria o login de todos os usuários.
+// KnownProxies/KnownIPNetworks são limpos porque o IP do container do nginx é dinâmico;
+// é seguro aqui porque o backend não é publicado — só é alcançável pelo proxy.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddDbContext<CaritasDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -123,6 +137,23 @@ builder.Services.AddScoped<IMontagemCestaService, MontagemCestaService>();
 builder.Services.AddScoped<ILoteCestaService, LoteCestaService>();
 builder.Services.AddScoped<IEntregaService, EntregaService>();
 
+// Rate limiting nos endpoints anônimos de autenticação, particionado por IP do cliente,
+// para conter tentativas de força bruta contra o login.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitPolicies.Auth, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: http.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(opt =>
@@ -166,9 +197,10 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
-    // Seed do admin inicial
-    // TODO: credenciais do admin de seed fixas temporariamente — mover para
-    // configuração/secrets (env vars / user-secrets) antes de produção.
+    // Seed do admin inicial.
+    // As credenciais vêm da configuração (SeedAdmin__Email / SeedAdmin__Password).
+    // Em desenvolvimento há um fallback fixo por conveniência; em produção, sem essas
+    // variáveis definidas, nenhum usuário admin é criado.
     {
         using var seedScope = app.Services.CreateScope();
         var userManager = seedScope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
@@ -201,11 +233,22 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        if (!userManager.Users.Any(u => u.UsuarioAdmin && u.Ativo))
-        {
-            const string adminEmail = "dev@caritas.com";
-            const string adminPassword = "Dev@12345";
+        var adminEmail = app.Configuration["SeedAdmin:Email"];
+        var adminPassword = app.Configuration["SeedAdmin:Password"];
 
+        if (app.Environment.IsDevelopment())
+        {
+            adminEmail = string.IsNullOrWhiteSpace(adminEmail) ? "dev@caritas.com" : adminEmail;
+            adminPassword = string.IsNullOrWhiteSpace(adminPassword) ? "Dev@12345" : adminPassword;
+        }
+
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+        {
+            app.Logger.LogWarning(
+                "SeedAdmin:Email/SeedAdmin:Password não configurados — nenhum usuário admin foi criado.");
+        }
+        else if (!userManager.Users.Any(u => u.UsuarioAdmin && u.Ativo))
+        {
             var admin = await userManager.FindByEmailAsync(adminEmail);
             if (admin is null)
             {
@@ -213,13 +256,23 @@ using (var scope = app.Services.CreateScope())
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
-                    Nome = "Dev",
-                    Sobrenome = "User",
+                    Nome = "Admin",
+                    Sobrenome = "Cáritas",
                     Ativo = true,
                     UsuarioAdmin = true,
                     CriadoEm = DateTime.UtcNow
                 };
-                await userManager.CreateAsync(admin, adminPassword);
+
+                var criacao = await userManager.CreateAsync(admin, adminPassword);
+                if (!criacao.Succeeded)
+                {
+                    // Senha fraca demais para as regras do Identity (mín. 8 caracteres,
+                    // com dígito e maiúscula) é o motivo mais provável.
+                    app.Logger.LogError(
+                        "Falha ao criar o usuário admin de seed: {Erros}",
+                        string.Join("; ", criacao.Errors.Select(e => e.Description)));
+                    admin = null;
+                }
             }
             else
             {
@@ -228,7 +281,7 @@ using (var scope = app.Services.CreateScope())
                 await userManager.UpdateAsync(admin);
             }
 
-            if (!await userManager.IsInRoleAsync(admin, PerfisPadrao.Admin))
+            if (admin is not null && !await userManager.IsInRoleAsync(admin, PerfisPadrao.Admin))
                 await userManager.AddToRoleAsync(admin, PerfisPadrao.Admin);
         }
     }
@@ -247,6 +300,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Precisa vir antes de tudo: reescreve o IP do cliente a partir do X-Forwarded-For
+// do nginx, que é o que o rate limiter usa para particionar.
+app.UseForwardedHeaders();
+
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -256,7 +313,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Health check para o proxy/monitoramento verificarem a API sem autenticar.
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+
 app.Run();

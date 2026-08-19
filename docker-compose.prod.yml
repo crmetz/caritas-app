@@ -1,0 +1,71 @@
+# Stack de produção — rodar a partir da RAIZ do repositório:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Fica na raiz de propósito: assim o backend/docker-compose.override.yml (que é
+# de desenvolvimento e força ASPNETCORE_ENVIRONMENT=Development) não é carregado.
+# Só o frontend publica porta para fora; backend e postgres ficam na rede interna.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: caritas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Caritas.WebApi/Dockerfile
+    container_name: backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      # Admin inicial. Deixe vazio depois do primeiro deploy: sem estas variáveis
+      # nenhum admin padrão é criado (e o já existente no banco é preservado).
+      SeedAdmin__Email: ${SEED_ADMIN_EMAIL:-}
+      SeedAdmin__Password: ${SEED_ADMIN_PASSWORD:-}
+      # Base dos links de recuperação de senha enviados por e-mail
+      FrontendUrl: ${FRONTEND_URL}
+      EmailSettings__SmtpHost: ${SMTP_HOST}
+      EmailSettings__SmtpPort: ${SMTP_PORT}
+      EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL}
+      EmailSettings__SenderName: ${SMTP_SENDER_NAME}
+      EmailSettings__Username: ${SMTP_USERNAME}
+      EmailSettings__Password: ${SMTP_PASSWORD}
+      EmailSettings__EnableSsl: ${SMTP_ENABLE_SSL}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vazio = chamadas relativas /api, resolvidas pelo proxy do nginx
+        VITE_API_URL: ""
+    container_name: caritas-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:

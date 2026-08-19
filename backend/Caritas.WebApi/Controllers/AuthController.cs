@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Caritas.Models.Interfaces.Services;
 using Caritas.Service.Services.Email.Templates;
+using Caritas.WebApi.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Caritas.WebApi.Controllers;
 
@@ -21,6 +23,7 @@ public class AuthController(
     private readonly AuthService _authService = new(userManager, roleManager, context, configuration, emailService);
 
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
@@ -38,6 +41,7 @@ public class AuthController(
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
@@ -45,7 +49,11 @@ public class AuthController(
 
         if (!string.IsNullOrEmpty(token))
         {
-            var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+            // Checa vazio, não só null: em container a variável costuma chegar como
+            // string vazia quando não é preenchida, e "??" não pegaria esse caso.
+            var frontendUrl = configuration["FrontendUrl"] is { Length: > 0 } url
+                ? url.TrimEnd('/')
+                : "http://localhost:5173";
             var link = $"{frontendUrl}/redefinir-senha?email={Uri.EscapeDataString(dto.Email)}&token={Uri.EscapeDataString(token)}";
             await emailService.SendAsync(dto.Email, PasswordRecoverEmail.Subject, PasswordRecoverEmail.Build(link));
         }
@@ -54,6 +62,7 @@ public class AuthController(
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {

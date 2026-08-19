@@ -1,0 +1,23 @@
+# Artefatos de build .NET (o Dockerfile faz restore/build de dentro do container)
+**/bin/
+**/obj/
+**/.vs/
+
+# Config de desenvolvimento — não deve entrar na imagem de produção
+**/appsettings.Development.json
+**/*.user
+
+# Compose de desenvolvimento (produção usa docker-compose.prod.yml na raiz)
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.dcproj
+
+# Dumps e arquivos avulsos
+*.sql
+caritas posteger
+
+# Diversos
+.dockerignore
+Dockerfile
+**/.DS_Store
+**/Thumbs.db

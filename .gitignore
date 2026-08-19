@@ -37,9 +37,6 @@ playwright/.cache/
 .env.local
 .env.*.local
 
-# Docker
-.dockerignore
-
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,22 @@
+# Dependências e build (instaladas/geradas dentro do container)
+node_modules/
+dist/
+dist-ssr/
+
+# Testes e2e — não fazem parte do bundle de produção
+e2e/
+test-results/
+playwright-report/
+playwright/.cache/
+playwright.config.ts
+
+# Variáveis locais — em produção o VITE_API_URL vem via build arg
+.env
+.env.local
+.env.*.local
+
+# Diversos
+.dockerignore
+Dockerfile
+.DS_Store
+Thumbs.db
