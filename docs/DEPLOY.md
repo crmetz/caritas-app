@@ -173,21 +173,9 @@ docker compose -f docker-compose.prod.yml down          # preserva o volume do b
 docker image prune -f
 ```
 
-### Backup do banco
-
-O volume `postgres_data` é o único dado que não se reconstrói a partir do repositório.
-
-```bash
-# Backup
-docker compose -f docker-compose.prod.yml exec -T postgres \
-  pg_dump -U caritas caritas > backup-$(date +%F).sql
-
-# Restore
-cat backup-2026-08-10.sql | docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -U caritas -d caritas
-```
-
-Vale agendar no cron da VM e copiar os arquivos para fora dela.
+> **Nunca rode `docker system prune -a` nesta VM.** Ele apaga imagens de *todos* os
+> projetos do host — inclusive as do mailcow, que não são reconstruídas por nós.
+> `docker image prune -f` (sem `-a`) remove só camadas órfãs e é seguro.
 
 ## Segurança
 

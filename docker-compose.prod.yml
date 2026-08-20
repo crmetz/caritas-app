@@ -16,6 +16,13 @@ services:
     container_name: caritas-postgres
     restart: unless-stopped
     mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        # Sem isto o log cresce sem limite e enche o disco — que é compartilhado
+        # com o servidor de e-mail desta VM.
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -35,6 +42,11 @@ services:
     container_name: caritas-backend
     restart: unless-stopped
     mem_limit: 768m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,6 +82,11 @@ services:
     container_name: caritas-frontend
     restart: unless-stopped
     mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - backend
     ports:
