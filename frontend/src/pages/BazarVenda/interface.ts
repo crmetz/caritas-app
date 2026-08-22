@@ -1,33 +1,33 @@
-export type FormaPagamento = 'Pix' | 'Dinheiro'
+export type FormaPagamento = "Pix" | "Dinheiro";
 
 export const FORMA_PAGAMENTO_LABELS: Record<FormaPagamento, string> = {
-  Pix: 'PIX',
-  Dinheiro: 'Dinheiro',
-}
+	Pix: "PIX",
+	Dinheiro: "Dinheiro",
+};
 
 export interface PecaOpcao {
-  id: number
-  categoria: string
-  descricao?: string
-  quantidade: number
-  preco: number
+	id: number;
+	categoria: string;
+	descricao?: string;
+	quantidade: number;
+	preco: number;
 }
 
 export interface ItemVenda {
-  pecaId: number
-  quantidade: number
-  valorUnitario: number
+	pecaId: number;
+	quantidade: number;
+	valorUnitario: number;
 }
 
 export interface CompradorDto {
-  nome: string
-  cpf: string
-  identificacaoAlternativa: string
+	nome: string;
+	cpf: string;
+	identificacaoAlternativa: string;
 }
 
 export interface CreateVendaDto {
-  itens: ItemVenda[]
-  comprador: CompradorDto
-  formaPagamento: FormaPagamento
-  registradoPor: string
+	itens: ItemVenda[];
+	comprador: CompradorDto;
+	formaPagamento: FormaPagamento;
+	registradoPor: string;
 }

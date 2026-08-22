@@ -53,28 +53,28 @@ export function MultiSelect<T extends SelectValue = string>({
 		if (optionsProp) setOptions(optionsProp);
 	}, [optionsProp]);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
+	useEffect(() => {
+		const handler = (e: MouseEvent) => {
+			const target = e.target as HTMLElement | null;
 
-      // Ignora cliques na scrollbar de um container rolável (ex.: o modal). Sem
-      // isso, tentar arrastar a barra para rolar fecharia o dropdown, pois o
-      // mousedown na scrollbar tem como alvo um elemento fora do select.
-      if (target) {
-        const clicouScrollbarVertical =
-          target.scrollHeight > target.clientHeight &&
-          e.offsetX > target.clientWidth;
-        const clicouScrollbarHorizontal =
-          target.scrollWidth > target.clientWidth &&
-          e.offsetY > target.clientHeight;
-        if (clicouScrollbarVertical || clicouScrollbarHorizontal) return;
-      }
+			// Ignora cliques na scrollbar de um container rolável (ex.: o modal). Sem
+			// isso, tentar arrastar a barra para rolar fecharia o dropdown, pois o
+			// mousedown na scrollbar tem como alvo um elemento fora do select.
+			if (target) {
+				const clicouScrollbarVertical =
+					target.scrollHeight > target.clientHeight &&
+					e.offsetX > target.clientWidth;
+				const clicouScrollbarHorizontal =
+					target.scrollWidth > target.clientWidth &&
+					e.offsetY > target.clientHeight;
+				if (clicouScrollbarVertical || clicouScrollbarHorizontal) return;
+			}
 
-      if (containerRef.current && !containerRef.current.contains(target)) {
-        setOpen(false);
-        setSearch("");
-      }
-    };
+			if (containerRef.current && !containerRef.current.contains(target)) {
+				setOpen(false);
+				setSearch("");
+			}
+		};
 
 		document.addEventListener("mousedown", handler);
 

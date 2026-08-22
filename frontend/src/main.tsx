@@ -46,7 +46,9 @@ createRoot(rootElement).render(
 							<Route element={<AppLayout />}>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Familia.Visualizar} />
+										<PermissionRoute
+											permission={Permissions.Familia.Visualizar}
+										/>
 									}
 								>
 									<Route path="/familias" element={<FamiliaPage />} />
@@ -65,56 +67,82 @@ createRoot(rootElement).render(
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Atendimento.Visualizar} />
+										<PermissionRoute
+											permission={Permissions.Atendimento.Visualizar}
+										/>
 									}
 								>
 									<Route path="/atendimentos" element={<AtendimentoPage />} />
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Bazar.Visualizar} />
+										<PermissionRoute
+											permission={Permissions.Bazar.Visualizar}
+										/>
 									}
 								>
 									<Route path="/bazar" element={<BazarPage />} />
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Bazar.RegistrarVenda} />
+										<PermissionRoute
+											permission={Permissions.Bazar.RegistrarVenda}
+										/>
 									}
 								>
-									<Route path="/bazar/nova-venda" element={<BazarVendaPage />} />
+									<Route
+										path="/bazar/nova-venda"
+										element={<BazarVendaPage />}
+									/>
 								</Route>
 								<Route
 									element={
 										<PermissionRoute permission={Permissions.Bazar.Relatorio} />
 									}
 								>
-									<Route path="/bazar/relatorio" element={<BazarRelatorioPage />} />
+									<Route
+										path="/bazar/relatorio"
+										element={<BazarRelatorioPage />}
+									/>
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Brecho.Visualizar} />
+										<PermissionRoute
+											permission={Permissions.Brecho.Visualizar}
+										/>
 									}
 								>
 									<Route path="/brecho" element={<BrechoPage />} />
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Brecho.RegistrarVenda} />
+										<PermissionRoute
+											permission={Permissions.Brecho.RegistrarVenda}
+										/>
 									}
 								>
-									<Route path="/brecho/nova-venda" element={<BrechoVendaPage />} />
+									<Route
+										path="/brecho/nova-venda"
+										element={<BrechoVendaPage />}
+									/>
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Brecho.Historico} />
+										<PermissionRoute
+											permission={Permissions.Brecho.Historico}
+										/>
 									}
 								>
-									<Route path="/brecho/historico" element={<BrechoHistoricoPage />} />
+									<Route
+										path="/brecho/historico"
+										element={<BrechoHistoricoPage />}
+									/>
 								</Route>
 								<Route
 									element={
-										<PermissionRoute permission={Permissions.Caixa.Visualizar} />
+										<PermissionRoute
+											permission={Permissions.Caixa.Visualizar}
+										/>
 									}
 								>
 									<Route path="/caixa" element={<CaixaPage />} />
@@ -124,20 +152,35 @@ createRoot(rootElement).render(
 										<PermissionRoute permission={Permissions.Caixa.Relatorio} />
 									}
 								>
-									<Route path="/caixa/relatorio" element={<CaixaRelatorioPage />} />
+									<Route
+										path="/caixa/relatorio"
+										element={<CaixaRelatorioPage />}
+									/>
 								</Route>
 								<Route
-									element={<PermissionRoute permission={Permissions.Paroquia.Visualizar} />}
+									element={
+										<PermissionRoute
+											permission={Permissions.Paroquia.Visualizar}
+										/>
+									}
 								>
 									<Route path="/paroquias" element={<ParoquiaPage />} />
 								</Route>
 								<Route
-									element={<PermissionRoute permission={Permissions.Usuario.Visualizar} />}
+									element={
+										<PermissionRoute
+											permission={Permissions.Usuario.Visualizar}
+										/>
+									}
 								>
 									<Route path="/usuarios" element={<UsuarioPage />} />
 								</Route>
 								<Route
-									element={<PermissionRoute permission={Permissions.Perfil.Visualizar} />}
+									element={
+										<PermissionRoute
+											permission={Permissions.Perfil.Visualizar}
+										/>
+									}
 								>
 									<Route path="/perfis" element={<PerfilPage />} />
 								</Route>

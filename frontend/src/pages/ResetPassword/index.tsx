@@ -103,9 +103,12 @@ export default function ResetPasswordPage() {
 							</button>
 						</div>
 						<p className="text-xs text-gray-500">
-							A senha deve ter no mínimo 8 caracteres, incluindo ao menos uma letra maiúscula e um número.
+							A senha deve ter no mínimo 8 caracteres, incluindo ao menos uma
+							letra maiúscula e um número.
 						</p>
-						{errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+						{errors.password && (
+							<p className="text-xs text-red-500">{errors.password.message}</p>
+						)}
 					</div>
 
 					<div className="space-y-1.5">

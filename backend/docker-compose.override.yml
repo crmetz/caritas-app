@@ -4,6 +4,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=caritas;Username=caritas;Password=caritas_dev;Include Error Detail=true
+      # Valores de desenvolvimento local. Antes vinham do appsettings.Development.json,
+      # que o .dockerignore (com razão) mantém fora da imagem — sem eles a API não sobe:
+      # "Jwt:Key não configurado.". Não têm valor fora da sua máquina.
+      - Jwt__Key=chave-de-desenvolvimento-local-nao-usar-em-producao-32-chars
+      - Jwt__Issuer=caritas-api
+      - Jwt__Audience=caritas-app
     ports:
       - "8080:8080"
     volumes:
