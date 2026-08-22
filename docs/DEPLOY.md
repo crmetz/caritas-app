@@ -32,6 +32,7 @@ vazio (chamadas relativas) — trocar o IP ou o domínio da VM **não exige rebu
 | `frontend/nginx.conf` | Serve o SPA e faz proxy de `/api` |
 | `backend/Caritas.WebApi/Dockerfile` | Imagem da API (já existia) |
 | `backend/.dockerignore`, `frontend/.dockerignore` | Mantêm o contexto de build enxuto |
+| `.github/workflows/deploy.yml` | Pipeline: build das imagens no GitHub, deploy por SSH |
 
 O compose de produção fica na **raiz**, não em `backend/`. Isso é intencional: rodar
 o Compose de dentro de `backend/` carregaria automaticamente o
@@ -64,13 +65,7 @@ sudo ufw allow 8081/tcp
 ```
 
 Requisitos: ~2 GB de RAM livres para o build (SDK .NET + `npm ci` rodam na VM).
-Conferir com `free -m` antes; se não houver folga, criar swap:
 
-```bash
-sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
-sudo mkswap /swapfile && sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab   # persiste no reboot
-```
 
 ### VM compartilhada (importante)
 
@@ -176,6 +171,93 @@ docker image prune -f
 > **Nunca rode `docker system prune -a` nesta VM.** Ele apaga imagens de *todos* os
 > projetos do host — inclusive as do mailcow, que não são reconstruídas por nós.
 > `docker image prune -f` (sem `-a`) remove só camadas órfãs e é seguro.
+
+## Deploy pela pipeline (GitHub Actions)
+
+O workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) é disparado
+**manualmente**, e só a partir da `main`:
+
+```
+Run workflow (main) → runner do GitHub builda as duas imagens → publica no GHCR
+                                                                    ↓
+                                  job de deploy entra por SSH na VM: git pull,
+                                  docker compose pull + up -d, health check
+```
+
+Não há gatilho por push: merge na `main` não coloca nada no ar sozinho. Quem decide a
+hora do deploy é você.
+
+```bash
+gh workflow run deploy.yml          # ou Actions -> Deploy -> Run workflow
+gh run watch
+```
+
+O disparo aceita qualquer branch na interface, mas o primeiro passo de cada job falha se
+a origem não for a `main`.
+
+O build **não** acontece na VM. Ela tem 4 GB divididos com um servidor de e-mail; o runner
+do GitHub é gratuito e ilimitado em repositório público, então compilar lá é de graça e
+não arrisca o host. A VM só baixa imagem pronta.
+
+O job de build também faz o papel de CI: o `Dockerfile` do frontend roda `tsc` antes do
+Vite e o do backend compila a solução inteira. Erro de tipo ou de compilação derruba o
+build, e o job de deploy nem começa — a versão no ar continua intacta.
+
+### Secrets a cadastrar
+
+Em *Settings → Secrets and variables → Actions*:
+
+| Secret | Valor |
+|---|---|
+| `SSH_HOST` | IP da VM |
+| `SSH_USER` | Usuário do deploy (precisa estar no grupo `docker`) |
+| `SSH_KEY` | Chave **privada** completa, incluindo as linhas `BEGIN`/`END` |
+| `SSH_PORT` | Só se o SSH não estiver na 22 |
+
+O `GITHUB_TOKEN` usado para publicar e baixar as imagens é gerado automaticamente a cada
+execução — não precisa cadastrar nada para o GHCR.
+
+### Chave de deploy dedicada
+
+Não use a chave root do provedor no pipeline. Gere um par exclusivo, sem senha (o
+workflow não tem como digitar uma):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/caritas-deploy -C "github-actions-caritas" -N ""
+ssh-copy-id -i ~/.ssh/caritas-deploy.pub xplay@177.104.188.217
+```
+
+O conteúdo de `~/.ssh/caritas-deploy` (a privada) vai para o secret `SSH_KEY`. Se depois
+a XPLAY criar um usuário sem sudo só para o deploy, basta trocar `SSH_USER` — o workflow
+não muda.
+
+### Pré-requisitos na VM
+
+O deploy pela pipeline assume o que o deploy manual já deixou pronto:
+
+- repositório clonado em `~/app/caritas` (o caminho está fixo no workflow);
+- `.env` preenchido ao lado do compose;
+- usuário do SSH no grupo `docker`, para rodar `docker` sem `sudo`.
+
+### Rollback
+
+Toda imagem recebe duas tags: `latest` e o SHA do commit. Depois de um deploy bem
+sucedido, a VM grava o SHA em `.last-good-tag`.
+
+- **Automático:** se o `/health` não responder em 150 s, o workflow sobe de volta a última
+  versão boa, despeja os logs do backend no output e falha.
+- **Manual:** *Actions → Deploy → Run workflow*, preenchendo `image_tag` com o SHA
+  desejado. Com esse campo preenchido o build é pulado e a VM só troca a imagem.
+
+### Cuidados
+
+- O script roda `git reset --hard origin/main` na VM: qualquer alteração feita à mão em
+  arquivo **versionado** lá é descartada. O `.env` não é versionado e sobrevive.
+- **As migrations do EF rodam no startup da API**, então todo deploy aplica no banco de
+  produção o que estiver pendente. Enquanto não houver rotina de backup, uma migration
+  destrutiva é irreversível — confira o que está indo junto antes de disparar.
+- Quem tem permissão de escrita no repositório consegue, via workflow, executar comandos
+  na VM. Pull requests de forks não têm acesso a secrets, mas vale proteger a `main`.
 
 ## Segurança
 

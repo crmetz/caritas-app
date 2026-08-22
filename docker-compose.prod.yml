@@ -1,5 +1,11 @@
-# Stack de produção — rodar a partir da RAIZ do repositório:
-#   docker compose -f docker-compose.prod.yml up -d --build
+# Stack de produção — rodar a partir da RAIZ do repositório.
+#
+#   Build local (deploy manual):  docker compose -f docker-compose.prod.yml up -d --build
+#   Imagem pronta (pipeline):     IMAGE_TAG=<sha> docker compose -f docker-compose.prod.yml pull && up -d
+#
+# Cada serviço declara "image" E "build": com --build o compose constrói e marca a imagem
+# com aquele nome; sem --build ele usa a imagem do GHCR publicada pelo GitHub Actions.
+# Por isso não existe um segundo compose de deploy para manter em sincronia.
 #
 # Fica na raiz de propósito: assim o backend/docker-compose.override.yml (que é
 # de desenvolvimento e força ASPNETCORE_ENVIRONMENT=Development) não é carregado.
@@ -36,6 +42,7 @@ services:
       retries: 5
 
   backend:
+    image: ghcr.io/crmetz/caritas-app-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Caritas.WebApi/Dockerfile
@@ -74,6 +81,7 @@ services:
       EmailSettings__EnableSsl: ${SMTP_ENABLE_SSL}
 
   frontend:
+    image: ghcr.io/crmetz/caritas-app-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       args:
