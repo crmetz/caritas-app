@@ -16,6 +16,11 @@ public class EntregasController(IEntregaService entregaService) : BaseApiControl
         [FromQuery] string? sortKey = null, [FromQuery] string? sortDir = null)
         => Ok(await entregaService.GetPagedAsync(page, pageSize, busca, sortKey, sortDir));
 
+    [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.Suprimentos.Visualizar)]
+    public async Task<IActionResult> GetById(int id)
+        => Ok(await entregaService.GetByIdAsync(id));
+
     [HttpPost]
     [Authorize(Policy = Permissions.Suprimentos.CriarEditar)]
     public async Task<IActionResult> Registrar([FromBody] EntregaCreateDto dto)

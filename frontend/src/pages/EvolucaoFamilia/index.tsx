@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import APIService from "@/services/api";
+import { HistoricoTimeline } from "./HistoricoTimeline";
 import type { EvolucaoFamilia } from "./interface";
 
 function formatDate(value: string) {
@@ -165,52 +166,8 @@ export default function EvolucaoFamiliaPage() {
 				/>
 			</div>
 
-			{/* Timeline */}
-			<div className="rounded-xl border bg-card p-4 shadow-sm">
-				<h3 className="mb-3 text-sm font-semibold">
-					Histórico de atendimentos
-				</h3>
-				{pontos.length === 0 ? (
-					<p className="py-6 text-center text-sm text-muted-foreground">
-						Nenhum atendimento registrado para esta família.
-					</p>
-				) : (
-					<ol className="space-y-3">
-						{[...pontos].reverse().map((p, i) => (
-							<li
-								key={`${p.data}-${i}`}
-								className="flex gap-3 border-l-2 border-border pl-4"
-							>
-								<div className="flex-1">
-									<div className="flex flex-wrap items-center gap-2">
-										<span className="text-sm font-medium">
-											{formatDate(p.data)}
-										</span>
-										{p.situacaoGeral && (
-											<Badge
-												style={{
-													backgroundColor: SITUACAO_COLOR[p.situacaoGeral],
-												}}
-												className="text-white"
-											>
-												{SITUACAO_LABEL[p.situacaoGeral]}
-											</Badge>
-										)}
-										{p.rendaFamiliarMomento != null && (
-											<span className="text-xs text-muted-foreground">
-												Renda: {formatCurrency(p.rendaFamiliarMomento)}
-											</span>
-										)}
-									</div>
-									<p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-										{p.relato}
-									</p>
-								</div>
-							</li>
-						))}
-					</ol>
-				)}
-			</div>
+			{/* Linha do tempo unificada: atendimentos, entregas e saídas de caixa */}
+			<HistoricoTimeline familiaId={familiaId as string} />
 		</div>
 	);
 }

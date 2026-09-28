@@ -1,6 +1,7 @@
 using Caritas.Models.Constants;
 using Caritas.Models.DTOs.Familia;
 using Caritas.Models.DTOs.Pessoa;
+using Caritas.Models.Interfaces.Services;
 using Caritas.Repository.Context;
 using Caritas.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace Caritas.WebApi.Controllers;
 
 [Authorize]
-public class FamiliasController(CaritasDbContext context) : BaseApiController
+public class FamiliasController(
+    CaritasDbContext context,
+    IHistoricoFamiliaService historicoService,
+    IAuthorizationService authorizationService) : BaseApiController
 {
     private readonly FamiliaService _familiaService = new(context);
 
@@ -36,6 +40,23 @@ public class FamiliasController(CaritasDbContext context) : BaseApiController
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _familiaService.GetByIdAsync(id);
+        return Ok(result);
+    }
+
+    // Linha do tempo da família. Entregas e saídas de caixa só entram se o usuário tiver
+    // permissão nesses módulos — as permissões não vêm no JWT, então são resolvidas aqui
+    // pelo IAuthorizationService (mesmo handler das policies) e repassadas ao service.
+    [HttpGet("{id:int}/historico")]
+    [Authorize(Policy = Permissions.Familia.Visualizar)]
+    public async Task<IActionResult> GetHistorico(
+        int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var podeVerEntregas = (await authorizationService
+            .AuthorizeAsync(User, Permissions.Suprimentos.Visualizar)).Succeeded;
+        var podeVerCaixa = (await authorizationService
+            .AuthorizeAsync(User, Permissions.Caixa.Visualizar)).Succeeded;
+
+        var result = await historicoService.GetAsync(id, page, pageSize, podeVerEntregas, podeVerCaixa);
         return Ok(result);
     }
 

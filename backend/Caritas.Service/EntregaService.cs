@@ -103,4 +103,39 @@ public class EntregaService(
             e.ToListItemDto(qtdCestas.GetValueOrDefault(e.Id), qtdItens.GetValueOrDefault(e.Id)));
         return new() { Items = items, TotalCount = paged.TotalCount };
     }
+
+    public async Task<EntregaDetalheDto> GetByIdAsync(int id)
+    {
+        var idParoquia = session.ParoquiaAtualId
+            ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
+
+        var entrega = await context.Entregas
+            .Include(e => e.Familia).ThenInclude(f => f.Responsavel)
+            .FirstOrDefaultAsync(e => e.Id == id && e.IdParoquia == idParoquia)
+            ?? throw new KeyNotFoundException($"Entrega {id} não encontrada nesta paróquia.");
+
+        var cestas = await context.MovimentacoesCesta
+            .Include(m => m.LoteCesta).ThenInclude(l => l.ConfiguracaoCesta)
+            .Where(m => m.IdEntrega == id)
+            .Select(m => new EntregaCestaDetalheDto
+            {
+                IdLoteCesta = m.IdLoteCesta,
+                Quantidade = m.Quantidade,
+                Origem = m.LoteCesta.Origem,
+                NomeConfiguracao = m.LoteCesta.ConfiguracaoCesta!.Nome,
+            })
+            .ToListAsync();
+
+        var movimentacoes = await context.Movimentacoes
+            .Where(m => m.OrigemTipo == OrigemMovimentacao.Entrega && m.OrigemId == id)
+            .ToListAsync();
+
+        // Resolve descrição/tipo dos itens em uma consulta, como MovimentacaoService.GetHistoricoAsync.
+        var idsItem = movimentacoes.Select(m => m.IdItem).Distinct().ToList();
+        var itens = await context.Items.Where(i => idsItem.Contains(i.Id)).ToDictionaryAsync(i => i.Id);
+
+        return entrega.ToDetalheDto(
+            cestas,
+            movimentacoes.Select(m => m.ToHistoricoDto(itens.GetValueOrDefault(m.IdItem))).ToList());
+    }
 }

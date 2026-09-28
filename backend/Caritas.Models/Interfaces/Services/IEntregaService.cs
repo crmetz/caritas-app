@@ -8,4 +8,5 @@ public interface IEntregaService
     Task<EntregaResponseDto> RegistrarAsync(EntregaCreateDto dto);
     Task<PagedResponseDto<EntregaListItemDto>> GetPagedAsync(
         int page, int pageSize, string? busca, string? sortKey, string? sortDir);
+    Task<EntregaDetalheDto> GetByIdAsync(int id);
 }

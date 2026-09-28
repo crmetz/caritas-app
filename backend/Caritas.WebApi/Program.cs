@@ -137,6 +137,8 @@ builder.Services.AddScoped<IMontagemCestaService, MontagemCestaService>();
 builder.Services.AddScoped<ILoteCestaService, LoteCestaService>();
 builder.Services.AddScoped<IEntregaService, EntregaService>();
 
+builder.Services.AddScoped<IHistoricoFamiliaService, HistoricoFamiliaService>();
+
 // Rate limiting nos endpoints anônimos de autenticação, particionado por IP do cliente,
 // para conter tentativas de força bruta contra o login.
 builder.Services.AddRateLimiter(options =>
