@@ -20,11 +20,15 @@ interface DatePickerProps {
 	placeholder?: string;
 	className?: string;
 	"aria-invalid"?: boolean;
-	// Navegação por dropdown de mês/ano (útil para datas distantes, ex.: nascimento).
+	// Navegação por dropdown de mês/ano; o intervalo padrão é de 10 anos para cada lado.
 	captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years";
 	startMonth?: Date;
 	endMonth?: Date;
 }
+
+const anoAtual = new Date().getFullYear();
+const PADRAO_INICIO = new Date(anoAtual - 10, 0);
+const PADRAO_FIM = new Date(anoAtual + 10, 11);
 
 // Converte ISO (yyyy-mm-dd) em Date local sem deslocamento de fuso.
 function isoToDate(iso: string | null): Date | undefined {
@@ -50,9 +54,9 @@ export function DatePicker({
 	disabled,
 	placeholder = "Selecione a data",
 	className,
-	captionLayout,
-	startMonth,
-	endMonth,
+	captionLayout = "dropdown",
+	startMonth = PADRAO_INICIO,
+	endMonth = PADRAO_FIM,
 	...rest
 }: DatePickerProps) {
 	const [open, setOpen] = useState(false);
