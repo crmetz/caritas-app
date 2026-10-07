@@ -6,7 +6,7 @@
 
 - Família tem **N membros** e exatamente **1 responsável** (marcado por `ResponsavelId`)
 - Família é vinculada a **uma paróquia** (`ParoquiaId` obrigatório)
-- Toda listagem de famílias deve ser filtrável por `paroquiaId`
+- Toda listagem de famílias é filtrada pela paróquia da sessão (ver "Filtro por Paróquia" no CLAUDE.md)
 - O responsável não pode ser removido da família sem antes trocar o responsável
 
 ## Identificação de Pessoa
@@ -41,7 +41,7 @@ Pessoa é considerada identificada se tiver **ao menos uma** das combinações:
 
 ## Endpoints
 
-- `GET /api/familias?paroquiaId=&page=&pageSize=` — listagem paginada filtrada por paróquia
+- `GET /api/familias?paroquiaId=&page=&pageSize=` — listagem paginada; o `paroquiaId` por query segue o padrão descontinuado (`TODO(isolamento-paroquia)`)
 - `GET /api/familias/{id}`
 - `POST /api/familias` — cria família com responsável + membros opcionais
 - `PUT /api/familias/{id}` — atualiza dados da família

@@ -12,6 +12,7 @@ public class AtendimentosController(CaritasDbContext context) : BaseApiControlle
 {
     private readonly AtendimentoService _atendimentoService = new(context);
 
+    // TODO(isolamento-paroquia): filter.ParoquiaId não é validado contra as paróquias do usuário e, se nulo, lista todas. Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet]
     [Authorize(Policy = Permissions.Atendimento.Visualizar)]
     public async Task<IActionResult> GetPaged(

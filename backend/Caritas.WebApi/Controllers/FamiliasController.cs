@@ -17,6 +17,7 @@ public class FamiliasController(
 {
     private readonly FamiliaService _familiaService = new(context);
 
+    // TODO(isolamento-paroquia): filter.ParoquiaId não é validado contra as paróquias do usuário e, se nulo, lista todas. Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet]
     [Authorize(Policy = Permissions.Familia.Visualizar)]
     public async Task<IActionResult> GetPaged(
@@ -28,6 +29,7 @@ public class FamiliasController(
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("select")]
     public async Task<IActionResult> GetSelect([FromQuery] int? paroquiaId)
     {
@@ -70,6 +72,7 @@ public class FamiliasController(
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    // TODO(isolamento-paroquia): não confere a paróquia da família e aceita dto.ParoquiaId do cliente, permitindo movê-la de paróquia. Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPut("{id:int}")]
     [Authorize(Policy = Permissions.Familia.CriarEditar)]
     public async Task<IActionResult> Update(int id, [FromBody] FamiliaUpdateDto dto)

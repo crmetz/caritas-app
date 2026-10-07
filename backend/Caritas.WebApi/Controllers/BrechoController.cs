@@ -14,6 +14,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
     private readonly BrechoService _brechoService = new(context);
     private readonly SessaoCaixaBrechoService _sessaoCaixaService = new(context);
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("pecas")]
     [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetPecas(
@@ -25,6 +26,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPost("pecas")]
     [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> CreatePeca([FromBody] PecaBrechoCreateDto dto)
@@ -33,6 +35,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return Created(string.Empty, result);
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPut("pecas/{id:int}")]
     [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> UpdatePeca(int id, [FromBody] PecaBrechoCreateDto dto)
@@ -49,6 +52,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return NoContent();
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPost("vendas")]
     [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> CreateVenda([FromBody] VendaBrechoCreateDto dto)
@@ -57,6 +61,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return Created(string.Empty, result);
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("vendas")]
     [Authorize(Policy = Permissions.Brecho.Historico)]
     public async Task<IActionResult> GetVendas(
@@ -78,6 +83,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return NoContent();
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("caixa/sessao-atual")]
     [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetSessaoAtual([FromQuery] int paroquiaId)
@@ -86,6 +92,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("caixa/sessao-recente")]
     [Authorize(Policy = Permissions.Brecho.Visualizar)]
     public async Task<IActionResult> GetSessaoRecente([FromQuery] int paroquiaId)
@@ -94,6 +101,7 @@ public class BrechoController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPost("caixa/abrir")]
     [Authorize(Policy = Permissions.Brecho.RegistrarVenda)]
     public async Task<IActionResult> AbrirCaixa([FromBody] AbrirCaixaBrechoDto dto)
