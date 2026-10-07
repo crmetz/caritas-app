@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Caritas.Models.Constants;
 using Caritas.Models.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 
@@ -21,11 +22,7 @@ public class CurrentSession(IHttpContextAccessor httpContextAccessor) : ICurrent
 
     public int? ParoquiaAtualId
     {
-        get
-        {
-            var header = Context?.Request.Headers["X-Paroquia-Id"].FirstOrDefault();
-            return int.TryParse(header, out var id) ? id : null;
-        }
+        get => Context?.Items[SessionKeys.ParoquiaAtualId] as int?;
     }
 
     public bool IsAuthenticated => Context?.User.Identity?.IsAuthenticated ?? false;
