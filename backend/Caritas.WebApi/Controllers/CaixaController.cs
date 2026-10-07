@@ -13,6 +13,7 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
 {
     private readonly CaixaService _caixaService = new(context);
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("{paroquiaId:int}/lancamentos")]
     [Authorize(Policy = Permissions.Caixa.Visualizar)]
     public async Task<IActionResult> GetLancamentos(
@@ -24,6 +25,7 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPost("lancamentos/entrada")]
     [Authorize(Policy = Permissions.Caixa.Lancar)]
     public async Task<IActionResult> CreateEntrada([FromBody] CreateEntradaDto dto)
@@ -32,6 +34,7 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return Created(string.Empty, result);
     }
 
+    // TODO(isolamento-paroquia): dto.ParoquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpPost("lancamentos/saida")]
     [Authorize(Policy = Permissions.Caixa.Lancar)]
     public async Task<IActionResult> CreateSaida([FromBody] CreateSaidaDto dto)
@@ -48,6 +51,7 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return NoContent();
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("{paroquiaId:int}/saldo")]
     [Authorize(Policy = Permissions.Caixa.Visualizar)]
     public async Task<IActionResult> GetSaldo(int paroquiaId)
@@ -56,6 +60,7 @@ public class CaixaController(CaritasDbContext context) : BaseApiController
         return Ok(result);
     }
 
+    // TODO(isolamento-paroquia): paroquiaId vem do cliente sem validação; usar ParoquiaAtualId (sessão). Ver CLAUDE.md, "Filtro por Paróquia".
     [HttpGet("{paroquiaId:int}/relatorio")]
     [Authorize(Policy = Permissions.Caixa.Relatorio)]
     public async Task<IActionResult> GetRelatorio(

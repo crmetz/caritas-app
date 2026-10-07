@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { DatePicker } from "../../components/DatePicker";
 import { QuantityInput } from "../../components/QuantityInput";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { Button } from "../../components/ui/button";
 import {
 	Dialog,
@@ -13,7 +14,6 @@ import {
 } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { SearchableSelect } from "../../components/SearchableSelect";
 import APIService from "../../services/api";
 import {
 	type AlimentoSelectOption,
@@ -35,6 +35,10 @@ interface FormState {
 	batch: string;
 	expiry: string;
 }
+
+const anoAtual = new Date().getFullYear();
+const VALIDADE_INICIO = new Date(anoAtual - 1, 0);
+const VALIDADE_FIM = new Date(anoAtual + 10, 11);
 
 const empty: FormState = {
 	idAlimento: "",
@@ -199,6 +203,8 @@ export function PerishableFormDialog({ open, onOpenChange, onSuccess }: Props) {
 								value={form.expiry}
 								onChange={(iso) => setForm((f) => ({ ...f, expiry: iso }))}
 								aria-invalid={!!errors.expiry}
+								startMonth={VALIDADE_INICIO}
+								endMonth={VALIDADE_FIM}
 							/>
 							{errors.expiry && (
 								<p className="text-xs font-medium text-destructive">

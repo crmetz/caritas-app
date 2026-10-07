@@ -22,8 +22,10 @@ api.interceptors.request.use((config) => {
 	if (token) {
 		config.headers.Authorization = `Bearer ${token}`;
 	}
+	// Rotas de auth não dependem de paróquia; um id salvo desatualizado faria o
+	// backend recusar (403) o próprio carregamento da sessão que o corrige.
 	const paroquiaId = localStorage.getItem("paroquiaAtualId");
-	if (paroquiaId) {
+	if (paroquiaId && !config.url?.startsWith("/auth")) {
 		config.headers["X-Paroquia-Id"] = paroquiaId;
 	}
 	return config;

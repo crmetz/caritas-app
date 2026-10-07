@@ -126,15 +126,34 @@ Nunca mapeie propriedade por propriedade diretamente no Service — delegue semp
 
 ### Filtro por Paróquia
 
-Todo endpoint de listagem de dados vinculados a paróquia deve aceitar `paroquiaId` como query param opcional. O service/repository filtra por paróquia quando fornecido:
+A paróquia de uma operação vem **sempre da sessão**, nunca de um valor enviado pelo cliente. O front manda o header `X-Paroquia-Id` em toda request. O `ParoquiaAtualMiddleware` confere se o usuário tem acesso à paróquia do header (vínculo em `UsuarioParoquias`; admin acessa qualquer uma) e responde 403 se não tiver. A paróquia validada fica disponível como `ICurrentSession.ParoquiaAtualId` (services) e `BaseApiController.ParoquiaAtualId` (controllers).
 
 ```csharp
 // Service
-public async Task<PagedResponseDto<T>> GetPagedAsync(int page, int pageSize, int? paroquiaId = null)
+var idParoquia = session.ParoquiaAtualId
+    ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
 
-// Repository / query
-.Where(x => paroquiaId == null || x.ParoquiaId == paroquiaId)
+// Repository / query: paróquia obrigatória, sem "null = todas"
+.Where(x => x.IdParoquia == idParoquia)
 ```
+
+**Não faça:**
+- Receber a paróquia por query param, rota ou campo de DTO (`?paroquiaId=`, `/{paroquiaId}/...`, `dto.ParoquiaId`). O middleware só valida o header, então qualquer outro canal deixa o usuário acessar outra paróquia.
+- Tratar `paroquiaId == null` como "todas as paróquias".
+- Buscar ou alterar um registro por id sem conferir que ele pertence à paróquia da sessão.
+
+Se uma tela precisar mesmo filtrar por uma paróquia diferente da atual (visão da diocese, usuário com várias paróquias), o valor recebido precisa ser validado contra as paróquias permitidas do usuário antes de ser usado.
+
+**Convenção antiga (descontinuada):** endpoints de listagem aceitavam `paroquiaId` como query param opcional, com `.Where(x => paroquiaId == null || x.ParoquiaId == paroquiaId)`. Esse padrão ainda existe nos endpoints marcados com `TODO(isolamento-paroquia)`. São eles:
+- **Caixa:** rotas `/caixa/{paroquiaId}/...` e `ParoquiaId` nos DTOs de lançamento.
+- **Brechó:** `?paroquiaId=` nas peças, vendas e sessão de caixa, e `ParoquiaId` nos DTOs de peça, venda e abertura de caixa.
+- **Famílias:**
+  - `GET /familias/select` dá prioridade ao query param sobre a sessão.
+  - `GET /familias` usa `filter.ParoquiaId` sem validação e, se nulo, lista todas.
+  - `PUT /familias/{id}` não confere a paróquia e aceita `ParoquiaId` do DTO.
+- **Atendimentos:** `GET /atendimentos` usa `filter.ParoquiaId` sem validação.
+
+Operações por id (cancelar venda, fechar caixa, excluir peça, etc.) ainda não foram auditadas quanto à paróquia. Novos endpoints não devem seguir o padrão antigo.
 
 ### Cancellation Token
 

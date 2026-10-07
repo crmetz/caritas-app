@@ -10,7 +10,7 @@ public interface ICurrentSession
     /// <summary>Id do usuário autenticado, lido do token JWT. Null se não autenticado.</summary>
     int? UsuarioId { get; }
 
-    /// <summary>Paróquia atualmente selecionada pelo front (header X-Paroquia-Id). Null se ausente.</summary>
+    /// <summary>Paróquia selecionada pelo front (header X-Paroquia-Id), já validada pelo ParoquiaAtualMiddleware. Null se ausente.</summary>
     int? ParoquiaAtualId { get; }
 
     /// <summary>Indica se há um usuário autenticado na requisição atual.</summary>

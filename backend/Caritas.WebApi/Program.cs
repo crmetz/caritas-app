@@ -317,6 +317,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<ParoquiaAtualMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

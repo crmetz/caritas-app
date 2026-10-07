@@ -11,9 +11,9 @@ Sistema de gestão pastoral para uma **diocese**, permitindo que ela e suas par�
 
 ### Regra Central de Filtro
 
-**Todo dado vinculado a uma paróquia deve ser filtrado por `paroquiaId`.**
-- Endpoints de listagem devem aceitar `paroquiaId` como query param
-- Usuários de paróquia só enxergam sua paróquia; diocese vê todas
+**Todo dado vinculado a uma paróquia deve ser filtrado pela paróquia da sessão** (header `X-Paroquia-Id`, validado pelo `ParoquiaAtualMiddleware`).
+- Nunca receber a paróquia por query param, rota ou DTO. Ver "Filtro por Paróquia" no CLAUDE.md, que também lista os endpoints que ainda seguem o padrão antigo.
+- Usuários de paróquia só enxergam suas paróquias; diocese vê todas
 
 ## Módulos
 

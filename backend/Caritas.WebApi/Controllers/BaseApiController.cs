@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Caritas.Models.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Caritas.WebApi.Controllers;
@@ -15,7 +16,6 @@ public abstract class BaseApiController : ControllerBase
             ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
             ?? throw new UnauthorizedAccessException("Usuário não autenticado."));
 
-    /// <summary>Paróquia atualmente selecionada pelo front, atualmente enviada no header.</summary>
-    protected int? ParoquiaAtualId =>
-        int.TryParse(Request.Headers["X-Paroquia-Id"], out var id) ? id : null;
+    /// <summary>Paróquia selecionada pelo front (header X-Paroquia-Id), já validada pelo ParoquiaAtualMiddleware.</summary>
+    protected int? ParoquiaAtualId => HttpContext.Items[SessionKeys.ParoquiaAtualId] as int?;
 }

@@ -12,12 +12,13 @@ namespace Caritas.Repository.Repositories;
 public class EstoqueRepository(CaritasDbContext context) : BaseRepository<Estoque>(context), IEstoqueRepository
 {
     public async Task<PagedResponseDto<Estoque>> GetAlimentosPagedAsync(
-        int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
+        int idParoquia, int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
         string? sortKey, string? sortDir)
     {
         // Lotes zerados (saldo aplicado a 0 após saídas) não aparecem na listagem.
         var query = DbSet.Include(e => e.Item)
-                         .Where(e => e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0);
+                         .Where(e => e.IdParoquia == idParoquia
+                               && e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0);
 
         if (!string.IsNullOrWhiteSpace(busca))
             query = query.Where(e => EF.Functions.ILike(e.Item.Descricao, $"%{busca}%")
@@ -44,10 +45,10 @@ public class EstoqueRepository(CaritasDbContext context) : BaseRepository<Estoqu
         return await ordered.ThenBy(e => e.Id).ToPagedAsync(page, pageSize);
     }
 
-    public async Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(DateOnly hoje)
+    public async Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(int idParoquia, DateOnly hoje)
     {
         var baseQuery = DbSet.Where(e =>
-            e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0 && e.Validade != null);
+            e.IdParoquia == idParoquia && e.Item.Tipo == TipoItem.Alimento && e.Quantidade > 0 && e.Validade != null);
         var limite = hoje.AddDays(30);
         return new EstoqueAlertasDto
         {
@@ -58,12 +59,12 @@ public class EstoqueRepository(CaritasDbContext context) : BaseRepository<Estoqu
 
     // Estoque de roupas com filtros/ordenação/paginação server-side.
     public async Task<PagedResponseDto<Estoque>> GetRoupasPagedAsync(
-        int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
+        int idParoquia, int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
         string? sortKey, string? sortDir)
     {
         var joined = DbSet.Include(e => e.Item)
             .Join(Context.Roupas, e => e.IdItem, r => r.Id, (e, r) => new { e, r })
-            .Where(x => x.e.Quantidade > 0);
+            .Where(x => x.e.IdParoquia == idParoquia && x.e.Quantidade > 0);
 
         if (!string.IsNullOrWhiteSpace(busca))
             joined = joined.Where(x => EF.Functions.ILike(x.r.Descricao, $"%{busca}%")
