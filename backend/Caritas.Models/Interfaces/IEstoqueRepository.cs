@@ -9,12 +9,12 @@ public interface IEstoqueRepository : IBaseRepository<Estoque>
 {
     // Estoque de alimentos com busca/filtro de validade/ordenação/paginação server-side.
     Task<PagedResponseDto<Estoque>> GetAlimentosPagedAsync(
-        int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
+        int idParoquia, int page, int pageSize, string? busca, DateOnly? validadeDe, DateOnly? validadeAte,
         string? sortKey, string? sortDir);
     // Contagens de vencidos / a vencer em até 30 dias (independem da paginação).
-    Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(DateOnly hoje);
+    Task<EstoqueAlertasDto> GetAlimentosAlertasAsync(int idParoquia, DateOnly hoje);
     Task<PagedResponseDto<Estoque>> GetRoupasPagedAsync(
-        int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
+        int idParoquia, int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
         string? sortKey, string? sortDir);
     Task<Estoque?> GetByCoordsForUpdateAsync(int idItem, int idParoquia, int? tamanho, DateOnly? validade, string? lote);
     // Resumo por gênero (TotalBase preenchido; TextoFormatado fica a cargo do service).

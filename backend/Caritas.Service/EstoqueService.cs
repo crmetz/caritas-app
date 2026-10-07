@@ -14,29 +14,30 @@ public class EstoqueService(IEstoqueRepository estoqueRepository, ICurrentSessio
         string? sortKey, string? sortDir)
     {
         var paged = await estoqueRepository.GetAlimentosPagedAsync(
-            page, pageSize, busca, validadeDe, validadeAte, sortKey, sortDir);
+            ParoquiaAtual(), page, pageSize, busca, validadeDe, validadeAte, sortKey, sortDir);
         return new() { Items = paged.Items.Select(e => e.ToAlimentoDto()), TotalCount = paged.TotalCount };
     }
 
     public Task<EstoqueAlertasDto> GetAlimentosAlertasAsync()
-        => estoqueRepository.GetAlimentosAlertasAsync(DateOnly.FromDateTime(DateTime.UtcNow));
+        => estoqueRepository.GetAlimentosAlertasAsync(ParoquiaAtual(), DateOnly.FromDateTime(DateTime.UtcNow));
 
     public async Task<PagedResponseDto<EstoqueRoupaResponseDto>> GetRoupasAsync(
         int page, int pageSize, string? busca, CategoriaRoupa? categoria, CondicaoRoupa? condicao,
         string? sortKey, string? sortDir)
     {
         var paged = await estoqueRepository.GetRoupasPagedAsync(
-            page, pageSize, busca, categoria, condicao, sortKey, sortDir);
+            ParoquiaAtual(), page, pageSize, busca, categoria, condicao, sortKey, sortDir);
         return new() { Items = paged.Items.Select(e => e.ToRoupaDto()), TotalCount = paged.TotalCount };
     }
 
     public async Task<List<ResumoTipoAlimentoDto>> GetResumoAlimentosAsync()
     {
-        var idParoquia = session.ParoquiaAtualId
-            ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
-        var resumo = await estoqueRepository.GetResumoAlimentosAsync(idParoquia);
+        var resumo = await estoqueRepository.GetResumoAlimentosAsync(ParoquiaAtual());
         foreach (var r in resumo)
             r.TextoFormatado = MedidaHelper.Formatar(r.TotalBase, r.FormaMedida);
         return resumo;
     }
+
+    private int ParoquiaAtual() => session.ParoquiaAtualId
+        ?? throw new InvalidOperationException("Paróquia atual não definida (header X-Paroquia-Id).");
 }
